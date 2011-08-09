@@ -1,0 +1,7 @@
+name = Islandora Xacml Editor
+;dependencies[] = imageapi
+;dependencies[] = tabs
+description = Visually edit XACML policies for objects.
+package = Fedora Repository
+version = 6.x-$Format:%h$-dev
+core = 6.x

@@ -5,6 +5,7 @@
  */
 
 include_once('XacmlConstants.inc');
+include_once('XacmlException.inc');
 
 /**
  * This static class takes an XACML XML file and parses it into the datastructures used by the XACML class.
@@ -17,18 +18,42 @@ class XacmlParser {
    * @param $xacml_string
    *   String containing the source XACML
    *
+   * @throws XacmlException
+   *   Thrown when the passed in policy can't be parsed. Particularly when the policy was not generated
+   *   by the islandora XACML editor.
+   *
    * @return array()
    *   Array containing the XACML represented as datastructures.
    */
   public static function parse ($xacml_string) {
-    $rules = array();
+    $xacml = array();
+    $xacml['rules'] = array();
+
+    // do some funky workaround stuff in order to get loadXML to throw an exception
+    // instead of outputting a warning then failing in an ugly way later on
+
+
     $dom = new DomDocument();
     $dom->preserveWhiteSpace = False;
-    $dom->loadXML($xacml_string);
+
+    // Throw exception if DomDocument gave us a Parse error
+    if($dom->loadXML($xacml_string) == FALSE) {
+      throw new XacmlException('Error Parsing XML.');
+    }
+
+    // Do basic sanity check that root element is <Policy>
+    if($dom->documentElement->tagName != 'Policy')
+      throw new XacmlException('Root tag is not Policy.');
+
+    //see if the policy was written by islandora, othewise throw an exception
+    if(!$dom->documentElement->hasAttribute('islandora_xacml'))
+      throw new XacmlException('XACML file was not written by XACML Editor.');
+    
     $xpath = new DomXpath($dom);
     $xpath->registerNamespace('xacml',XacmlConstants::xacml);
     XacmlParser::parseXacml($rules, $dom, $xpath);
-    return $rules;
+
+    return $xacml;
   }
 
   /**
@@ -121,8 +146,7 @@ class XacmlParser {
   }
 
   /**
-   * Parses the passed in Xacml returning the $rules array containing the datastructure for
-   * each rule.
+   * Parses the passed in Xacml returning the $xacml array.
    *
    * @param $rules
    *   The rules array to be populated by this function.
@@ -131,7 +155,11 @@ class XacmlParser {
    * @param $xpath
    *   An instantianted DOMXPath class for the above DOMDomcument.
    */
-  protected static function parseXacml(&$rules, $dom, $xpath){
+  protected static function parseXacml(&$xacml, $dom, $xpath){
+    $xacml['PolicyId'] = $dom->documentElement->getAttribute("PolicyId");
+    //$xacml['EditorVersion'] = $dom->documentElement->getAttribute("islandora_xacml");
+    $xacml['RuleCombiningAlgId'] = $dom->documentElement->getAttribute("RuleCombiningAlgId");
+
     # get each rule element
     foreach($dom->getElementsByTagNameNS(XacmlConstants::xacml,"Rule") as $rule_element) {
       $rule = array();
@@ -150,7 +178,7 @@ class XacmlParser {
       XacmlParser::findRoles($rule, $rule_element, $xpath);
       XacmlParser::findUsers($rule, $rule_element, $xpath);
 
-      $rules[] = $rule;
+      $xacml['rules'][] = $rule;
     }
   }
 

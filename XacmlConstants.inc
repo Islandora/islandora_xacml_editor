@@ -12,6 +12,7 @@ class XacmlConstants {
   const mime = "urn:fedora:names:fedora:2.1:resource:datastream:mimeType";
   const dsid = "urn:fedora:names:fedora:2.1:resource:datastream:id";
   const onememeberof = "urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of";
+  const stringequal = "urn:oasis:names:tc:xacml:1.0:function:string-equal";
   const loginid = "urn:fedora:names:fedora:2.1:subject:loginId";
   const xsi = 'http://www.w3.org/2001/XMLSchema-instance';
   const xmlns = 'http://www.w3.org/2000/xmlns/';
