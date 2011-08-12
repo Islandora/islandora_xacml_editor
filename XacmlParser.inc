@@ -172,10 +172,12 @@ class XacmlParser {
       $rule['users'] = array();
       $rule['roles'] = array();
 
-      XacmlParser::findDsidMime($rule, $rule_element);
-      XacmlParser::findMethods($rule, $rule_element);
-      XacmlParser::findRoles($rule, $rule_element, $xpath);
-      XacmlParser::findUsers($rule, $rule_element, $xpath);
+      if($rule['effect'] == 'Deny') {
+        XacmlParser::findDsidMime($rule, $rule_element);
+        XacmlParser::findMethods($rule, $rule_element);
+        XacmlParser::findRoles($rule, $rule_element, $xpath);
+        XacmlParser::findUsers($rule, $rule_element, $xpath);
+      }
 
       $xacml['rules'][] = $rule;
     }
