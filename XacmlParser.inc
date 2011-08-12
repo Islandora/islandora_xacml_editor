@@ -46,12 +46,12 @@ class XacmlParser {
       throw new XacmlException('Root tag is not Policy.');
 
     //see if the policy was written by islandora, othewise throw an exception
-    if(!$dom->documentElement->hasAttribute('islandora_xacml'))
+    if(!$dom->documentElement->hasAttribute('PolicyId') || $dom->documentElement->getAttribute("PolicyId") != 'islandora-xacml-editor-v1')
       throw new XacmlException('XACML file was not written by XACML Editor.');
     
     $xpath = new DomXpath($dom);
     $xpath->registerNamespace('xacml',XacmlConstants::xacml);
-    XacmlParser::parseXacml($rules, $dom, $xpath);
+    XacmlParser::parseXacml($xacml, $dom, $xpath);
 
     return $xacml;
   }
@@ -164,9 +164,8 @@ class XacmlParser {
     foreach($dom->getElementsByTagNameNS(XacmlConstants::xacml,"Rule") as $rule_element) {
       $rule = array();
 
-      $rule['id'] = $rule_element->getAttribute("RuleId");
       $rule['effect'] = $rule_element->getAttribute("Effect");
-
+      $rule['ruleid'] = $rule_element->getAttribute("RuleId");
       $rule['dsids'] = array();
       $rule['mimes'] = array();
       $rule['methods'] = array();

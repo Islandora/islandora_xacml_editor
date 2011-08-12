@@ -59,7 +59,7 @@ class XacmlWriter {
     $root = $dom->createElementNS(XacmlConstants::xacml, 'Policy');
 
     //$root->setAttribute('islandora_xacml', '1.0');
-    $root->setAttribute('PolicyId',$xacml['PolicyId']);
+    $root->setAttribute('PolicyId','islandora-xacml-editor-v1');
     $root->setAttribute('RuleCombiningAlgId',$xacml['RuleCombiningAlgId']);
     $root->setAttributeNS(XacmlConstants::xmlns, 'xmlns', XacmlConstants::xacml);
     $root->setAttributeNS(XacmlConstants::xmlns, 'xmlns:xsi', XacmlConstants::xsi);

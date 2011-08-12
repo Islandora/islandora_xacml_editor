@@ -36,14 +36,12 @@ function islandora_xacml_editor_menu() {
  * The XACML editing form.
  */
 function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
+
   module_load_include('inc', 'fedora_repository', 'api/fedora_utils');
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
 
-  // setup the form for our confirmation screen
-  if (!isset($form_state['storage']['step'])) {
-    $form_state['storage']['step'] = 1;
-    $form_state['rebuild'] = TRUE;
-  }
+  $form_state['storage']['object_pid'] = $object_pid;
+  $form_state['storage']['xacml_dsid'] = $xacml_dsid;
 
   if(!validPid($object_pid) || !validDsid($xacml_dsid)) {
     drupal_not_found();
@@ -72,56 +70,83 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     $user->uid == 0 ? : $users[$user->name] = $user->name;
     if($user->uid == 1) {
       $admin_user = $user->name;
+      $form_state['storage']['admin_user'] = $user->name;
     }
   }
+
+  // current user
+  $form_state['storage']['current_user'] = $GLOBALS['user']->name;
 
   // get role list
   $roles = array();
   $result = db_query('SELECT r.rid, r.name FROM {role} r');
   while($role = db_fetch_object($result)) {
-    //$roles[$role->rid] = $role->name;
     $role->rid == 0 ? : $roles[$role->name] = $role->name;
   }
 
+  $access = FALSE;
+  $dsidmime = FALSE;
+  $manage = FALSE;
+
   if(array_key_exists($xacml_dsid, $datastreams)) {
-    // here we should populate the form
+    module_load_include('inc', 'islandora_xacml_editor', 'XacmlParser');
+    module_load_include('inc', 'islandora_xacml_editor', 'XacmlException');
+
+    // here we populate the form
+    $xml = $object->get_datastream_dissemination($xacml_dsid);
+
+    // some basic error handling
+    try {
+      $xacml = XacmlParser::parse($xml);
+    }
+    catch(XacmlException $e) {
+      drupal_set_message($e->getMessage());
+      drupal_set_message("Xacml Parser failed to parse $object_pid/$xacml_dsid");
+      drupal_not_found();
+      exit();
+    }
+
+    // decide what is enabled
+    foreach($xacml['rules'] as $rule) {
+      if($rule['ruleid'] == 'deny-management-functions')
+        $manage = $rule;
+      elseif ($rule['ruleid'] == 'deny-dsid-mime')
+        $dsidmime = $rule;
+      elseif ($rule['ruleid'] == 'deny-access-functions')
+        $access = $rule;
+    }
+    
   }
-  else {
-    // select the admin user and the current user by default
-    $selected_users = $GLOBALS['user']->name == $admin_user ? array($admin_user) : array($GLOBALS['user']->name, $admin_user);
-  }
+
+
+  // select the admin user and the current user by default
+  $selected_users = $GLOBALS['user']->name == $admin_user ? array($admin_user) : array($GLOBALS['user']->name, $admin_user);
 
   $form = array();
 
   $form['#tree'] = TRUE;
 
-  if($form_state['storage']['step'] == 2) {
-    $form['warning'] = array(
-      '#value' => 'holy shit!!!',
-      '#weight' => -2,
-    );
-  }
-
   $form['access'] = array(
     '#type' => 'fieldset',
     '#title' => t('Object Viewing'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsed' => $access ? FALSE : TRUE,
   );
 
   $form['access']['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable XACML Restrictions on Object Viewing'),
-    '#default' => $form_state['storage']['step'] == 2 ? $form_state['values']['access']['enabled'] : '',
+    '#default_value' => $access ? 1 : 0,
   );
 
   $form['access']['users'] = array(
     '#type' => 'select',
     '#title' => t('Allowed Users'),
-    '#default_value' => $selected_users,
+    '#default_value' => $access ? $access['users'] : $selected_users,
     '#options' => $users,
     '#multiple' => TRUE,
-    '#size' => 10
+    '#size' => 10,
+    '#default_value' => $access ? $access['users'] : NULL,
   );
 
   $form['access']['roles'] = array(
@@ -129,7 +154,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#title' => t('Allowed Roles'),
     '#options' => $roles,
     '#multiple' => TRUE,
-    '#size' => 10
+    '#size' => 10,
+    '#default_value' => $access ? $access['roles'] : NULL,
   );
 
   $form['manage'] = array(
@@ -137,18 +163,17 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#type' => 'fieldset',
     '#title' => t('Object Management'),
     '#description' => 'Select the Users and Roles that are allowed to manage this object.
-      These users will also be able to view the object even if not explicitly allowed to in the 
+      These users will also be able to view the object even if not explicitly allowed to in the
       object access section.
       WARNING: If you unselect youself you will be locked out of the object.',
     '#collapsible' => FALSE,
-    '#collapsed' => FALSE,
   );
 
   $form['manage']['users'] = array(
     '#type' => 'select',
     '#title' => t('Users'),
     '#options' => $users,
-    '#default_value' => $selected_users,
+    '#default_value' => $manage ? $manage['users'] : $selected_users,
     '#multiple' => TRUE,
     '#size' => 10
   );
@@ -156,8 +181,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form['manage']['roles'] = array(
     '#type' => 'select',
     '#title' => t('Roles'),
+    '#default_value' => $manage ? $manage['roles'] : NULL,
     '#options' => $roles,
-  //  '#default_value' => $selected_roles,
     '#multiple' => TRUE,
     '#size' => 10
   );
@@ -166,12 +191,13 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#type' => 'fieldset',
     '#title' => t('Datastreams and MIME types'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsed' => $dsidmime ? FALSE : TRUE,
   );
 
   $form['dsidmime']['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable XACML Restrictions on DSIDs and MIME types'),
+    '#default_value' => $dsidmime ? 1 : 0,
   );
 
   $form['dsidmime']['users'] = array(
@@ -180,7 +206,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#default_value' => $selected_users,
     '#options' => $users,
     '#multiple' => TRUE,
-    '#size' => 10
+    '#size' => 10,
+    '#default_value' => $dsidmime ? $dsmime['users'] : $selected_users,
   );
 
   $form['dsidmime']['roles'] = array(
@@ -188,7 +215,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#title' => t('Roles'),
     '#options' => $roles,
     '#multiple' => TRUE,
-    '#size' => 10
+    '#size' => 10,
+    '#default_value' => $dsidmime ? $dsmime['roles'] : NULL,
   );
 
   $form['dsidmime']['dsid'] = array(
@@ -196,7 +224,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#title' => t('DSIDs'),
     '#options' => $dsid,
     '#multiple' => TRUE,
-    '#size' => 10
+    '#size' => 10,
+    '#default_value' => $dsidmime ? $dsmime['dsids'] : NULL,
   );
 
   $form['dsidmime']['mime'] = array(
@@ -204,7 +233,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#title' => t('Mimetype'),
     '#options' => $mime,
     '#multiple' => TRUE,
-    '#size' => 10
+    '#size' => 10,
+    '#default_value' => $dsidmime ? $dsmime['mimes'] : NULL,
   );
 
   $form['submit'] = array(
@@ -213,6 +243,27 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   );
 
   return $form;
+}
+
+function islandora_xacml_editor_page_validate(&$form, &$form_state) {
+
+  // test if the user is locking themselves or the admin out of the object
+  $admin_user = $form_state['storage']['admin_user'];
+  $current_user = $form_state['storage']['current_user'];
+
+  // management functions
+  if(!array_key_exists($admin_user,$form_state['values']['manage']['users']) ||
+      !array_key_exists($current_user,$form_state['values']['manage']['users']) )
+  {
+    if($admin_user == $current_user) {
+      form_set_error('manage][users',"Please make sure that $admin_user is selected in the manage
+        section to prevent locking yourself out of the object.",FALSE);
+    }
+    else {
+      form_set_error('manage][users',"Please make sure that $admin_user and $current_user are selected in the manage
+        section to prevent locking yourself and the admin user out of the object.",FALSE);
+    }
+  }
 }
 
 function islandora_xacml_editor_new_rule($id = 'Generic-Rule-578', $effect = 'Deny') {
@@ -231,17 +282,15 @@ function islandora_xacml_editor_new_rule($id = 'Generic-Rule-578', $effect = 'De
 }
 
 /**
- * The submit function where all the XACML magic happens. Abra
+ * The submit function where all the XACML magic happens. Abracadabra.
  */
 function islandora_xacml_editor_page_submit(&$form, &$form_state) {
-
+  
   module_load_include('inc', 'islandora_xacml_editor', 'XacmlWriter');
-
-  $form_state['storage']['step'] = 2;
+  module_load_include('inc', 'fedora_repository', 'api/fedora_item');
 
   // create the rule array
   $xacml = array(
-    'PolicyId'           => 'islandora-xacml-editor-v1',
     'RuleCombiningAlgId' => 'urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:first-applicable',
     'rules'              => array(),
   );
@@ -252,8 +301,9 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     $rule = islandora_xacml_editor_new_rule('deny-dsid-mime');
     $rule['mimes'] = $values['mime'];
     $rule['dsids'] = $values['dsid'];
-    $rule['users'] = $values['users'];
-    $rule['roles'] = $values['roles'];
+    // allow anyone with admin viewing
+    $rule['users'] = array_merge($values['users'], $form_state['values']['manage']['users'], array('fedoraAdmin' => 'fedoraAdmin'));
+    $rule['roles'] = array_merge($values['roles'], $form_state['values']['manage']['roles']);
     $rule['methods'][] = 'getDatastreamDissemination';
     $xacml['rules'][] = $rule;
   }
@@ -261,7 +311,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   // check admin (always have this rule)
   $values = $form_state['values']['manage'];
   $rule = islandora_xacml_editor_new_rule('deny-management-functions');
-  $rule['users'] = $values['users'];
+  $rule['users'] = array_merge($values['users'], array('fedoraAdmin' => 'fedoraAdmin'));
   $rule['roles'] = $values['roles'];
   $rule['methods'] = array(
     'ingest',
@@ -275,7 +325,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     'setDisseminatorState',
     'setDatastreamVersionable',
     'addDatastream',
-    'addDisseminator'
+    'addDisseminator',
   );
   $xacml['rules'][] = $rule;
 
@@ -283,8 +333,8 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   $values = $form_state['values']['access'];
   if( $values['enabled'] ) {
     $rule = islandora_xacml_editor_new_rule('deny-access-functions');
-    $rule['users'] = $values['users'];
-    $rule['roles'] = $values['roles'];
+    $rule['users'] = array_merge($values['users'], $form_state['values']['manage']['users'], array('fedoraAdmin' => 'fedoraAdmin'));
+    $rule['roles'] = array_merge($values['roles'], $form_state['values']['manage']['roles']);
     $rule['methods'] = array(
       'api-a',
       'getDatastreamHistory'
@@ -292,8 +342,25 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     $xacml['rules'][] = $rule;
   }
 
+  // allows allow everything not caught above
+  $xacml['rules'][] = islandora_xacml_editor_new_rule('allow-everything-else','Permit');
+
   $xml = XacmlWriter::toXML($xacml, TRUE);
 
-  dpm($xml);
-  dpm($xacml);
+  $pid = $form_state['storage']['object_pid'];
+  $dsid = $form_state['storage']['xacml_dsid'];
+
+  $object = new Fedora_Item($pid);
+  $datastreams = $object->get_datastreams_list_as_array();
+
+  if(array_key_exists($dsid, $datastreams)) {
+    $object->modify_datastream_by_value($xml, $dsid, 'Xacml Policy Stream', 'text/xml');
+  }
+  else {
+    $object->add_datastream_from_string($xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
+  }
+
+  unset($form_state['storage']);
+  //$form_state['redirect'] = array("fedora/repository/$pid");
+
 }
