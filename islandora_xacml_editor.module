@@ -314,18 +314,49 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   $rule['users'] = array_merge($values['users'], array('fedoraAdmin' => 'fedoraAdmin'));
   $rule['roles'] = $values['roles'];
   $rule['methods'] = array(
-    'ingest',
-    'modifyDatastreamByReference',
-    'modifyDatastreamByValue',
-    'modifyDisseminator',
-    'purgeObject',
-    'purgeDatastream',
-    'purgeDisseminator',
-    'setDatastreamState',
-    'setDisseminatorState',
-    'setDatastreamVersionable',
-    'addDatastream',
-    'addDisseminator',
+    'addDatastream',               //
+    'addDisseminator',             //
+    'adminPing',
+    'export',
+    //'getDatastream',
+    //'getDatastreamHistory',
+    //'getDatastreams',
+    //'getDisseminator',
+    //'getDisseminators',
+    'getDisseminatorHistory',
+    'getNextPid',
+    //'getObjectProperties',
+    //'getObjectXML',
+    'ingest',                       //
+    'modifyDatastreamByReference',  //
+    'modifyDatastreamByValue',      //
+    'modifyDisseminator',           //
+    'modifyObject',
+    'purgeObject',                  //
+    'purgeDatastream',              //
+    'purgeDisseminator',            //
+    'setDatastreamState',           //
+    'setDisseminatorState',         //
+    'setDatastreamVersionable',     //
+    'compareDatastreamChecksum',
+    //'describeRepository',
+    //'findObjects',
+    //'riFindObjects',
+    //'getDatastreamDissemination',
+    //'getDissemination',
+    //'getObjectHistory',
+    //'getObjectProfile',
+    //'listDatastreams',
+    //'listMethods',
+    //'listObjectInFieldSearchResults',
+    //'listObjectInResourceIndexResults',
+    'serverShutdown',
+    'serverStatus',
+    //'oai',
+    'upload',
+    'dsstate',
+    'resolveDatastream',
+    'reloadPolicies',
   );
   $xacml['rules'][] = $rule;
 
@@ -337,7 +368,8 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     $rule['roles'] = array_merge($values['roles'], $form_state['values']['manage']['roles']);
     $rule['methods'] = array(
       'api-a',
-      'getDatastreamHistory'
+      'getDatastreamHistory',
+      'listObjectInResourceIndexResults',
     );
     $xacml['rules'][] = $rule;
   }
