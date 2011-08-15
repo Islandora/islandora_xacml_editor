@@ -159,10 +159,20 @@ class XacmlWriter {
     $actionMatch = $dom->createElementNS(XacmlConstants::xacml, 'ActionMatch');
     $actionMatch->setAttribute('MatchId',XacmlConstants::stringequal);
     $action->appendChild($actionMatch);
-    $attributeValue = $dom->createElementNS(XacmlConstants::xacml, "AttributeValue", "urn:fedora:names:fedora:2.1:action:id-$method");
+
+    if($method == 'api-a' || $method == 'api-m') {
+      $attributevalue = "urn:fedora:names:fedora:2.1:action:$method";
+      $attributeid = 'urn:fedora:names:fedora:2.1:action:api';
+    }
+    else {
+      $attributevalue = "urn:fedora:names:fedora:2.1:action:id-$method";
+      $attributeid = "urn:fedora:names:fedora:2.1:action:id";
+    }
+
+    $attributeValue = $dom->createElementNS(XacmlConstants::xacml, "AttributeValue", $attributevalue);
     $attributeValue->setAttribute("DataType","http://www.w3.org/2001/XMLSchema#string");
     $actionAttributeDesignator = $dom->createElementNS(XacmlConstants::xacml, "ActionAttributeDesignator");
-    $actionAttributeDesignator->setAttribute("AttributeId", "urn:fedora:names:fedora:2.1:action:id");
+    $actionAttributeDesignator->setAttribute("AttributeId", $attributeid);
     $actionAttributeDesignator->setAttribute("DataType","http://www.w3.org/2001/XMLSchema#string");
     $actionMatch->appendChild($attributeValue);
     $actionMatch->appendChild($actionAttributeDesignator);

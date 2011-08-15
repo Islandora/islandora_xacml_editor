@@ -97,11 +97,16 @@ class XacmlParser {
     foreach($values as $value) {
       $method = $value->nodeValue;
 
-      // methods are returned as they are represented in XACML
-      // for example: urn:fedora:names:fedora:2.1:action:id-getDatastreamDissemination
-      // here we split off the first 38 characters, which for this example would
-      // give us: getDatastreamDissemination
-      $rule['methods'][] = substr($method,38);
+      if(preg_match('/api-a/', $method) || preg_match('/api-m/', $method)) {
+        $rule['methods'][] = substr($method,35);
+      }
+      else {
+        // methods are returned as they are represented in XACML
+        // for example: urn:fedora:names:fedora:2.1:action:id-getDatastreamDissemination
+        // here we split off the first 38 characters, which for this example would
+        // give us: getDatastreamDissemination
+        $rule['methods'][] = substr($method,38);
+      }
     }
   }
 
