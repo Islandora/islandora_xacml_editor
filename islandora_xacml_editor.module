@@ -361,6 +361,6 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   }
 
   unset($form_state['storage']);
-  //$form_state['redirect'] = array("fedora/repository/$pid");
+  $form_state['redirect'] = array("fedora/repository/$pid");
 
 }
