@@ -207,7 +207,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#options' => $users,
     '#multiple' => TRUE,
     '#size' => 10,
-    '#default_value' => $dsidmime ? $dsmime['users'] : $selected_users,
+    '#default_value' => $dsidmime ? $dsidmime['users'] : $selected_users,
   );
 
   $form['dsidmime']['roles'] = array(
@@ -216,7 +216,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#options' => $roles,
     '#multiple' => TRUE,
     '#size' => 10,
-    '#default_value' => $dsidmime ? $dsmime['roles'] : NULL,
+    '#default_value' => $dsidmime ? $dsidmime['roles'] : NULL,
   );
 
   $form['dsidmime']['dsid'] = array(
@@ -225,7 +225,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#options' => $dsid,
     '#multiple' => TRUE,
     '#size' => 10,
-    '#default_value' => $dsidmime ? $dsmime['dsids'] : NULL,
+    '#default_value' => $dsidmime ? $dsidmime['dsids'] : NULL,
   );
 
   $form['dsidmime']['mime'] = array(
@@ -234,7 +234,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#options' => $mime,
     '#multiple' => TRUE,
     '#size' => 10,
-    '#default_value' => $dsidmime ? $dsmime['mimes'] : NULL,
+    '#default_value' => $dsidmime ? $dsidmime['mimes'] : NULL,
   );
 
   $form['submit'] = array(

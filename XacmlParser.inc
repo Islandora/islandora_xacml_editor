@@ -119,7 +119,7 @@ class XacmlParser {
     $role_designator = $xpath->query('.//xacml:Apply[@FunctionId="' . XacmlConstants::onememeberof .
       '"]/xacml:SubjectAttributeDesignator[@AttributeId="fedoraRole"]',$element);
     
-    if($role_designator) {
+    if($role_designator->length != 0) {
       $role_attrib = $xpath->query('../xacml:Apply/xacml:AttributeValue',$role_designator->item(0));
 
       foreach($role_attrib as $role) {
@@ -142,7 +142,7 @@ class XacmlParser {
     $user_designator = $xpath->query('.//xacml:Apply[@FunctionId="' . XacmlConstants::onememeberof .
       '"]/xacml:SubjectAttributeDesignator[@AttributeId="' . XacmlConstants::loginid . '"]',$element);
 
-    if($user_designator) {
+    if($user_designator->length != 0) {
       $user_attrib = $xpath->query('../xacml:Apply/xacml:AttributeValue',$user_designator->item(0));
 
       foreach($user_attrib as $user) {
