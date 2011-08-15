@@ -118,10 +118,13 @@ class XacmlParser {
   protected static function findRoles(&$rule, $element, $xpath) {
     $role_designator = $xpath->query('.//xacml:Apply[@FunctionId="' . XacmlConstants::onememeberof .
       '"]/xacml:SubjectAttributeDesignator[@AttributeId="fedoraRole"]',$element);
-    $role_attrib = $xpath->query('../xacml:Apply/xacml:AttributeValue',$role_designator->item(0));
+    
+    if($role_designator) {
+      $role_attrib = $xpath->query('../xacml:Apply/xacml:AttributeValue',$role_designator->item(0));
 
-    foreach($role_attrib as $role) {
-      $rule['roles'][] = $role->nodeValue;
+      foreach($role_attrib as $role) {
+        $rule['roles'][] = $role->nodeValue;
+      }
     }
   }
 
@@ -138,10 +141,13 @@ class XacmlParser {
   protected static function findUsers(&$rule, $element, $xpath) {
     $user_designator = $xpath->query('.//xacml:Apply[@FunctionId="' . XacmlConstants::onememeberof .
       '"]/xacml:SubjectAttributeDesignator[@AttributeId="' . XacmlConstants::loginid . '"]',$element);
-    $user_attrib = $xpath->query('../xacml:Apply/xacml:AttributeValue',$user_designator->item(0));
 
-    foreach($user_attrib as $user) {
-      $rule['users'][] = $user->nodeValue;
+    if($user_designator) {
+      $user_attrib = $xpath->query('../xacml:Apply/xacml:AttributeValue',$user_designator->item(0));
+
+      foreach($user_attrib as $user) {
+        $rule['users'][] = $user->nodeValue;
+      }
     }
   }
 
