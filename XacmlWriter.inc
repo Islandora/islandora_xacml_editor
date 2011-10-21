@@ -115,7 +115,7 @@ class XacmlWriter {
 
   private static function createRule(&$dom, $rule) {
     $root = $dom->createElementNS(XacmlConstants::xacml, "Rule");
-    $root->setAttribute('RuleId', $rule['id']);
+    $root->setAttribute('RuleId', $rule['ruleid']);
     $root->setAttribute('Effect', $rule['effect']);
 
     XacmlWriter::createRuleTarget($dom, $root, $rule);
