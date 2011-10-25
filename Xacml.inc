@@ -179,7 +179,7 @@ abstract class XacmlRule {
    *   String or array of string with roles to remove.
    */
   function removeRole($role) {
-    $this->removeValues('users', $user);
+    $this->removeValues('roles', $role);
   }
 
   /**
