@@ -41,6 +41,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
   module_load_include('inc', 'islandora_xacml_editor', 'Xacml');
 
+  $form_state['storage'] = array();
   $form_state['storage']['object_pid'] = $object_pid;
   $form_state['storage']['xacml_dsid'] = $xacml_dsid;
 
@@ -106,7 +107,6 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     $xacml = new Xacml();
   }
 
-
   // select the admin user and the current user by default
   $selected_users = $GLOBALS['user']->name == $admin_user ? array($admin_user) : array($GLOBALS['user']->name, $admin_user);
 
@@ -118,13 +118,13 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#type' => 'fieldset',
     '#title' => t('Object Viewing'),
     '#collapsible' => TRUE,
-    '#collapsed' => $access,
+    '#collapsed' => !$xacml->viewingRule->isPopulated(),
   );
 
   $form['access']['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable XACML Restrictions on Object Viewing'),
-    '#default_value' => $xacml->viewingRule->isPopulated() ? 1 : 0,
+    '#default_value' => $xacml->viewingRule->isPopulated(),
   );
 
   $form['access']['users'] = array(
@@ -178,13 +178,13 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#type' => 'fieldset',
     '#title' => t('Datastreams and MIME types'),
     '#collapsible' => TRUE,
-    '#collapsed' => $xacml->datastreamRule->isPopulated(),
+    '#collapsed' => !$xacml->datastreamRule->isPopulated(),
   );
 
   $form['dsidmime']['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable XACML Restrictions on DSIDs and MIME types'),
-    '#default_value' => $xacml->datastreamRule->isPopulated() ? 1 : 0,
+    '#default_value' => $xacml->datastreamRule->isPopulated(),
   );
 
   $form['dsidmime']['users'] = array(
