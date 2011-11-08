@@ -45,7 +45,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form_state['storage']['object_pid'] = $object_pid;
   $form_state['storage']['xacml_dsid'] = $xacml_dsid;
 
-  if(!validPid($object_pid) || !validDsid($xacml_dsid)) {
+  if(!valid_pid($object_pid) || !valid_dsid($xacml_dsid)) {
     drupal_not_found();
     exit();
   }
