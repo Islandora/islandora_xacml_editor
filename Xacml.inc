@@ -143,6 +143,25 @@ abstract class XacmlRule {
   }
 
   /**
+   * Check if the user with the specified username and roles has permission.
+   *
+   * @param $user
+   *   A string containing the user being tested.
+   * @param $roles
+   *   An array of strings containing the roles being tested. Or NULL.
+   */
+  function hasPermission($user, $roles = NULL) {
+    if(!$this->isPopulated()) {
+      return TRUE;
+    }
+
+    $boolean_user = in_array($user,$this->getUsers());
+    $boolean_role = array_intersect($this->getRoles(),$roles);
+
+    return ($boolean_user || $boolean_role);
+  }
+
+  /**
    * Add a user to the XACML rule.
    *
    * @param $user
@@ -449,6 +468,39 @@ class XacmlDatastreamRule extends XacmlRule {
   function isPopulated() {
     return parent::isPopulated() && ($this->getMimetypes() || $this->getDsids());
   }
+
+  /**
+   * Check if the user with the specified username and roles has permission. This
+   * also takes the DSID and mime.
+   *
+   * @param $user
+   *   A string containing the user being tested.
+   * @param $roles
+   *   An array of strings containing the roles being tested. Or NULL.
+   * @param $mime
+   *   String containing the mime
+   * @param $dsid
+   *   String containing the DSID
+   */
+  function hasPermission($user, $roles, $mime, $dsid) {
+
+    if(!$this->isPopulated()) {
+      return TRUE;
+    }
+    if(!parent::hasPermission($user, $roles)){
+        $boolean_mime = $mime ? in_array($mime,$this->getMimetypes()) : FALSE;
+        $boolean_dsid = $dsid ? in_array($dsid,$this->getDsids()) : FALSE;
+        if($boolean_mime || $boolean_dsid) {
+          return FALSE;
+        }
+        else {
+          return TRUE;
+        }
+    }
+    return TRUE;
+  }
+
+
 }
 
 /**
