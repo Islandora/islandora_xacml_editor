@@ -157,7 +157,7 @@ abstract class XacmlRule {
 
     $boolean_user = in_array($user,$this->getUsers());
     $boolean_role = array_intersect($this->getRoles(),$roles);
-
+    
     return ($boolean_user || $boolean_role);
   }
 
@@ -593,6 +593,30 @@ class Xacml {
     $this->managementRule = new XacmlManagementRule($management_rule, $this);
     $this->viewingRule = new XacmlViewingRule($viewing_rule,$this);
     $this->permitEverythingRule = new XacmlPermitEverythingRule($this);
+  }
+
+  /**
+   * Alternate Constructor for the Xacml object. This constructs from a PID instead of
+   * from a string.
+   *
+   * @param $pid
+   *   A string containing the PID
+   *
+   * @throws XacmlException
+   * @return an initialized Xacml object.
+   *
+   */
+  static public function constructFromPid($pid) {
+    module_load_include('inc', 'fedora_repository', 'api/fedora_item');
+    $item = new Fedora_Item($pid);
+    $datastreams = $item->get_datastreams_list_as_array();
+    if(isset($datastreams['POLICY'])) {
+      $xacml = $item->get_datastream_dissemination('POLICY');
+    }
+    else {
+      $xacml = NULL;
+    }
+    return new Xacml($xacml);
   }
 
   /**
