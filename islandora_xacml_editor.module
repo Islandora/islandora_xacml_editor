@@ -343,8 +343,8 @@ function islandora_xacml_editor_batch_function($xml, $pid, $option, &$context) {
     $query = new IslandoraXacmlEditorQuery($pid, $option);
     $context['sandbox'] = array();
     $context['sandbox']['progress'] = 0;
-    $context['sandbox']['items'] = $query->getCount();
     $context['sandbox']['pids'] = $query->getPids();
+    $context['sandbox']['items'] = count($context['sandbox']['pids']);
     $context['results']['redirect'] = $pid;
     $context['results']['success'] = array();
     $context['results']['fail'] = array();
@@ -353,7 +353,7 @@ function islandora_xacml_editor_batch_function($xml, $pid, $option, &$context) {
   $targetpid = array_pop($context['sandbox']['pids']);
   $context['sandbox']['progress']++;
 
-  $policy_update = new IslandoraUpdatePolicy($targetpid);
+  $policy_update = new IslandoraUpdatePolicy($targetpid, $xml);
   $success = $policy_update->updatePolicy();
 
   if($success) {
@@ -381,8 +381,10 @@ function islandora_xacml_editor_batch_finished($success, $results, $operations) 
 class IslandoraUpdatePolicy {
   protected $pid;
 
-  function __construct($pid) {
+  function __construct($pid, $xml) {
     $this->pid = $pid;
+    $this->xml = $xml;
+    $this->object = new Fedora_Item($pid);
   }
 
   function isCollection() {
@@ -399,9 +401,9 @@ class IslandoraUpdatePolicy {
     $results = new SimpleXMLElement($query_results);
     $collection = FALSE;
     foreach($results->results->result as $result) {
-      $pid = (string)$result->object['uri'];
+      $pid = (string)$result->parent_model['uri'];
       $pid = explode('/',$pid);
-      $pid = $parts[1];
+      $pid = $pid[1];
       if($pid == 'islandora:collectionCModel') {
         $collection = TRUE;
       }
@@ -410,14 +412,13 @@ class IslandoraUpdatePolicy {
   }
 
   function updatePolicy() {
+    global $user;
     $success = FALSE;
-    $object = new Fedora_Item($targetpid);
-    if($object->exists()) {
-      $datastreams = $object->get_datastreams_list_as_array();
+    if($this->object->exists()) {
+      $datastreams = $this->object->get_datastreams_list_as_array();
       if(array_key_exists('POLICY', $datastreams)) {
-        global $user;
         try {
-          $xacml = Xacml::constructFromPid($targetpid);
+          $xacml = Xacml::constructFromPid($this->pid);
           if($xacml->managementRule->hasPermission($user->name, $user->roles)) {
             $success = $this->addOrUpdateAllPolicies($datastreams);
           }
@@ -441,10 +442,10 @@ class IslandoraUpdatePolicy {
 
   private function addOrUpdatePolicy($datastreams, $dsid) {
     if(array_key_exists($dsid, $datastreams)) {
-      $object->modify_datastream_by_value($xml, $dsid, 'Xacml Policy Stream', 'text/xml');
+      $this->object->modify_datastream_by_value($this->xml, $dsid, 'Xacml Policy Stream', 'text/xml');
     }
     else {
-      $object->add_datastream_from_string($xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
+      $this->object->add_datastream_from_string($this->xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
     }
   }
 }
