@@ -45,6 +45,12 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form_state['storage']['object_pid'] = $object_pid;
   $form_state['storage']['xacml_dsid'] = $xacml_dsid;
 
+  // when we call in from top level collections in JS get get the
+  // pid being undefined
+  if($object_pid == 'undefined' || !$object_pid) {
+    $object_pid = variable_get('fedora_repository_pid', 'islandora:top');
+  }
+
   if(!valid_pid($object_pid) || !valid_dsid($xacml_dsid)) {
     drupal_not_found();
     exit();
@@ -224,6 +230,19 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#default_value' => $xacml->datastreamRule->isPopulated() ? $xacml->datastreamRule->getMimetypes() : NULL,
   );
 
+ if($xacml_dsid == 'CHILD_SECURITY') {
+    $form['update_options'] = array(
+      '#type' => 'select',
+      '#title' => t('What items would you like to apply this policy to?'),
+      '#default_value' => 'newchildren',
+      '#options' => array(
+        'newchildren' => t('New children of this collection.'),
+        'allchildren' => t('All children of this collection (Existing and new).'),
+        'allgrandchildren' => t('All children of this collection and collections within this collection. (Existing and new).'),
+      ),
+    );
+  }
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Set Permissions')
@@ -297,6 +316,192 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     $object->add_datastream_from_string($xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
   }
 
-  unset($form_state['storage']);
-  $form_state['redirect'] = array("fedora/repository/$pid");
+  if($dsid == 'CHILD_SECURITY' && $form_state['values']['update_options'] != 'newchildren') {
+    $option = $form_state['values']['update_options'];
+    $batch = array(
+      'title' => t('Updating Policies'),
+      'progress_message' => t('Please wait if many objects are being updated this could take a few minutes.'),
+      'operations' => array(
+        array('islandora_xacml_editor_batch_function', array($xml, $pid, $option)),
+      ),
+      'finished' => 'islandora_xacml_editor_batch_finished',
+    );
+    batch_set($batch);
+  }
+  else {
+    unset($form_state['storage']);
+    $form_state['redirect'] = array("fedora/repository/$pid");
+  }
+}
+
+function islandora_xacml_editor_batch_function($xml, $pid, $option, &$context) {
+  module_load_include('inc', 'fedora_repository', 'api/fedora_item');
+  module_load_include('inc', 'islandora_xacml_editor', 'Xacml');
+  module_load_include('inc', 'islandora_xacml_editor', 'XacmlException');
+
+  if (empty($context['sandbox'])) {
+    $query = new IslandoraXacmlEditorQuery($pid, $option);
+    $context['sandbox'] = array();
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['items'] = $query->getCount();
+    $context['sandbox']['pids'] = $query->getPids();
+    $context['results']['redirect'] = $pid;
+    $context['results']['success'] = array();
+    $context['results']['fail'] = array();
+  }
+
+  $targetpid = array_pop($context['sandbox']['pids']);
+  $context['sandbox']['progress']++;
+
+  $policy_update = new IslandoraUpdatePolicy($targetpid);
+  $success = $policy_update->updatePolicy();
+
+  if($success) {
+    $context['results']['success'][] = $targetpid;
+  }
+  else {
+    $context['results']['fail'][] = $targetpid;
+  }
+
+  $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['items'];
+}
+
+function islandora_xacml_editor_batch_finished($success, $results, $operations) {
+  if ($success) {
+    $message = format_plural(count($results['success']), 'One policy updated.', '@count policies updated.');
+  }
+  else {
+    $message = t('Finished with an error.');
+  }
+  drupal_set_message($message);
+  $pid = $results['redirect'];
+  drupal_goto("fedora/repository/$pid");
+}
+
+class IslandoraUpdatePolicy {
+  protected $pid;
+
+  function __construct($pid) {
+    $this->pid = $pid;
+  }
+
+  function isCollection() {
+    module_load_include('inc', 'fedora_repository', 'CollectionClass');
+    $collectionClass = new CollectionClass();
+    $query = 'select $parent_model from <#ri> where (
+      <info:fedora/' . $this->pid . '> <fedora-model:hasModel> $model
+      and $model <fedora-model:hasModel> $parent_model
+      and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
+      )
+      minus $parent_model <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
+      minus $parent_model <mulgara:is> <info:fedora/fedora-system:ContentModel-3.0>';
+    $query_results = $collectionClass->getRelatedItems($this->pid, $query);
+    $results = new SimpleXMLElement($query_results);
+    $collection = FALSE;
+    foreach($results->results->result as $result) {
+      $pid = (string)$result->object['uri'];
+      $pid = explode('/',$pid);
+      $pid = $parts[1];
+      if($pid == 'islandora:collectionCModel') {
+        $collection = TRUE;
+      }
+    }
+    return $collection;
+  }
+
+  function updatePolicy() {
+    $success = FALSE;
+    $object = new Fedora_Item($targetpid);
+    if($object->exists()) {
+      $datastreams = $object->get_datastreams_list_as_array();
+      if(array_key_exists('POLICY', $datastreams)) {
+        global $user;
+        try {
+          $xacml = Xacml::constructFromPid($targetpid);
+          if($xacml->managementRule->hasPermission($user->name, $user->roles)) {
+            $success = $this->addOrUpdateAllPolicies($datastreams);
+          }
+        }
+        catch (XacmlException $e) {}
+      }
+      else {
+        $success = $this->addOrUpdateAllPolicies($datastreams);
+      }
+    }
+    return $success;
+  }
+
+  private function addOrUpdateAllPolicies($datastreams) {
+    $this->addOrUpdatePolicy($datastreams, 'POLICY');
+    if($this->isCollection()) {
+      $this->addOrUpdatePolicy($datastreams, 'CHILD_SECURITY');
+    }
+    return TRUE;
+  }
+
+  private function addOrUpdatePolicy($datastreams, $dsid) {
+    if(array_key_exists($dsid, $datastreams)) {
+      $object->modify_datastream_by_value($xml, $dsid, 'Xacml Policy Stream', 'text/xml');
+    }
+    else {
+      $object->add_datastream_from_string($xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
+    }
+  }
+}
+
+class IslandoraXacmlEditorQuery {
+  protected $pid;
+  protected $option;
+
+  function __construct($pid, $option) {
+    $this->pid = $pid;
+    $this->option = $option;
+  }
+
+  function getCount() {
+    module_load_include('inc', 'fedora_repository', 'CollectionClass');
+    $collectionClass = new CollectionClass();
+    $query_results = $collectionClass->getRelatedItems($this->pid, $this->getCountQuery());
+    $results = new SimpleXMLElement($query_results);
+    return (int)$results->results->result[0]->k0;
+  }
+
+  function getPids($limit = 10000000) {
+    $pids = array();
+    module_load_include('inc', 'fedora_repository', 'CollectionClass');
+    $collectionClass = new CollectionClass();
+    $query_results = $collectionClass->getRelatedItems($this->pid, $this->getQuery(), $limit);
+    $results = new SimpleXMLElement($query_results);
+    foreach($results->results->result as $result) {
+      $pid = (string)$result->object['uri'];
+      $parts = explode('/',$pid);
+      $pids[] = $parts[1];
+    }
+    return $pids;
+  }
+
+  private function getCountQuery() {
+    $query = $this->getQuery();
+    $query = 'select count( ' . $query;
+    $query = $query . ' ) from <#ri> where $s $p $o';
+    return $query;
+  }
+
+  private function getQuery() {
+    if ($this->option == 'allgrandchildren') {
+      $query = 'select $object from <#ri> where (walk(
+        $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $this->pid . '> and
+        $object <fedora-rels-ext:isMemberOfCollection> $parent) or walk(
+        $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $this->pid . '> and
+        $object <fedora-rels-ext:isMemberOf> $parent))
+        and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
+    }
+    elseif ($this->option == 'allchildren') {
+      $query = 'select $object from <#ri> where
+        ($object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $this->pid . '> or
+        $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $this->pid . '>)
+        and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
+    }
+    return $query;
+  }
 }
