@@ -89,7 +89,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $roles = array();
   $result = db_query('SELECT r.rid, r.name FROM {role} r');
   while($role = db_fetch_object($result)) {
-    $role->rid == 0 ? : $roles[$role->name] = $role->name;
+    $role->rid == 0 ? $roles['anonymous'] = 'anonymous' : $roles[$role->name] = $role->name;
   }
 
   if(array_key_exists($xacml_dsid, $datastreams)) {
