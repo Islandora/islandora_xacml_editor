@@ -75,7 +75,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $users = array();
   $result = db_query('SELECT u.uid, u.name FROM {users} u');
   while($user = db_fetch_object($result)) {
-    $user->uid == 0 ? : $users[$user->name] = $user->name;
+    $user->uid == 0 ? $users['anonymous'] = 'anonymous' : $users[$user->name] = $user->name;
     if($user->uid == 1) {
       $admin_user = $user->name;
       $form_state['storage']['admin_user'] = $user->name;
