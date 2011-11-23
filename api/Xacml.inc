@@ -566,7 +566,7 @@ class Xacml {
    * @throws XacmlException if the XML cannot be parsed
    */
   function __construct($xacml = NULL) {
-    include_once('XacmlParser.inc');
+    module_load_include('inc', 'islandora_xacml_api', 'XacmlParser');
 
     $management_rule = NULL;
     $datastream_rule = NULL;
@@ -644,7 +644,7 @@ class Xacml {
    * @return DomDocument
    */
   function getDomDocument() {
-    include_once('XacmlWriter.inc');
+    module_load_include('inc', 'islandora_xacml_api', 'XacmlWriter');
     $this->updateRulesArray();
     return XacmlWriter::toDOM($this->xacml);
   }
@@ -658,7 +658,7 @@ class Xacml {
    * @return string containing xacml xml
    */
   function getXmlString($prettyPrint=TRUE) {
-    include_once('XacmlWriter.inc');
+    module_load_include('inc', 'islandora_xacml_api', 'XacmlWriter');
     $this->updateRulesArray();
     return XacmlWriter::toXML($this->xacml, $prettyPrint);
   }

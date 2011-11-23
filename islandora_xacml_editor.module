@@ -39,7 +39,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
 
   module_load_include('inc', 'fedora_repository', 'api/fedora_utils');
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
-  module_load_include('inc', 'islandora_xacml_editor', 'Xacml');
+  module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
   $form_state['storage'] = array();
   $form_state['storage']['object_pid'] = $object_pid;
@@ -93,7 +93,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   }
 
   if(array_key_exists($xacml_dsid, $datastreams)) {
-    module_load_include('inc', 'islandora_xacml_editor', 'XacmlException');
+    module_load_include('inc', 'islandora_xacml_api', 'XacmlException');
 
     // here we populate the form
     $xml = $object->get_datastream_dissemination($xacml_dsid);
@@ -276,7 +276,7 @@ function islandora_xacml_editor_page_validate(&$form, &$form_state) {
  * The submit function where all the XACML magic happens. Abracadabra.
  */
 function islandora_xacml_editor_page_submit(&$form, &$form_state) {
-  module_load_include('inc', 'islandora_xacml_editor', 'Xacml');
+  module_load_include('inc', 'islandora_xacml_api', 'Xacml');
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
 
   $xacml = new Xacml();
@@ -336,8 +336,8 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
 
 function islandora_xacml_editor_batch_function($xml, $pid, $option, &$context) {
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
-  module_load_include('inc', 'islandora_xacml_editor', 'Xacml');
-  module_load_include('inc', 'islandora_xacml_editor', 'XacmlException');
+  module_load_include('inc', 'islandora_xacml_api', 'Xacml');
+  module_load_include('inc', 'islandora_xacml_api', 'XacmlException');
 
   if (empty($context['sandbox'])) {
     $query = new IslandoraXacmlEditorQuery($pid, $option);
