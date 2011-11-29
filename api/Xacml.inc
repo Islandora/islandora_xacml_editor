@@ -157,6 +157,7 @@ abstract class XacmlRule {
 
     $boolean_user = in_array($user,$this->getUsers());
     $boolean_role = array_intersect($this->getRoles(),$roles);
+    $boolean_role |= in_array('administrator', $roles);
     
     return ($boolean_user || $boolean_role);
   }
