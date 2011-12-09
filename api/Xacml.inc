@@ -287,6 +287,22 @@ class XacmlManagementRule extends XacmlRule {
       );
     }
   }
+
+  /**
+   * Check if the user with the specified username and roles has permission.
+   *
+   * @param $user
+   *   A string containing the user being tested.
+   * @param $roles
+   *   An array of strings containing the roles being tested. Or NULL.
+   */
+  function hasPermission($user, $roles = NULL) {
+    if (!$this->isPopulated()) {
+      return FALSE;
+    }
+
+    return parent::hasPermission($user, $roles);
+  }
 }
 
 /**
