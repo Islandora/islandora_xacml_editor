@@ -150,16 +150,22 @@ abstract class XacmlRule {
    * @param $roles
    *   An array of strings containing the roles being tested. Or NULL.
    */
-  function hasPermission($user, $roles = NULL) {
-    if(!$this->isPopulated()) {
+  function hasPermission($user, $roles = NULL, $default = TRUE) {
+    // we always allow the administrator role
+    if(in_array('administrator', $roles)) {
       return TRUE;
     }
 
+    // if the rule is not populated we return the default value
+    if(!$this->isPopulated()) {
+      return $default;
+    }
+
+    // otherwise we see if they are allowed
     $boolean_user = in_array($user,$this->getUsers());
     $boolean_role = array_intersect($this->getRoles(),$roles);
-    $boolean_role |= in_array('administrator', $roles);
     
-    return ($boolean_user || $boolean_role);
+    return ($boolean_user || $boolean_role || $boolean_default);
   }
 
   /**
@@ -297,11 +303,8 @@ class XacmlManagementRule extends XacmlRule {
    *   An array of strings containing the roles being tested. Or NULL.
    */
   function hasPermission($user, $roles = NULL) {
-    if (!$this->isPopulated()) {
-      return FALSE;
-    }
-
-    return parent::hasPermission($user, $roles);
+    // we pass FALSE because we want to deny management if there is no xacml policy
+    return parent::hasPermission($user, $roles, FALSE);
   }
 }
 
@@ -500,7 +503,7 @@ class XacmlDatastreamRule extends XacmlRule {
    *   String containing the DSID
    */
   function hasPermission($user, $roles, $mime, $dsid) {
-
+    // we need to check the isPopulated function for this one because it is overridden
     if(!$this->isPopulated()) {
       return TRUE;
     }
