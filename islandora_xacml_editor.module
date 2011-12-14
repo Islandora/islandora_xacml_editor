@@ -378,7 +378,7 @@ function islandora_xacml_editor_batch_finished($success, $results, $operations) 
 
   if ($results['fail']) {
     foreach ($results['fail'] as $fail) {
-      drupal_set_message("Failed to update: $fail", 'error');
+      drupal_set_message("Failed to update: $fail. You do not have permission to update this object.", 'error');
     }
   }
 
