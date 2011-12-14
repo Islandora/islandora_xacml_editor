@@ -41,15 +41,15 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
   module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
-  $form_state['storage'] = array();
-  $form_state['storage']['object_pid'] = $object_pid;
-  $form_state['storage']['xacml_dsid'] = $xacml_dsid;
-
   // when we call in from top level collections in JS get get the
   // pid being undefined
   if($object_pid == 'undefined' || !$object_pid) {
     $object_pid = variable_get('fedora_repository_pid', 'islandora:top');
   }
+
+  $form_state['storage'] = array();
+  $form_state['storage']['object_pid'] = $object_pid;
+  $form_state['storage']['xacml_dsid'] = $xacml_dsid;
 
   if(!valid_pid($object_pid) || !valid_dsid($xacml_dsid)) {
     drupal_not_found();
@@ -363,7 +363,8 @@ function islandora_xacml_editor_batch_function($xml, $pid, $option, &$context) {
     $context['results']['fail'][] = $targetpid;
   }
 
-  $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['items'];
+  // make sure we don't divide by zero
+  $context['finished'] = $context['sandbox']['items'] == 0 ? 1 : $context['sandbox']['progress'] / $context['sandbox']['items'];
 }
 
 function islandora_xacml_editor_batch_finished($success, $results, $operations) {
@@ -374,6 +375,13 @@ function islandora_xacml_editor_batch_finished($success, $results, $operations) 
     $message = t('Finished with an error.');
   }
   drupal_set_message($message);
+
+  if ($results['fail']) {
+    foreach ($results['fail'] as $fail) {
+      drupal_set_message("Failed to update: $fail", 'error');
+    }
+  }
+
   $pid = $results['redirect'];
   drupal_goto("fedora/repository/$pid");
 }
@@ -388,8 +396,6 @@ class IslandoraUpdatePolicy {
   }
 
   function isCollection() {
-    module_load_include('inc', 'fedora_repository', 'CollectionClass');
-    $collectionClass = new CollectionClass();
     $query = 'select $parent_model from <#ri> where (
       <info:fedora/' . $this->pid . '> <fedora-model:hasModel> $model
       and $model <fedora-model:hasModel> $parent_model
@@ -397,7 +403,7 @@ class IslandoraUpdatePolicy {
       )
       minus $parent_model <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
       minus $parent_model <mulgara:is> <info:fedora/fedora-system:ContentModel-3.0>';
-    $query_results = $collectionClass->getRelatedItems($this->pid, $query);
+    $query_results = IslandoraXacmlEditorQuery::query($query);
     $results = new SimpleXMLElement($query_results);
     $collection = FALSE;
     foreach($results->results->result as $result) {
@@ -433,19 +439,19 @@ class IslandoraUpdatePolicy {
   }
 
   private function addOrUpdateAllPolicies($datastreams) {
-    $this->addOrUpdatePolicy($datastreams, 'POLICY');
+    $ret = $this->addOrUpdatePolicy($datastreams, 'POLICY');
     if($this->isCollection()) {
-      $this->addOrUpdatePolicy($datastreams, 'CHILD_SECURITY');
+      $ret &= $this->addOrUpdatePolicy($datastreams, 'CHILD_SECURITY');
     }
-    return TRUE;
+    return $ret;
   }
 
   private function addOrUpdatePolicy($datastreams, $dsid) {
     if(array_key_exists($dsid, $datastreams)) {
-      $this->object->modify_datastream_by_value($this->xml, $dsid, 'Xacml Policy Stream', 'text/xml');
+      return $this->object->modify_datastream_by_value($this->xml, $dsid, 'Xacml Policy Stream', 'text/xml');
     }
     else {
-      $this->object->add_datastream_from_string($this->xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
+      return $this->object->add_datastream_from_string($this->xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
     }
   }
 }
@@ -459,19 +465,25 @@ class IslandoraXacmlEditorQuery {
     $this->option = $option;
   }
 
+  static function query($query_string) {
+    module_load_include('inc', 'fedora_repository', 'api/fedora_utils');
+    $query_string = htmlentities(urlencode($query_string));
+    $content = '';
+    $url = variable_get('fedora_repository_url', 'http://localhost:8080/fedora/risearch');
+    $url .= "?type=tuples&flush=TRUE&format=Sparql&lang=itql&stream=on&query=" . $query_string;
+    $content .= do_curl($url);
+    return $content;
+  }
+
   function getCount() {
-    module_load_include('inc', 'fedora_repository', 'CollectionClass');
-    $collectionClass = new CollectionClass();
-    $query_results = $collectionClass->getRelatedItems($this->pid, $this->getCountQuery());
+    $query_results = IslandoraXacmlEditorQuery::query($this->getCountQuery());
     $results = new SimpleXMLElement($query_results);
     return (int)$results->results->result[0]->k0;
   }
 
-  function getPids($limit = 10000000) {
+  function getPids() {
     $pids = array();
-    module_load_include('inc', 'fedora_repository', 'CollectionClass');
-    $collectionClass = new CollectionClass();
-    $query_results = $collectionClass->getRelatedItems($this->pid, $this->getQuery(), $limit);
+    $query_results = IslandoraXacmlEditorQuery::query($this->getQuery());
     $results = new SimpleXMLElement($query_results);
     foreach($results->results->result as $result) {
       $pid = (string)$result->object['uri'];
