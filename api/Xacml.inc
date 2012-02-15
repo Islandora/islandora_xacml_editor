@@ -122,8 +122,8 @@ abstract class XacmlRule {
     if(is_array($arg1)) {
       $this->rule = $arg1;
       /* remove them now, add them later */
-      $this->removeValues('users', 'fedoraAdmin');
-      $this->removeValues('roles', 'administrator');
+      $this->setValue('users', 'fedoraAdmin');
+      $this->setValue('roles', 'administrator');
     }
 
     $this->xacml = $xacml;
