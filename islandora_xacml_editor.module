@@ -45,7 +45,7 @@ function islandora_xacml_editor_menu() {
  */
 function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
   $tabs = array();
-  if (variable_get('islandora_xacml_editor_show_tabs', FALSE)) {
+  if (variable_get('islandora_xacml_editor_show_tabs', TRUE)) {
     if (user_access('Edit XACML Policies')) {
       $item_is_collection = FALSE;
       foreach ($content_models as $content_model) {
@@ -80,8 +80,8 @@ function islandora_xacml_editor_settings() {
   $form['islandora_xacml_editor_show_tabs'] = array(
     '#type' => 'checkbox',
     '#title' => t('Show Policy Tabs'),
-    '#description' => t('Show a tab for the XACML Policy Editor on each Fedora item\'s page. For normal items, this policy will only apply to the item itself; in the case of collection items (having the content model &lt;islandora:collectionCModel&gt;), this will be a child policy.'),
-    '#default_value' => variable_get('islandora_xacml_editor_show_tabs',0),
+    '#description' => t("Show a tab for the XACML Policy Editor on each Fedora item's page. For normal items, this policy will only apply to the item itself; in the case of collection items (having the content model &lt;islandora:collectionCModel&gt;), this will be a child policy."),
+    '#default_value' => variable_get('islandora_xacml_editor_show_tabs',1),
   );
   return system_settings_form($form);
 }
