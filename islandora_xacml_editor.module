@@ -33,6 +33,38 @@ function islandora_xacml_editor_menu() {
 }
 
 /**
+ * Implementation of hook_islandora_tabs().
+ */
+function islandora_xacml_islandora_tabs($content_models, $pid) {
+  $tabs = array();
+  if (user_access('Edit XACML Policies')) {
+    $item_is_collection = FALSE;
+    foreach ($content_models as $content_model) {
+      if ($content_model->pid == 'islandora:collectionCModel') {
+        $item_is_collection = TRUE;
+        break;
+      }
+    }
+    if ($item_is_collection) {
+      $title = t('Child Policy');
+      $dsid = 'CHILD_POLICY';
+    }
+    else {
+      $title = t('Policy');
+      $dsid = 'POLICY';
+    }
+    if ($item_is_collection) {
+      $tabs['xacml_policy'] = array(
+        '#type' => 'tabpage',
+        '#title' => $title,
+        '#content' => drupal_get_form('islandora_xacml_editor_page',$pid,$dsid), 
+      )
+    }
+  }
+  return $tabs;
+}
+
+/**
  * The XACML editing form.
  */
 function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
