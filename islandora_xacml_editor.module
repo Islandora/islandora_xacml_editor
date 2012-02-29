@@ -47,7 +47,7 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
     }
     if ($item_is_collection) {
       $title = t('Child Policy');
-      $dsid = 'CHILD_POLICY';
+      $dsid = 'CHILD_SECURITY';
     }
     else {
       $title = t('Item Policy');
