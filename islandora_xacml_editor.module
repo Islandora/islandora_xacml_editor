@@ -10,7 +10,7 @@
  * Implementation of hook_perm().
  */
 function islandora_xacml_editor_perm() {
-  return array('Edit XACML Policies');
+  return array('administer islandora_xacml_editor', 'Edit XACML Policies');
 }
 
 /**
@@ -28,6 +28,14 @@ function islandora_xacml_editor_menu() {
     'page arguments' => array('islandora_xacml_editor_page',1,2),
     'access arguments' => array('Edit XACML Policies'),
   );
+  
+  $items['admin/settings/islandora_xacml_editor'] = array(
+    'title' => 'Islandora XACML Editor',
+    'description' => 'Settings for the Islandora XACML module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_xacml_editor_settings'),
+    'access arguments' => array('administer islandora_xacml_editor'),
+  );
 
   return $items;
 }
@@ -37,29 +45,45 @@ function islandora_xacml_editor_menu() {
  */
 function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
   $tabs = array();
-  if (user_access('Edit XACML Policies')) {
-    $item_is_collection = FALSE;
-    foreach ($content_models as $content_model) {
-      if ($content_model->pid == 'islandora:collectionCModel') {
-        $item_is_collection = TRUE;
-        break;
+  if (variable_get('islandora_xacml_editor_show_tabs', FALSE)) {
+    if (user_access('Edit XACML Policies')) {
+      $item_is_collection = FALSE;
+      foreach ($content_models as $content_model) {
+        if ($content_model->pid == 'islandora:collectionCModel') {
+          $item_is_collection = TRUE;
+          break;
+        }
       }
+      if ($item_is_collection) {
+        $title = t('Child Policy');
+        $dsid = 'CHILD_SECURITY';
+      }
+      else {
+        $title = t('Item Policy');
+        $dsid = 'POLICY';
+      }
+      $tabs['xacml_policy'] = array(
+        '#type' => 'tabpage',
+        '#title' => $title,
+        '#content' => drupal_get_form('islandora_xacml_editor_page',$pid,$dsid), 
+      );
     }
-    if ($item_is_collection) {
-      $title = t('Child Policy');
-      $dsid = 'CHILD_SECURITY';
-    }
-    else {
-      $title = t('Item Policy');
-      $dsid = 'POLICY';
-    }
-    $tabs['xacml_policy'] = array(
-      '#type' => 'tabpage',
-      '#title' => $title,
-      '#content' => drupal_get_form('islandora_xacml_editor_page',$pid,$dsid), 
-    );
   }
   return $tabs;
+}
+
+/**
+ * Admin settings form.
+ */
+function islandora_xacml_editor_settings() {
+  $form = array();
+  $form['islandora_xacml_editor_show_tabs'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show Policy Tabs'),
+    '#description' => t('Show a tab for the XACML Policy Editor on each Fedora item\'s page. For normal items, this policy will only apply to the item itself; in the case of collection items (having the content model &lt;islandora:collectionCModel&gt;), this will be a child policy.'),
+    '#default_value' => variable_get('islandora_xacml_editor_show_tabs',0),
+  );
+  return system_settings_form($form);
 }
 
 /**
