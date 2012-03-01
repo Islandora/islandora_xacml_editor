@@ -120,6 +120,37 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
 
   $mime = array();
   $dsid = array();
+
+
+  module_load_include('inc', 'fedora_repository', 'ContentModel');
+
+  if($xacml_dsid == 'CHILD_SECURITY') {
+    module_load_include('inc', 'fedora_repository', 'CollectionPolicy');  
+
+    $collection = CollectionPolicy::loadFromCollection($object_pid);
+    if($collection) {
+      $cms = $collection->getContentModels();
+      foreach($cms as $cm) {
+        $contentmodel = ContentModel::loadFromModel($cm->pid);
+        if($contentmodel) {
+          $tmp = $contentmodel->getMimetypes();
+          foreach($tmp as $t) {
+            $mime[$t] = $t;
+          }
+        }
+      }
+    }
+  }
+  else {
+    $contentmodel = ContentModel::loadFromObject($object_pid);
+    if($contentmodel) {
+      $tmp = $contentmodel->getMimetypes();
+      foreach($tmp as $t) {
+        $mime[$t] = $t;
+      }
+    }
+  }
+
   foreach($datastreams as $k => $ds) {
     $mime[$ds['MIMEType']] = $ds['MIMEType'];
     $dsid[$k] = $k;
