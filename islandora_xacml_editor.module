@@ -94,6 +94,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   module_load_include('inc', 'fedora_repository', 'api/fedora_utils');
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
   module_load_include('inc', 'islandora_xacml_api', 'Xacml');
+  module_load_include('inc', 'fedora_repository', 'ObjectHelper');
 
   // when we call in from top level collections in JS get get the
   // pid being undefined
@@ -115,7 +116,10 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     drupal_not_found();
     exit();
   }
-
+  $breadcrumbs = array();
+  $objectHelper = new ObjectHelper();
+  $objectHelper->getBreadcrumbs($object_pid, $breadcrumbs);
+  drupal_set_breadcrumb(array_reverse($breadcrumbs));
   $datastreams = $object->get_datastreams_list_as_array();
 
   $mime = array();
