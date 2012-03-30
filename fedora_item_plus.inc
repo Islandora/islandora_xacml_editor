@@ -11,7 +11,7 @@ class Fedora_Item_Plus extends Fedora_Item {
    */
 	
   function __construct($pid) {
-		parent::construct($pid);
+		parent::__construct($pid);
 	}
 	
   /**
