@@ -427,12 +427,28 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   	$item->purge_relationships($viewable_by_role,$ISLANDORA_RELSEXT);
   	if (isset($values['users'])) {
   		foreach($values['users'] as $account) {
-  			$item->add_relationship($viewable_by_user,$account,$namespace_uri = $ISLANDORA_RELSEXT);
+        $params = array( 
+          'pid' => $pid,
+          'relationship' => $ISLANDORA_RELSEXT.$viewable_by_user,
+          'object' => $account,
+          'isLiteral' => TRUE,
+          'datatype' => '',
+        );
+        return $item->soap_call('addRelationship', $params);
+  			// $item->add_relationship($viewable_by_user,$account,$namespace_uri = $ISLANDORA_RELSEXT);
   		}
   	}
   	if (isset($values['roles'])) {
   		foreach($values['roles'] as $role) {
-  			$item->add_relationship($viewable_by_role,$role,$namespace_uri = $ISLANDORA_RELSEXT);
+        $params = array( 
+          'pid' => $pid,
+          'relationship' => $ISLANDORA_RELSEXT.$viewable_by_role,
+          'object' => $role,
+          'isLiteral' => TRUE,
+          'datatype' => '',
+        );
+        return $item->soap_call('addRelationship', $params);
+        // $item->add_relationship($viewable_by_role,$role,$namespace_uri = $ISLANDORA_RELSEXT);
   		}
   	}
   }
