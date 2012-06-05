@@ -434,7 +434,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
           'isLiteral' => TRUE,
           'datatype' => '',
         );
-        return $item->soap_call('addRelationship', $params);
+        $item->soap_call('addRelationship', $params);
   			// $item->add_relationship($viewable_by_user,$account,$namespace_uri = $ISLANDORA_RELSEXT);
   		}
   	}
@@ -447,7 +447,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
           'isLiteral' => TRUE,
           'datatype' => '',
         );
-        return $item->soap_call('addRelationship', $params);
+        $item->soap_call('addRelationship', $params);
         // $item->add_relationship($viewable_by_role,$role,$namespace_uri = $ISLANDORA_RELSEXT);
   		}
   	}
