@@ -432,7 +432,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   	}
   	if (isset($values['roles'])) {
   		foreach($values['roles'] as $role) {
-  			$item->add_relationship($role_predicate,$role,$namespace_uri = $ISLANDORA_RELSEXT);
+  			$item->add_relationship($viewable_by_role,$role,$namespace_uri = $ISLANDORA_RELSEXT);
   		}
   	}
   }
