@@ -243,7 +243,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#options' => $roles,
     '#multiple' => TRUE,
     '#size' => 10,
-    '#default_value' => $xacml->viewingRule->isPopulated() ? $xacml->viewingRule->getRoles() : _islandora_xacml_editor_management_roles(),
+    '#default_value' => $xacml->viewingRule->isPopulated() ? $xacml->viewingRule->getRoles() : NULL,
   );
 
   $form['manage'] = array(
@@ -269,7 +269,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form['manage']['roles'] = array(
     '#type' => 'select',
     '#title' => t('Roles'),
-    '#default_value' => $xacml->managementRule->isPopulated() ? $xacml->managementRule->getRoles() : NULL,
+    '#default_value' => $xacml->managementRule->isPopulated() ? $xacml->managementRule->getRoles() : _islandora_xacml_editor_management_roles(),
     '#options' => $roles,
     '#multiple' => TRUE,
     '#size' => 10
