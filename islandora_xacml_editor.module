@@ -83,6 +83,12 @@ function islandora_xacml_editor_settings() {
     '#description' => t("Show a tab for the XACML Policy Editor on each Fedora item's page. For normal items, this policy will only apply to the item itself; in the case of collection items (having the content model &lt;islandora:collectionCModel&gt;), this will be a child policy."),
     '#default_value' => variable_get('islandora_xacml_editor_show_tabs',1),
   );
+  $form['islandora_xacml_editor_save_relationships'] = array(
+	  '#type' => 'checkbox',
+	  '#title' => t('Save policy details in RELS-EXT'),
+    '#description' => t("Add <islandora:isViewableByUser> and <islandora:isViewableByRole> relationships to objects' RELS-EXT datastreams when XACML viewing restrictions are in place."),
+    '#default_value' => variable_get('islandora_xacml_editor_save_relationships',0),
+  );
   return system_settings_form($form);
 }
 
@@ -263,7 +269,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form['manage']['roles'] = array(
     '#type' => 'select',
     '#title' => t('Roles'),
-    '#default_value' => $xacml->managementRule->isPopulated() ? $xacml->managementRule->getRoles() : NULL,
+    '#default_value' => $xacml->managementRule->isPopulated() ? $xacml->managementRule->getRoles() : _islandora_xacml_editor_management_roles(),
     '#options' => $roles,
     '#multiple' => TRUE,
     '#size' => 10
@@ -367,6 +373,8 @@ function islandora_xacml_editor_page_validate(&$form, &$form_state) {
 function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   module_load_include('inc', 'islandora_xacml_api', 'Xacml');
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
+  // load the local subclass of Fedora_Item in case we need to add relationships
+  module_load_include('inc', 'islandora_xacml_editor', 'fedora_item_plus');
 
   $xacml = new Xacml();
 
@@ -403,6 +411,46 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   }
   else {
     $object->add_datastream_from_string($xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
+  }
+  
+  // save relationships before $form_state['storage'] gets scrubbed, removing the object's PID
+  if (variable_get('islandora_xacml_editor_save_relationships',FALSE)) {
+  	$ISLANDORA_RELSEXT = 'http://islandora.ca/ontology/relsext#';
+  	$viewable_by_user = 'isViewableByUser';
+  	$viewable_by_role = 'isViewableByRole';
+  	$pid = $form_state['storage']['object_pid']; 
+  	$item = new Fedora_Item_Plus($pid);
+  	$values = $form_state['values']['access'];
+  	// we can't use Fedora_Item::get_relationships() because the predicate isn't in the #rels-ext namespace
+  	// we can't use Fedora_Item::purge_relationship() because we don't know what the objects are (see above)
+  	$item->purge_relationships($viewable_by_user,$ISLANDORA_RELSEXT);
+  	$item->purge_relationships($viewable_by_role,$ISLANDORA_RELSEXT);
+  	if (isset($values['users'])) {
+  		foreach($values['users'] as $account) {
+        $params = array( 
+          'pid' => $pid,
+          'relationship' => $ISLANDORA_RELSEXT.$viewable_by_user,
+          'object' => $account,
+          'isLiteral' => TRUE,
+          'datatype' => '',
+        );
+        $item->soap_call('addRelationship', $params);
+  			// $item->add_relationship($viewable_by_user,$account,$namespace_uri = $ISLANDORA_RELSEXT);
+  		}
+  	}
+  	if (isset($values['roles'])) {
+  		foreach($values['roles'] as $role) {
+        $params = array( 
+          'pid' => $pid,
+          'relationship' => $ISLANDORA_RELSEXT.$viewable_by_role,
+          'object' => $role,
+          'isLiteral' => TRUE,
+          'datatype' => '',
+        );
+        $item->soap_call('addRelationship', $params);
+        // $item->add_relationship($viewable_by_role,$role,$namespace_uri = $ISLANDORA_RELSEXT);
+  		}
+  	}
   }
 
   if($dsid == 'CHILD_SECURITY' && $form_state['values']['update_options'] != 'newchildren') {
@@ -606,4 +654,19 @@ class IslandoraXacmlEditorQuery {
     }
     return $query;
   }
+}
+
+function _islandora_xacml_editor_management_roles() {
+  $management_permissions = array(
+    PERM_CONTENT_MODEL_VIEWER_MODIFY_OBJECT_PROPERTIES,
+    PERM_CONTENT_MODEL_VIEWER_PURGE_OBJECTS,
+    PERM_CONTENT_MODEL_VIEWER_ADD_DATASTREAMS,
+    PERM_CONTENT_MODEL_VIEWER_PURGE_DATASTREAMS,
+    PERM_CONTENT_MODEL_VIEWER_MODIFY_DATASTEAM_PROPERTIES
+  );
+  $roles = array();
+  foreach($management_permissions as $perm) {
+    $roles = array_unique(array_merge($roles,user_roles(FALSE,$perm)));
+  } 
+  return $roles;
 }
