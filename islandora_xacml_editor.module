@@ -243,7 +243,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#options' => $roles,
     '#multiple' => TRUE,
     '#size' => 10,
-    '#default_value' => $xacml->viewingRule->isPopulated() ? $xacml->viewingRule->getRoles() : NULL,
+    '#default_value' => $xacml->viewingRule->isPopulated() ? $xacml->viewingRule->getRoles() : _islandora_xacml_editor_management_roles(),
   );
 
   $form['manage'] = array(
@@ -654,4 +654,19 @@ class IslandoraXacmlEditorQuery {
     }
     return $query;
   }
+}
+
+function _islandora_xacml_editor_management_roles() {
+  $management_permissions = array(
+    PERM_CONTENT_MODEL_VIEWER_MODIFY_OBJECT_PROPERTIES,
+    PERM_CONTENT_MODEL_VIEWER_PURGE_OBJECTS,
+    PERM_CONTENT_MODEL_VIEWER_ADD_DATASTREAMS,
+    PERM_CONTENT_MODEL_VIEWER_PURGE_DATASTREAMS,
+    PERM_CONTENT_MODEL_VIEWER_MODIFY_DATASTEAM_PROPERTIES
+  );
+  $roles = array();
+  foreach($management_permissions as $perm) {
+    $roles = array_unique(array_merge($roles,user_roles(FALSE,$perm)));
+  } 
+  return $roles;
 }

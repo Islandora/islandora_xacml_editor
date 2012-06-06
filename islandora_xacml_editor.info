@@ -2,6 +2,7 @@ name = Islandora Xacml Editor
 ;dependencies[] = imageapi
 dependencies[] = fedora_repository
 dependencies[] = islandora_xacml_api
+dependencies[] = islandora_content_model_viewer
 description = Visually edit XACML policies for objects.
 package = Fedora Repository
 version = 6.x-0.1-dev
