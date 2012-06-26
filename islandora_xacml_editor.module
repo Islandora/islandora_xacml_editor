@@ -28,7 +28,7 @@ function islandora_xacml_editor_menu() {
     'page arguments' => array('islandora_xacml_editor_page',1,2),
     'access arguments' => array('Edit XACML Policies'),
   );
-  
+
   $items['admin/settings/islandora_xacml_editor'] = array(
     'title' => 'Islandora XACML Editor',
     'description' => 'Settings for the Islandora XACML module.',
@@ -65,7 +65,7 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
       $tabs['xacml_policy'] = array(
         '#type' => 'tabpage',
         '#title' => $title,
-        '#content' => drupal_get_form('islandora_xacml_editor_page',$pid,$dsid), 
+        '#content' => drupal_get_form('islandora_xacml_editor_page',$pid,$dsid),
       );
     }
   }
@@ -82,6 +82,12 @@ function islandora_xacml_editor_settings() {
     '#title' => t('Show Policy Tabs'),
     '#description' => t("Show a tab for the XACML Policy Editor on each Fedora item's page. For normal items, this policy will only apply to the item itself; in the case of collection items (having the content model &lt;islandora:collectionCModel&gt;), this will be a child policy."),
     '#default_value' => variable_get('islandora_xacml_editor_show_tabs',1),
+  );
+  $form['islandora_xacml_editor_save_relationships'] = array(
+	  '#type' => 'checkbox',
+	  '#title' => t('Save policy details in RELS-EXT'),
+    '#description' => t("Add <islandora:isViewableByUser> and <islandora:isViewableByRole> relationships to objects' RELS-EXT datastreams when XACML viewing restrictions are in place."),
+    '#default_value' => variable_get('islandora_xacml_editor_save_relationships', FALSE),
   );
   return system_settings_form($form);
 }
@@ -129,7 +135,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   module_load_include('inc', 'fedora_repository', 'ContentModel');
 
   if($xacml_dsid == 'CHILD_SECURITY') {
-    module_load_include('inc', 'fedora_repository', 'CollectionPolicy');  
+    module_load_include('inc', 'fedora_repository', 'CollectionPolicy');
 
     $collection = CollectionPolicy::loadFromCollection($object_pid);
     if($collection) {
@@ -405,6 +411,29 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     $object->add_datastream_from_string($xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
   }
 
+  // save relationships before $form_state['storage'] gets scrubbed, removing the object's PID
+  $viewable_by_user = 'isViewableByUser';
+  $viewable_by_role = 'isViewableByRole';
+  // remove all old policy related rels-ext statements
+  $object->purge_relationships($viewable_by_user, NULL, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+  $object->purge_relationships($viewable_by_role, NULL, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+
+  if (variable_get('islandora_xacml_editor_save_relationships', FALSE) && $xacml->viewingRule->isPopulated()) {
+    $values = $form_state['values']['access'];
+    // recompute the new values from the policy
+    if (isset($values['users'])) {
+      foreach($values['users'] as $account) {
+        $object->add_relationship($viewable_by_user, $account, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+      }
+    }
+    if (isset($values['roles'])) {
+      foreach($values['roles'] as $role) {
+        $object->add_relationship($viewable_by_role, $role, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+      }
+    }
+//    $object->save_relationships();
+  }
+
   if($dsid == 'CHILD_SECURITY' && $form_state['values']['update_options'] != 'newchildren') {
     $option = $form_state['values']['update_options'];
     $batch = array(
@@ -473,6 +502,45 @@ function islandora_xacml_editor_batch_finished($success, $results, $operations) 
 
   $pid = $results['redirect'];
   drupal_goto("fedora/repository/$pid");
+}
+
+/**
+ * Hook to update the collection query when xacml is enabled.  By default the collection
+ * query does not respect xacml rules, now when the xacml editor module is enabled the
+ * query will be modified to use xacml rules.
+ */
+function islandora_xacml_editor_islandora_collection_query_alter(&$query, $pid) {
+    global $user;
+    $query = 'select $object $title $model $parent_model $created from <#ri>
+              where
+              ((
+              $object <fedora-model:label> $title
+              and $object <fedora-model:hasModel> $model
+              and $object <fedora-model:createdDate> $created
+              and $model <fedora-model:hasModel> $parent_model
+              and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
+              and ( $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>
+              or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $pid . '> )
+              minus $object <http://islandora.ca/ontology/relsext#isViewableByRole> $role
+              minus $object <http://islandora.ca/ontology/relsext#isViewableByUser> $user
+              ) or (
+              $object <fedora-model:label> $title
+              and $object <fedora-model:hasModel> $model
+              and $object <fedora-model:createdDate> $created
+              and $model <fedora-model:hasModel> $parent_model
+              and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
+              and ( $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>
+              or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $pid . '> )
+              and (';
+    foreach ($user->roles as $role) {
+      $query .= '$object <http://islandora.ca/ontology/relsext#isViewableByRole> '."'$role' or ";
+    }
+    $query .= '$object <http://islandora.ca/ontology/relsext#isViewableByUser> '."'$user->name'".')';
+    $query .= '))
+              minus $model <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
+              minus $parent_model <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
+              order by $title';
+    return $query;
 }
 
 class IslandoraUpdatePolicy {
