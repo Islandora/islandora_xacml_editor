@@ -431,7 +431,6 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
         $object->add_relationship($viewable_by_role, $role, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
       }
     }
-//    $object->save_relationships();
   }
 
   if($dsid == 'CHILD_SECURITY' && $form_state['values']['update_options'] != 'newchildren') {
