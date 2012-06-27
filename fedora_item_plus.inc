@@ -79,20 +79,18 @@ class Fedora_Item_Plus extends Fedora_Item {
         break;
     }
 
-    if (substr($object, 0, 12) != 'info:fedora/') {
-      $object = "info:fedora/$object";
-    }
-
     $relsextxml = new DomDocument();
     $relsextxml->loadXML($relsext);
-    $modified = FALSE;
     $rels = $relsextxml->getElementsByTagNameNS($namespaceURI, $relationship);
+    $elements_to_remove = array();
+    $modified = FALSE;
     if (!empty($rels)) {
       foreach ($rels as $rel) {
-        if ($rel->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'resource') == $object) {
-          $rel->parentNode->removeChild($rel);
-          $modified = TRUE;
-        }
+        $elements_to_remove[] = $rel;
+        $modified = TRUE;
+      }
+      foreach($elements_to_remove as $element) {
+        $element->parentNode->removeChild($element);
       }
     }
     if ($modified) {
