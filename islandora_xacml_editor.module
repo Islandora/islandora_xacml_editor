@@ -453,6 +453,24 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
         }
       }
     }
+    else {
+      $params = array(
+        'pid' => $pid,
+        'relationship' => $ISLANDORA_RELSEXT.$viewable_by_user,
+        'object' => 'anonymous',
+        'isLiteral' => TRUE,
+        'datatype' => '',
+      );
+      $item->soap_call('addRelationship', $params);
+      $params = array(
+        'pid' => $pid,
+        'relationship' => $ISLANDORA_RELSEXT.$viewable_by_role,
+        'object' => 'all',
+        'isLiteral' => TRUE,
+        'datatype' => '',
+      );
+      $item->soap_call('addRelationship', $params);
+    }
   }
 
   if($dsid == 'CHILD_SECURITY' && $form_state['values']['update_options'] != 'newchildren') {
