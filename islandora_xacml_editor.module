@@ -425,7 +425,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     // we can't use Fedora_Item::purge_relationship() because we don't know what the objects are (see above)
     $item->purge_relationships($viewable_by_user,$ISLANDORA_RELSEXT);
     $item->purge_relationships($viewable_by_role,$ISLANDORA_RELSEXT);
-    if (isset($access_values['enabled'])) {
+    if ($access_values['enabled']) {
       if (isset($access_values['users'])) {
         foreach($access_values['users'] as $account) {
           $params = array(
