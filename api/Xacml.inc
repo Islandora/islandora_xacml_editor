@@ -41,6 +41,7 @@ abstract class XacmlRule {
    *   Takes the ID for the new rule as a string.
    * @param $effect
    *   The effect of the rule (Permit or Deny)
+   *
    * @return array
    *   A structure that is parsable by XacmlWriter.
    */
@@ -62,13 +63,13 @@ abstract class XacmlRule {
   /**
    * Helper function. Allows strings or arrays of strings to be passed in.
    *
-   * @param $type
+   * @param String $type
    *   Array key to modify in internal $rules datastructure.
    * @param $data
    *   Data to be added.
    */
   protected function setValue($type, $data) {
-    if(is_array($data)) {
+    if (is_array($data)) {
       $this->rule[$type] = array_merge($this->rule[$type], array_values($data));
     }
     else {
@@ -79,8 +80,9 @@ abstract class XacmlRule {
   /**
    * Helper function. Internal arrays may have repeated values. Fixes this before returning.
    *
-   * @param $type
+   * @param String $type
    *   Array key in internal datastructure to return
+   *
    * @return
    *   Array requested.
    */
@@ -92,17 +94,18 @@ abstract class XacmlRule {
    * Uses the array_diff functionality to remove data from internal rule representation.
    *
    * @todo This could all be made more efficient.
-   * @param $type
+   *
+   * @param String $type
    *   Array key to work on
    * @param $data
    *   Data to be removed.
    */
   protected function removeValues($type, $data) {
-    if(!is_array($data)) {
+    if (!is_array($data)) {
       $data = array($data);
     }
 
-    $this->rule[$type] = array_diff($this->rule[$type],$data);
+    $this->rule[$type] = array_diff($this->rule[$type], $data);
   }
 
   /**
@@ -119,7 +122,7 @@ abstract class XacmlRule {
    *   reference to the XACML object that this datastructure is part of.
    */
   function __construct($arg1, $xacml) {
-    if(is_array($arg1)) {
+    if (is_array($arg1)) {
       $this->rule = $arg1;
       /* remove them now, add them later */
       $this->setValue('users', 'fedoraAdmin');
@@ -151,20 +154,20 @@ abstract class XacmlRule {
    *   An array of strings containing the roles being tested. Or NULL.
    */
   function hasPermission($user, $roles = NULL, $default = TRUE) {
-    // we always allow the administrator role
-    if(in_array('administrator', $roles)) {
+    // We always allow the administrator role.
+    if (in_array('administrator', $roles)) {
       return TRUE;
     }
 
     // if the rule is not populated we return the default value
-    if(!$this->isPopulated()) {
+    if (!$this->isPopulated()) {
       return $default;
     }
 
     // otherwise we see if they are allowed
-    $boolean_user = in_array($user,$this->getUsers());
-    $boolean_role = array_intersect($this->getRoles(),$roles);
-    
+    $boolean_user = in_array($user, $this->getUsers());
+    $boolean_role = array_intersect($this->getRoles(), $roles);
+
     return ($boolean_user || $boolean_role || $boolean_default);
   }
 
@@ -221,7 +224,7 @@ abstract class XacmlRule {
   /**
    * Get roles associated with this XACML rule.
    *
-   * @return
+   * @return Array
    *   Array containing the roles.
    */
   function getRoles() {
@@ -262,9 +265,9 @@ class XacmlManagementRule extends XacmlRule {
    * @param $xacml
    *   Reference to the parent XACML object.
    */
-  function  __construct($arg1, $xacml) {
+  function __construct($arg1, $xacml) {
     parent::__construct($arg1, $xacml);
-    if($arg1 == NULL){
+    if ($arg1 == NULL) {
       $this->rule = $this->initializeRule(MANAGEMENT_RULE, 'Deny');
       $this->rule['methods'] = array(
         'addDatastream',
@@ -322,9 +325,9 @@ class XacmlViewingRule extends XacmlRule {
    * @param $xacml
    *   Reference to the parent XACML object.
    */
-  function  __construct($arg1, $xacml) {
+  function __construct($arg1, $xacml) {
     parent::__construct($arg1, $xacml);
-    if($arg1 == NULL){
+    if ($arg1 == NULL) {
       $this->rule = $this->initializeRule(VIEWING_RULE, 'Deny');
       $this->rule['methods'] = array(
         'api-a',
@@ -340,15 +343,15 @@ class XacmlViewingRule extends XacmlRule {
    * be possible to have people that could manage an object but not view datastreams. An unexpected behavior.
    *
    * @return
-   *   $rule datastructure parsable by XacmlWriter.
+   *   rule datastructure parsable by XacmlWriter.
    */
   function getRuleArray() {
     $rule = parent::getRuleArray();
-    if($this->xacml->managementRule->isPopulated()) {
+    if ($this->xacml->managementRule->isPopulated()) {
       $rule['users'] = array_unique(array_merge($rule['users'], $this->xacml->managementRule->getUsers()));
       $rule['roles'] = array_unique(array_merge($rule['roles'], $this->xacml->managementRule->getRoles()));
     }
-    if($this->xacml->datastreamRule->isPopulated()) {
+    if ($this->xacml->datastreamRule->isPopulated()) {
       $rule['users'] = array_unique(array_merge($rule['users'], $this->xacml->datastreamRule->getUsers()));
       $rule['roles'] = array_unique(array_merge($rule['roles'], $this->xacml->datastreamRule->getRoles()));
     }
@@ -364,7 +367,7 @@ class XacmlViewingRule extends XacmlRule {
  * This is entirely managed by Xacml object so not much needs to be said about it.
  */
 class XacmlPermitEverythingRule extends XacmlRule {
-  function  __construct($xacml) {
+  function __construct($xacml) {
     parent::__construct(NULL, $xacml);
     $this->rule = $this->initializeRule(PERMIT_RULE, 'Permit');
   }
@@ -389,9 +392,9 @@ class XacmlDatastreamRule extends XacmlRule {
    * @param $xacml
    *   Reference to parent Xacml object.
    */
-  function  __construct($arg1, $xacml) {
+  function __construct($arg1, $xacml) {
     parent::__construct($arg1, $xacml);
-    if($arg1 == NULL){
+    if ($arg1 == NULL) {
       $this->rule = $this->initializeRule(DATASTREAM_RULE, 'Deny');
       $this->rule['methods'][] = 'getDatastreamDissemination';
     }
@@ -403,13 +406,13 @@ class XacmlDatastreamRule extends XacmlRule {
    * be possible to have people that could manage an object but not view datastreams. An unexpected behavior.
    *
    * @return
-   *   $rule datastructure parsable by XacmlWriter.
+   *   rule datastructure parsable by XacmlWriter.
    */
   function getRuleArray() {
     $rule = parent::getRuleArray();
     $rule['dsids'] = $this->getValues('dsids');
     $rule['mimes'] = $this->getValues('mimes');
-    if($this->xacml->managementRule->isPopulated()) {
+    if ($this->xacml->managementRule->isPopulated()) {
       $rule['users'] = array_unique(array_merge($rule['users'], $this->xacml->managementRule->getUsers()));
       $rule['roles'] = array_unique(array_merge($rule['roles'], $this->xacml->managementRule->getRoles()));
     }
@@ -504,18 +507,18 @@ class XacmlDatastreamRule extends XacmlRule {
    */
   function hasPermission($user, $roles, $mime, $dsid) {
     // we need to check the isPopulated function for this one because it is overridden
-    if(!$this->isPopulated()) {
+    if (!$this->isPopulated()) {
       return TRUE;
     }
-    if(!parent::hasPermission($user, $roles)){
-        $boolean_mime = $mime ? in_array($mime,$this->getMimetypes()) : FALSE;
-        $boolean_dsid = $dsid ? in_array($dsid,$this->getDsids()) : FALSE;
-        if($boolean_mime || $boolean_dsid) {
-          return FALSE;
-        }
-        else {
-          return TRUE;
-        }
+    if (!parent::hasPermission($user, $roles)) {
+      $boolean_mime = $mime ? in_array($mime, $this->getMimetypes()) : FALSE;
+      $boolean_dsid = $dsid ? in_array($dsid, $this->getDsids()) : FALSE;
+      if ($boolean_mime || $boolean_dsid) {
+        return FALSE;
+      }
+      else {
+        return TRUE;
+      }
     }
     return TRUE;
   }
@@ -583,6 +586,7 @@ class Xacml {
    * @param (optional) $xacml The XACML XML as a string. If this isn't passed
    *   the constructor will instead create a new XACML object that permits
    *   everything.
+   *
    * @throws XacmlException if the XML cannot be parsed
    */
   function __construct($xacml = NULL) {
@@ -592,12 +596,12 @@ class Xacml {
     $datastream_rule = NULL;
     $viewing_rule = NULL;
 
-    if($xacml != NULL) {
+    if ($xacml != NULL) {
       $this->xacml = XacmlParser::parse($xacml);
 
       // decide what is enabled
-      foreach($this->xacml['rules'] as $rule) {
-        if($rule['ruleid'] == MANAGEMENT_RULE)
+      foreach ($this->xacml['rules'] as $rule) {
+        if ($rule['ruleid'] == MANAGEMENT_RULE)
           $management_rule = $rule;
         elseif ($rule['ruleid'] == DATASTREAM_RULE)
           $datastream_rule = $rule;
@@ -611,7 +615,7 @@ class Xacml {
 
     $this->datastreamRule = new XacmlDatastreamRule($datastream_rule, $this);
     $this->managementRule = new XacmlManagementRule($management_rule, $this);
-    $this->viewingRule = new XacmlViewingRule($viewing_rule,$this);
+    $this->viewingRule = new XacmlViewingRule($viewing_rule, $this);
     $this->permitEverythingRule = new XacmlPermitEverythingRule($this);
   }
 
@@ -625,14 +629,14 @@ class Xacml {
    *   (Optional) Defaults to POLICY. A string contrining the DSID to parse.
    *
    * @throws XacmlException
-   * @return an initialized Xacml object.
-   *
+   * @return
+   *   an initialized Xacml object.
    */
   static public function constructFromPid($pid, $dsid = 'POLICY') {
     module_load_include('inc', 'fedora_repository', 'api/fedora_item');
     $item = new Fedora_Item($pid);
     $datastreams = $item->get_datastreams_list_as_array();
-    if(isset($datastreams[$dsid])) {
+    if (isset($datastreams[$dsid])) {
       $xacml = $item->get_datastream_dissemination($dsid);
     }
     else {
@@ -648,13 +652,13 @@ class Xacml {
   private function updateRulesArray() {
     $this->xacml['rules'] = array();
 
-    if($this->datastreamRule->isPopulated())
+    if ($this->datastreamRule->isPopulated())
       $this->xacml['rules'][] = $this->datastreamRule->getRuleArray();
-    
-    if($this->managementRule->isPopulated())
+
+    if ($this->managementRule->isPopulated())
       $this->xacml['rules'][] = $this->managementRule->getRuleArray();
-    
-    if($this->viewingRule->isPopulated())
+
+    if ($this->viewingRule->isPopulated())
       $this->xacml['rules'][] = $this->viewingRule->getRuleArray();
 
     $this->xacml['rules'][] = $this->permitEverythingRule->getRuleArray();
@@ -664,6 +668,7 @@ class Xacml {
    * Returns the DomDocument that is associated with this Xacml Rule.
    *
    * @return DomDocument
+   *   The DomDocument associated with this Xacml rule.
    */
   function getDomDocument() {
     module_load_include('inc', 'islandora_xacml_api', 'XacmlWriter');
@@ -674,14 +679,15 @@ class Xacml {
   /**
    * Returns a string containing the XML for this XACML policy.
    *
-   * @param boolean $prettyPrint
+   * @param boolean $pretty_print
    *   If set to TRUE the function will return a prettyprinted xacml policy.
    *
-   * @return string containing xacml xml
+   * @return String
+   *   string containing xacml xml
    */
-  function getXmlString($prettyPrint=TRUE) {
+  function getXmlString($pretty_print = TRUE) {
     module_load_include('inc', 'islandora_xacml_api', 'XacmlWriter');
     $this->updateRulesArray();
-    return XacmlWriter::toXML($this->xacml, $prettyPrint);
+    return XacmlWriter::toXML($this->xacml, $pretty_print);
   }
 }

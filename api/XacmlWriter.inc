@@ -3,13 +3,12 @@
 /**
  * @file
  * This file has functions for writing the XACML class datastructures out to XML.
- *
  */
 
-include_once('XacmlConstants.inc');
+include_once 'XacmlConstants.inc';
 
 /**
- * Class for writing XACML editor datasctructures out to XML.
+ * Class for writing XACML editor datastructures out to XML.
  */
 class XacmlWriter {
 
@@ -32,22 +31,22 @@ class XacmlWriter {
 
     return $dom;
   }
-  
+
   /**
    * Function takes a $xacml datastructure as input and returns
    * an string containing the XACML xml.
    *
    * @param $xacml
    *   $xacml datastructure
-   * @param $prettyprint
+   * @param $pretty_print
    *   Boolean. Determines if the output XML is formatted. Default: FALSE.
    *
    * @return
    *   String containing the XACML as XML.
    */
-  public static function toXML($xacml, $prettyprint=FALSE) {
+  public static function toXML($xacml, $pretty_print = FALSE) {
     $dom = XacmlWriter::toDom($xacml);
-    $dom->formatOutput = $prettyprint;
+    $dom->formatOutput = $pretty_print;
 
     return $dom->saveXML();
   }
@@ -56,13 +55,13 @@ class XacmlWriter {
    * Creates the root tag for the base XACML document.
    */
   private static function createRootElement(&$dom, $xacml) {
-    $root = $dom->createElementNS(XacmlConstants::xacml, 'Policy');
+    $root = $dom->createElementNS(XacmlConstants::XACML, 'Policy');
 
     //$root->setAttribute('islandora_xacml', '1.0');
-    $root->setAttribute('PolicyId','islandora-xacml-editor-v1');
-    $root->setAttribute('RuleCombiningAlgId',$xacml['RuleCombiningAlgId']);
-    $root->setAttributeNS(XacmlConstants::xmlns, 'xmlns', XacmlConstants::xacml);
-    $root->setAttributeNS(XacmlConstants::xmlns, 'xmlns:xsi', XacmlConstants::xsi);
+    $root->setAttribute('PolicyId', 'islandora-xacml-editor-v1');
+    $root->setAttribute('RuleCombiningAlgId', $xacml['RuleCombiningAlgId']);
+    $root->setAttributeNS(XacmlConstants::XMLNS, 'xmlns', XacmlConstants::XACML);
+    $root->setAttributeNS(XacmlConstants::XMLNS, 'xmlns:xsi', XacmlConstants::XSI);
 
     $dom->appendChild($root);
   }
@@ -87,18 +86,18 @@ class XacmlWriter {
    * @endcode
    */
   private static function createTarget(&$dom, $xacml) {
-    $target = $dom->createElementNS(XacmlConstants::xacml,'Target');
+    $target = $dom->createElementNS(XacmlConstants::XACML, 'Target');
 
-    $subject = $dom->createElementNS(XacmlConstants::xacml, 'Subjects');
-    $subject->appendChild($dom->createElementNS(XacmlConstants::xacml,'AnySubject'));
+    $subject = $dom->createElementNS(XacmlConstants::XACML, 'Subjects');
+    $subject->appendChild($dom->createElementNS(XacmlConstants::XACML, 'AnySubject'));
     $target->appendChild($subject);
 
-    $resource = $dom->createElementNS(XacmlConstants::xacml, 'Resources');
-    $resource->appendChild($dom->createElementNS(XacmlConstants::xacml,'AnyResource'));
+    $resource = $dom->createElementNS(XacmlConstants::XACML, 'Resources');
+    $resource->appendChild($dom->createElementNS(XacmlConstants::XACML, 'AnyResource'));
     $target->appendChild($resource);
 
-    $action = $dom->createElementNS(XacmlConstants::xacml, 'Actions');
-    $action->appendChild($dom->createElementNS(XacmlConstants::xacml,'AnyAction'));
+    $action = $dom->createElementNS(XacmlConstants::XACML, 'Actions');
+    $action->appendChild($dom->createElementNS(XacmlConstants::XACML, 'AnyAction'));
     $target->appendChild($action);
 
     $dom->documentElement->appendChild($target);
@@ -108,13 +107,13 @@ class XacmlWriter {
    * Create all of the <Rule> tags.
    */
   private static function createRules(&$dom, $xacml) {
-    foreach($xacml['rules'] as $rule) {
+    foreach ($xacml['rules'] as $rule) {
       XacmlWriter::createRule($dom, $rule);
     }
   }
 
   private static function createRule(&$dom, $rule) {
-    $root = $dom->createElementNS(XacmlConstants::xacml, "Rule");
+    $root = $dom->createElementNS(XacmlConstants::XACML, "Rule");
     $root->setAttribute('RuleId', $rule['ruleid']);
     $root->setAttribute('Effect', $rule['effect']);
 
@@ -125,7 +124,7 @@ class XacmlWriter {
   }
 
   private static function createRuleTarget(&$dom, &$root, $rule) {
-    $target = $dom->createElementNS(XacmlConstants::xacml,"Target");
+    $target = $dom->createElementNS(XacmlConstants::XACML, "Target");
 
     XacmlWriter::createRuleTargetSubjects($dom, $target, $rule);
     XacmlWriter::createRuleTargetResources($dom, $target, $rule);
@@ -135,32 +134,32 @@ class XacmlWriter {
   }
 
   private static function createRuleTargetSubjects(&$dom, &$target, $rule) {
-    $subjects = $dom->createElementNS(XacmlConstants::xacml, "Subjects");
-    $subjects->appendChild($dom->createElementNS(XacmlConstants::xacml,"AnySubject"));
+    $subjects = $dom->createElementNS(XacmlConstants::XACML, "Subjects");
+    $subjects->appendChild($dom->createElementNS(XacmlConstants::XACML, "AnySubject"));
     $target->appendChild($subjects);
   }
 
   private static function createRuleTargetActions(&$dom, &$target, $rule) {
-    $actions = $dom->createElementNS(XacmlConstants::xacml, "Actions");
-    if(!empty($rule['methods'])) {
-      foreach($rule['methods'] as $method) {
+    $actions = $dom->createElementNS(XacmlConstants::XACML, "Actions");
+    if (!empty($rule['methods'])) {
+      foreach ($rule['methods'] as $method) {
         XacmlWriter::createRuleTargetAction($dom, $actions, $method);
       }
     }
     else {
-      $actions->appendChild($dom->createElementNS(XacmlConstants::xacml,"AnyAction"));
+      $actions->appendChild($dom->createElementNS(XacmlConstants::XACML, "AnyAction"));
     }
 
     $target->appendChild($actions);
   }
 
   private static function createRuleTargetAction(&$dom, &$actions, $method) {
-    $action = $dom->createElementNS(XacmlConstants::xacml,'Action');
-    $actionMatch = $dom->createElementNS(XacmlConstants::xacml, 'ActionMatch');
-    $actionMatch->setAttribute('MatchId',XacmlConstants::stringequal);
-    $action->appendChild($actionMatch);
+    $action = $dom->createElementNS(XacmlConstants::XACML, 'Action');
+    $action_match = $dom->createElementNS(XacmlConstants::XACML, 'ActionMatch');
+    $action_match->setAttribute('MatchId', XacmlConstants::STRINGEQUAL);
+    $action->appendChild($action_match);
 
-    if($method == 'api-a' || $method == 'api-m') {
+    if ($method == 'api-a' || $method == 'api-m') {
       $attributevalue = "urn:fedora:names:fedora:2.1:action:$method";
       $attributeid = 'urn:fedora:names:fedora:2.1:action:api';
     }
@@ -169,27 +168,27 @@ class XacmlWriter {
       $attributeid = "urn:fedora:names:fedora:2.1:action:id";
     }
 
-    $attributeValue = $dom->createElementNS(XacmlConstants::xacml, "AttributeValue", $attributevalue);
-    $attributeValue->setAttribute("DataType","http://www.w3.org/2001/XMLSchema#string");
-    $actionAttributeDesignator = $dom->createElementNS(XacmlConstants::xacml, "ActionAttributeDesignator");
-    $actionAttributeDesignator->setAttribute("AttributeId", $attributeid);
-    $actionAttributeDesignator->setAttribute("DataType","http://www.w3.org/2001/XMLSchema#string");
-    $actionMatch->appendChild($attributeValue);
-    $actionMatch->appendChild($actionAttributeDesignator);
+    $attribute_value = $dom->createElementNS(XacmlConstants::XACML, "AttributeValue", $attributevalue);
+    $attribute_value->setAttribute("DataType", "http://www.w3.org/2001/XMLSchema#string");
+    $action_attribute_designator = $dom->createElementNS(XacmlConstants::XACML, "ActionAttributeDesignator");
+    $action_attribute_designator->setAttribute("AttributeId", $attributeid);
+    $action_attribute_designator->setAttribute("DataType", "http://www.w3.org/2001/XMLSchema#string");
+    $action_match->appendChild($attribute_value);
+    $action_match->appendChild($action_attribute_designator);
     $actions->appendChild($action);
   }
 
   private static function createRuleTargetResources(&$dom, &$target, $rule) {
-    $resources = $dom->createElementNS(XacmlConstants::xacml, "Resources");
+    $resources = $dom->createElementNS(XacmlConstants::XACML, "Resources");
 
-    if(empty($rule['mimes']) && empty($rule['dsids'])){
-      $resources->appendChild($dom->createElementNS(XacmlConstants::xacml,"AnyResource"));
+    if (empty($rule['mimes']) && empty($rule['dsids'])) {
+      $resources->appendChild($dom->createElementNS(XacmlConstants::XACML, "AnyResource"));
     }
     else {
-      foreach($rule['mimes'] as $mime) {
+      foreach ($rule['mimes'] as $mime) {
         XacmlWriter::createRuleTargetResource($dom, $resources, $mime, 'mime');
       }
-      foreach($rule['dsids'] as $dsid) {
+      foreach ($rule['dsids'] as $dsid) {
         XacmlWriter::createRuleTargetResource($dom, $resources, $dsid, 'dsid');
       }
     }
@@ -198,48 +197,50 @@ class XacmlWriter {
   }
 
   private static function createRuleTargetResource(&$dom, &$resources, $name, $type) {
-    $resource = $dom->createElementNS(XacmlConstants::xacml, 'Resource');
-    $resourceMatch = $dom->createElementNS(XacmlConstants::xacml, 'ResourceMatch');
-    $resourceMatch->setAttribute('MatchId',XacmlConstants::stringequal);
-    $resource->appendChild($resourceMatch);
+    $resource = $dom->createElementNS(XacmlConstants::XACML, 'Resource');
+    $resource_match = $dom->createElementNS(XacmlConstants::XACML, 'ResourceMatch');
+    $resource_match->setAttribute('MatchId', XacmlConstants::STRINGEQUAL);
+    $resource->appendChild($resource_match);
 
-    $AttributeValue = $dom->createElementNS(XacmlConstants::xacml, 'AttributeValue', $name);
-    $AttributeValue->setAttribute('DataType',"http://www.w3.org/2001/XMLSchema#string");
+    $attribute_value = $dom->createElementNS(XacmlConstants::XACML, 'AttributeValue', $name);
+    $attribute_value->setAttribute('DataType', "http://www.w3.org/2001/XMLSchema#string");
 
-    $ResourceAttributeDesignator = $dom->createElementNS(XacmlConstants::xacml, 'ResourceAttributeDesignator');
-    $ResourceAttributeDesignator->setAttribute("DataType","http://www.w3.org/2001/XMLSchema#string");
+    $resource_attribute_designator = $dom->createElementNS(XacmlConstants::XACML, 'ResourceAttributeDesignator');
+    $resource_attribute_designator->setAttribute("DataType", "http://www.w3.org/2001/XMLSchema#string");
 
-    switch ($type){
+    switch ($type) {
       case 'mime':
-        $ResourceAttributeDesignator->setAttribute("AttributeId","urn:fedora:names:fedora:2.1:resource:datastream:mimeType");
+        $resource_attribute_designator->setAttribute("AttributeId", "urn:fedora:names:fedora:2.1:resource:datastream:mimeType");
         break;
+
       case 'dsid':
-        $ResourceAttributeDesignator->setAttribute("AttributeId","urn:fedora:names:fedora:2.1:resource:datastream:id");
+        $resource_attribute_designator->setAttribute("AttributeId", "urn:fedora:names:fedora:2.1:resource:datastream:id");
         break;
+
       default:
-        return False;
+        return FALSE;
     }
 
-    $resourceMatch->appendChild($AttributeValue);
-    $resourceMatch->appendChild($ResourceAttributeDesignator);
+    $resource_match->appendChild($attribute_value);
+    $resource_match->appendChild($resource_attribute_designator);
 
     $resources->appendChild($resource);
   }
 
   private static function createRuleCondition(&$dom, &$target, $rule) {
-    $condition = $dom->createElementNS(XacmlConstants::xacml,"Condition");
+    $condition = $dom->createElementNS(XacmlConstants::XACML, "Condition");
     $condition->setAttribute("FunctionId", "urn:oasis:names:tc:xacml:1.0:function:not");
 
-    if(!empty($rule['users'])) {
-      $users = XacmlWriter::createRuleConditionApply($dom, $rule['users'],'user');
+    if (!empty($rule['users'])) {
+      $users = XacmlWriter::createRuleConditionApply($dom, $rule['users'], 'user');
     }
-    if(!empty($rule['roles'])) {
-      $roles = XacmlWriter::createRuleConditionApply($dom, $rule['roles'],'role');
+    if (!empty($rule['roles'])) {
+      $roles = XacmlWriter::createRuleConditionApply($dom, $rule['roles'], 'role');
     }
 
-    if(isset($users) && isset($roles)) {
-      $apply = $dom->createElementNS(XacmlConstants::xacml, "Apply");
-      $apply->setAttribute("FunctionId","urn:oasis:names:tc:xacml:1.0:function:or");
+    if (isset($users) && isset($roles)) {
+      $apply = $dom->createElementNS(XacmlConstants::XACML, "Apply");
+      $apply->setAttribute("FunctionId", "urn:oasis:names:tc:xacml:1.0:function:or");
       $condition->appendChild($apply);
       $apply->appendChild($users);
       $apply->appendChild($roles);
@@ -258,34 +259,36 @@ class XacmlWriter {
   }
 
   private static function createRuleConditionApply(&$dom, $attributes, $type) {
-    $apply = $dom->createElementNS(XacmlConstants::xacml,'Apply');
-    $apply->setAttribute("FunctionId","urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of");
+    $apply = $dom->createElementNS(XacmlConstants::XACML, 'Apply');
+    $apply->setAttribute("FunctionId", "urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of");
 
-    $subjectAttribureDesignator = $dom->createElementNS(XacmlConstants::xacml, 'SubjectAttributeDesignator');
-    $subjectAttribureDesignator->setAttribute("DataType","http://www.w3.org/2001/XMLSchema#string");
-    $subjectAttribureDesignator->setAttribute("MustBePresent","false");
+    $subject_attribute_designator = $dom->createElementNS(XacmlConstants::XACML, 'SubjectAttributeDesignator');
+    $subject_attribute_designator->setAttribute("DataType", "http://www.w3.org/2001/XMLSchema#string");
+    $subject_attribute_designator->setAttribute("MustBePresent", "false");
 
-    switch($type) {
+    switch ($type) {
       case 'role':
-        $subjectAttribureDesignator->setAttribute('AttributeId',"fedoraRole");
+        $subject_attribute_designator->setAttribute('AttributeId', "fedoraRole");
         break;
+
       case 'user':
-        $subjectAttribureDesignator->setAttribute('AttributeId',"urn:fedora:names:fedora:2.1:subject:loginId");
+        $subject_attribute_designator->setAttribute('AttributeId', "urn:fedora:names:fedora:2.1:subject:loginId");
         break;
+
       default:
         return NULL;
     }
 
-    $apply->appendChild($subjectAttribureDesignator);
+    $apply->appendChild($subject_attribute_designator);
 
-    $stringBag = $dom->createElementNS(XacmlConstants::xacml,"Apply");
-    $stringBag->setAttribute("FunctionId","urn:oasis:names:tc:xacml:1.0:function:string-bag");
-    $apply->appendChild($stringBag);
+    $string_bag = $dom->createElementNS(XacmlConstants::XACML, "Apply");
+    $string_bag->setAttribute("FunctionId", "urn:oasis:names:tc:xacml:1.0:function:string-bag");
+    $apply->appendChild($string_bag);
 
-    foreach($attributes as $attribute) {
-      $attrib = $dom->createElementNS(XacmlConstants::xacml, "AttributeValue", $attribute);
-      $attrib->setAttribute("DataType","http://www.w3.org/2001/XMLSchema#string");
-      $stringBag->appendChild($attrib);
+    foreach ($attributes as $attribute) {
+      $attrib = $dom->createElementNS(XacmlConstants::XACML, "AttributeValue", $attribute);
+      $attrib->setAttribute("DataType", "http://www.w3.org/2001/XMLSchema#string");
+      $string_bag->appendChild($attrib);
     }
 
     return $apply;
