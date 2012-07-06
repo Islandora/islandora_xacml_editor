@@ -2,7 +2,6 @@
 
 /**
  * @file
- *
  * This file defines the exceptions used in Islandora XACML editor.
  */
 
@@ -11,4 +10,5 @@
  * It currently doesn't override anything from the base exception class and is just here
  * as a placeholder.
  */
-class XacmlException extends Exception { }
+class XacmlException extends Exception {
+}

@@ -8,12 +8,12 @@
  * Helper class specifying some useful constants.
  */
 class XacmlConstants {
-  const xacml = "urn:oasis:names:tc:xacml:1.0:policy";
-  const mime = "urn:fedora:names:fedora:2.1:resource:datastream:mimeType";
-  const dsid = "urn:fedora:names:fedora:2.1:resource:datastream:id";
-  const onememeberof = "urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of";
-  const stringequal = "urn:oasis:names:tc:xacml:1.0:function:string-equal";
-  const loginid = "urn:fedora:names:fedora:2.1:subject:loginId";
-  const xsi = 'http://www.w3.org/2001/XMLSchema-instance';
-  const xmlns = 'http://www.w3.org/2000/xmlns/';
+  const XACML = "urn:oasis:names:tc:xacml:1.0:policy";
+  const MIME = "urn:fedora:names:fedora:2.1:resource:datastream:mimeType";
+  const DSID = "urn:fedora:names:fedora:2.1:resource:datastream:id";
+  const ONEMEMBEROF = "urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of";
+  const STRINGEQUAL = "urn:oasis:names:tc:xacml:1.0:function:string-equal";
+  const LOGINID = "urn:fedora:names:fedora:2.1:subject:loginId";
+  const XSI = 'http://www.w3.org/2001/XMLSchema-instance';
+  const XMLNS = 'http://www.w3.org/2000/xmlns/';
 }
