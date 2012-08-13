@@ -181,7 +181,7 @@ class XacmlWriter {
   private static function createRuleTargetResources(&$dom, &$target, $rule) {
     $resources = $dom->createElementNS(XacmlConstants::XACML, "Resources");
 
-    if (empty($rule['mimes']) && empty($rule['dsids'])) {
+    if (empty($rule['mimes']) && empty($rule['dsids']) && empty($rule['dsidregexs']) && empty($rule['mimeregexs'])) {
       $resources->appendChild($dom->createElementNS(XacmlConstants::XACML, "AnyResource"));
     }
     else {
@@ -191,6 +191,12 @@ class XacmlWriter {
       foreach ($rule['dsids'] as $dsid) {
         XacmlWriter::createRuleTargetResource($dom, $resources, $dsid, 'dsid');
       }
+      foreach ($rule['dsidregexs'] as $dsidregex) {
+        XacmlWriter::createRuleTargetResource($dom, $resources, $dsidregex, 'dsidregex');
+      }
+      foreach ($rule['mimeregexs'] as $mimeregex) {
+        XacmlWriter::createRuleTargetResource($dom, $resources, $mimeregex, 'mimeregex');
+      }
     }
 
     $target->appendChild($resources);
@@ -199,7 +205,13 @@ class XacmlWriter {
   private static function createRuleTargetResource(&$dom, &$resources, $name, $type) {
     $resource = $dom->createElementNS(XacmlConstants::XACML, 'Resource');
     $resource_match = $dom->createElementNS(XacmlConstants::XACML, 'ResourceMatch');
-    $resource_match->setAttribute('MatchId', XacmlConstants::STRINGEQUAL);
+    
+    if ($type == 'mime' || $type == 'dsid') {
+      $resource_match->setAttribute('MatchId', XacmlConstants::STRINGEQUAL);
+    }
+    else {
+      $resource_match->setAttribute('MatchId', XacmlConstants::REGEXEQUAL);
+    }
     $resource->appendChild($resource_match);
 
     $attribute_value = $dom->createElementNS(XacmlConstants::XACML, 'AttributeValue', $name);
@@ -210,13 +222,15 @@ class XacmlWriter {
 
     switch ($type) {
       case 'mime':
+      case 'mimeregex':
         $resource_attribute_designator->setAttribute("AttributeId", "urn:fedora:names:fedora:2.1:resource:datastream:mimeType");
         break;
-
+       
       case 'dsid':
+      case 'dsidregex':
         $resource_attribute_designator->setAttribute("AttributeId", "urn:fedora:names:fedora:2.1:resource:datastream:id");
         break;
-
+      
       default:
         return FALSE;
     }
