@@ -783,8 +783,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     exit();
   }
   $breadcrumbs = array();
-  $objectHelper = new ObjectHelper();
-  $objectHelper->getBreadcrumbs($object_pid, $breadcrumbs);
+  $object_helper = new ObjectHelper();
+  $object_helper->getBreadcrumbs($object_pid, $breadcrumbs);
   drupal_set_breadcrumb(array_reverse($breadcrumbs));
   $datastreams = $object->get_datastreams_list_as_array();
 
@@ -795,7 +795,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   module_load_include('inc', 'fedora_repository', 'ContentModel');
 
   if ($xacml_dsid == 'CHILD_SECURITY') {
-    module_load_include('inc', 'fedora_repository', 'CollectionPolicy');  
+    module_load_include('inc', 'fedora_repository', 'CollectionPolicy'); 
 
     $collection = CollectionPolicy::loadFromCollection($object_pid);
     if ($collection) {
@@ -858,8 +858,11 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
       $xacml = new Xacml($xml);
     }
     catch (XacmlException $e) {
+      watchdog('islandora_xacml_editor', $e->getMessage(), array(), WATCHDOG_ERROR);
       drupal_set_message($e->getMessage());
-      drupal_set_message("Xacml Parser failed to parse $object_pid/$xacml_dsid. It is likely this POLICY wasn't written by the islandora XACML editor, it will have to be modified by hand.");
+      drupal_set_message(t("Xacml Parser failed to parse @object_pid/@xacml_dsid. It is likely this POLICY wasn't written by the islandora XACML editor, it will have to be modified by hand.",
+                          array("@object_pid" => $object_pid, "@xacml_dsid" => $xacml_dsid))
+                        );
       drupal_not_found();
       exit();
     }
@@ -1425,14 +1428,14 @@ function islandora_xacml_editor_page_validate(&$form, &$form_state) {
   $current_user = $form_state['storage']['current_user'];
 
   // management functions
-  if (!array_key_exists($admin_user,$form_state['values']['manage']['users']) ||
-      !array_key_exists($current_user,$form_state['values']['manage']['users'])) {
+  if (!array_key_exists($admin_user, $form_state['values']['manage']['users']) ||
+      !array_key_exists($current_user, $form_state['values']['manage']['users'])) {
     if ($admin_user == $current_user) {
-      form_set_error('manage][users',"Please make sure that $admin_user is selected in the manage
+      form_set_error('manage][users', "Please make sure that $admin_user is selected in the manage
         section to prevent locking yourself out of the object.", FALSE);
     }
     else {
-      form_set_error('manage][users',"Please make sure that $admin_user and $current_user are selected in the manage
+      form_set_error('manage][users', "Please make sure that $admin_user and $current_user are selected in the manage
         section to prevent locking yourself and the admin user out of the object.", FALSE);
     }
   }
@@ -1503,8 +1506,10 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
       'title' => t('Updating Policies'),
       'progress_message' => t('Please wait if many objects are being updated this could take a few minutes.'),
       'operations' => array(
-        array('islandora_xacml_editor_batch_function', array($xml, $pid, $option)),
-      ),
+        array(
+          'islandora_xacml_editor_batch_function', 
+          array($xml, $pid, $option)),
+        ),
       'finished' => 'islandora_xacml_editor_batch_finished',
     );
     batch_set($batch);
@@ -1559,7 +1564,7 @@ function islandora_xacml_editor_batch_finished($success, $results, $operations) 
 
   if ($results['fail']) {
     foreach ($results['fail'] as $fail) {
-      drupal_set_message("Failed to update: $fail. You do not have permission to update this object.", 'error');
+      drupal_set_message(t("Failed to update: @failed_object. You do not have permission to update this object.", array('@failed_object' => $fail)), 'error');
     }
   }
 
