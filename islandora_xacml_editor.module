@@ -1393,7 +1393,6 @@ function islandora_xacml_editor_form_table(array $selected, $xacml_dsid) {
   foreach ($selected as $select) {
     $filter = $select['Filter'];
     $type = $select['Type'];
-    //$buttonname = str_replace(' ', '~SPACE~', $type) . '---' . str_replace('.', '~DOT~', $filter);
     $buttonname = str_replace(' ', '~SPACE~', $type) . '---' . $count;
     $rows[] = array(
       'Filter' => array(
