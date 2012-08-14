@@ -727,7 +727,7 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
       $tabs['xacml_policy'] = array(
         '#type' => 'tabpage',
         '#title' => $title,
-        '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, $dsid), 
+        '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, $dsid),
       );
     }
   }
@@ -762,7 +762,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   Ahah::get_ahah_js();
   // when we call in from top level collections in JS get get the
   // pid being undefined
-  if($object_pid == 'undefined' || !$object_pid) {
+  if ($object_pid == 'undefined' || !$object_pid) {
     $object_pid = variable_get('fedora_repository_pid', 'islandora:top');
   }
   
@@ -794,17 +794,17 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
 
   module_load_include('inc', 'fedora_repository', 'ContentModel');
 
-  if($xacml_dsid == 'CHILD_SECURITY') {
+  if ($xacml_dsid == 'CHILD_SECURITY') {
     module_load_include('inc', 'fedora_repository', 'CollectionPolicy');  
 
     $collection = CollectionPolicy::loadFromCollection($object_pid);
-    if($collection) {
+    if ($collection) {
       $cms = $collection->getContentModels();
-      foreach($cms as $cm) {
+      foreach ($cms as $cm) {
         $contentmodel = ContentModel::loadFromModel($cm->pid);
-        if($contentmodel) {
+        if ($contentmodel) {
           $tmp = $contentmodel->getMimetypes();
-          foreach($tmp as $t) {
+          foreach ($tmp as $t) {
             $mime[$t] = $t;
           }
         }
@@ -813,9 +813,9 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   }
   else {
     $contentmodel = ContentModel::loadFromObject($object_pid);
-    if($contentmodel) {
+    if ($contentmodel) {
       $tmp = $contentmodel->getMimetypes();
-      foreach($tmp as $t) {
+      foreach ($tmp as $t) {
         $mime[$t] = $t;
       }
     }
@@ -1418,8 +1418,6 @@ function islandora_xacml_editor_form_table(array $selected, $xacml_dsid) {
   return $table;
 }
 
-
-
 function islandora_xacml_editor_page_validate(&$form, &$form_state) {
   drupal_add_css(drupal_get_path('module', 'islandora_xacml_editor') . '/css/islandora_xacml_editor.css');
   // test if the user is locking themselves or the admin out of the object
@@ -1428,15 +1426,14 @@ function islandora_xacml_editor_page_validate(&$form, &$form_state) {
 
   // management functions
   if (!array_key_exists($admin_user,$form_state['values']['manage']['users']) ||
-      !array_key_exists($current_user,$form_state['values']['manage']['users']) )
-  {
+      !array_key_exists($current_user,$form_state['values']['manage']['users'])) {
     if ($admin_user == $current_user) {
       form_set_error('manage][users',"Please make sure that $admin_user is selected in the manage
-        section to prevent locking yourself out of the object.",FALSE);
+        section to prevent locking yourself out of the object.", FALSE);
     }
     else {
       form_set_error('manage][users',"Please make sure that $admin_user and $current_user are selected in the manage
-        section to prevent locking yourself and the admin user out of the object.",FALSE);
+        section to prevent locking yourself and the admin user out of the object.", FALSE);
     }
   }
 }
@@ -1493,7 +1490,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   $object = new Fedora_Item($pid);
   $datastreams = $object->get_datastreams_list_as_array();
 
-  if(array_key_exists($dsid, $datastreams)) {
+  if (array_key_exists($dsid, $datastreams)) {
     $object->modify_datastream_by_value($xml, $dsid, 'Xacml Policy Stream', 'text/xml');
   }
   else {
@@ -1590,9 +1587,9 @@ class IslandoraUpdatePolicy {
     $query_results = IslandoraXacmlEditorQuery::query($query);
     $results = new SimpleXMLElement($query_results);
     $collection = FALSE;
-    foreach($results->results->result as $result) {
+    foreach ($results->results->result as $result) {
       $pid = (string) $result->parent_model['uri'];
-      $pid = explode('/',$pid);
+      $pid = explode('/', $pid);
       $pid = $pid[1];
       if ($pid == 'islandora:collectionCModel') {
         $collection = TRUE;
@@ -1606,14 +1603,15 @@ class IslandoraUpdatePolicy {
     $success = FALSE;
     if ($this->object->exists()) {
       $datastreams = $this->object->get_datastreams_list_as_array();
-      if(array_key_exists('POLICY', $datastreams)) {
+      if (array_key_exists('POLICY', $datastreams)) {
         try {
           $xacml = Xacml::constructFromPid($this->pid);
           if ($xacml->managementRule->hasPermission($user->name, $user->roles)) {
             $success = $this->addOrUpdateAllPolicies($datastreams);
           }
         }
-        catch (XacmlException $e) {}
+        catch (XacmlException $e) {
+        }
       }
       else {
         $success = $this->addOrUpdateAllPolicies($datastreams);
@@ -1631,7 +1629,7 @@ class IslandoraUpdatePolicy {
   }
 
   private function addOrUpdatePolicy($datastreams, $dsid) {
-    if(array_key_exists($dsid, $datastreams)) {
+    if (array_key_exists($dsid, $datastreams)) {
       return $this->object->modify_datastream_by_value($this->xml, $dsid, 'Xacml Policy Stream', 'text/xml');
     }
     else {
@@ -1669,9 +1667,9 @@ class IslandoraXacmlEditorQuery {
     $pids = array();
     $query_results = IslandoraXacmlEditorQuery::query($this->getQuery());
     $results = new SimpleXMLElement($query_results);
-    foreach($results->results->result as $result) {
+    foreach ($results->results->result as $result) {
       $pid = (string) $result->object['uri'];
-      $parts = explode('/',$pid);
+      $parts = explode('/', $pid);
       $pids[] = $parts[1];
     }
     return $pids;
