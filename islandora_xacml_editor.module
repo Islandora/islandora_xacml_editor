@@ -137,45 +137,24 @@ function islandora_xacml_editor_remove_js($xacml_dsid) {
   }
   
   $removeval = array_search('Remove', $form_state['post']);
-  $removeval = str_replace('~DOT~', '.', $removeval);
   $removeval = str_replace('~SPACE~', ' ', $removeval);
   
   preg_match('/(.*)---(.*)/', $removeval, $match);
   $removeval = $match[2];
   $type = $match[1];
-   
+ 
   if ($type == 'DSID') {
-    foreach ($values['dsid'] as $key => $value) {
-      if ($value == $removeval) {
-        $form_state['storage']['removedsid'] = $value;
-        break;
-      }
-    }
+    $form_state['storage']['removedsid'] = $form_state['storage']['rows'][$removeval]['Filter'];
   }
   elseif ($type == 'MIME Type') {
-    foreach($values['mime'] as $key => $value) {
-      if ($value == $removeval) {
-        $form_state['storage']['removemime'] = $value;
-        break;
-      }
-    }
+    $form_state['storage']['removemime'] = $form_state['storage']['rows'][$removeval]['Filter'];
   }
   elseif ($type == 'MIME Type Regex') {
-    foreach($values['mimeregexs'] as $key => $value) {
-      if ($value == $removeval) {
-        $form_state['storage']['removemimeregex'] = $value;
-        break;
-      }
-    }
+    $form_state['storage']['removemimeregex'] = $form_state['storage']['rows'][$removeval]['Filter'];
   }
   elseif ($type == 'DSID Regex') {
-    foreach($values['dsidregexs'] as $key => $value) {
-      if ($value == $removeval) {
-        $form_state['storage']['removedsidregex'] = $value;
-        break;
-      }
-    }
-  }
+    $form_state['storage']['removedsidregex'] = $form_state['storage']['rows'][$removeval]['Filter'];
+ }
   
   if ($xacml_dsid == 'CHILD_SECURITY') {
     $childvalue = $_POST['update_options'];
@@ -1287,6 +1266,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     }
   }
   
+  $form_state['storage']['rows'] = $rows;
+  
   $form['dsidmime']['table'] = array(
     '#type' => 'item',
     '#value' => (count($rows) > 0) ? '<strong>Applied Rules:</strong>' : '<strong>No rules applied!</strong>',
@@ -1408,11 +1389,12 @@ function islandora_xacml_editor_form_table(array $selected, $xacml_dsid) {
     'rows' => array(),
   );
   $rows = &$table['rows'];
+  $count = 0;
   foreach ($selected as $select) {
     $filter = $select['Filter'];
     $type = $select['Type'];
-    $buttonname = str_replace(' ', '~SPACE~', $type) . '---' . str_replace('.', '~DOT~', $filter);
-    
+    //$buttonname = str_replace(' ', '~SPACE~', $type) . '---' . str_replace('.', '~DOT~', $filter);
+    $buttonname = str_replace(' ', '~SPACE~', $type) . '---' . $count;
     $rows[] = array(
       'Filter' => array(
         '#value' => $filter,
@@ -1432,6 +1414,7 @@ function islandora_xacml_editor_form_table(array $selected, $xacml_dsid) {
         ),
       )
     );
+    $count++;    
   }
   return $table;
 }
