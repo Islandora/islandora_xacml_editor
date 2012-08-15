@@ -651,7 +651,12 @@ function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
   $output = array();
   
   foreach ($dslist as $key => $value) {
-     if (strpos(strtoupper($key), strtoupper($string)) !== false) {
+    if ($string != '*') {
+      if (strpos(strtoupper($key), strtoupper($string)) !== false) {
+        $output[$key] = check_plain($key);
+      }
+    }
+    else {
       $output[$key] = check_plain($key);
     }
   }
@@ -690,9 +695,13 @@ function islandora_xacml_editor_mime_autocomplete($xacml_dsid, $pid, $string) {
       }
     }
   }
-  
   foreach ($mime as $key => $value) {
-    if (strpos(strtoupper($key), strtoupper($string)) !== false) {
+    if ($string != "*") { 
+      if (strpos(strtoupper($key), strtoupper($string)) !== false) {
+        $output[$key] = check_plain($key);
+      }
+    }
+    else {
       $output[$key] = check_plain($key);
     }
   }
