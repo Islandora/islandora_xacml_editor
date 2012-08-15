@@ -133,6 +133,30 @@ abstract class XacmlRule {
   }
 
   /**
+   * Clear the settings for the given rule.
+   *
+   * @param $type
+   *   Either a type or array of types to clear, or NULL (something which casts
+   *   to an empty array) to clear all--except those values which are required--
+   *   from the rule array.
+   */
+  function clear($type = NULL) {
+    $dont_touch = array(
+      'ruleid',
+      'effect',
+    );
+
+    $clearable = array_diff(array_keys($this->rule), $dont_touch);
+    if (($types = (array)$type) && (count($types) > 0)) {
+      $clearable = array_intersect($clearable, $types);
+    }
+
+    foreach ($clearable as $to_clear) {
+      $this->rule[$to_clear] = array();
+    }
+  }
+
+  /**
    * Returns true if the rule is populated with data, otherwise returns false.
    *
    * For example a rule can be created that has no users or roles. This rule has no meaning
