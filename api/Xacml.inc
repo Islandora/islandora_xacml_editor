@@ -50,9 +50,11 @@ abstract class XacmlRule {
 
     $rule['ruleid'] = $id;
     $rule['effect'] = $effect;
-
+    
     $rule['dsids'] = array();
     $rule['mimes'] = array();
+    $rule['dsidregexs'] = array();
+    $rule['mimeregexs'] = array();
     $rule['methods'] = array();
     $rule['users'] = array();
     $rule['roles'] = array();
@@ -412,6 +414,9 @@ class XacmlDatastreamRule extends XacmlRule {
     $rule = parent::getRuleArray();
     $rule['dsids'] = $this->getValues('dsids');
     $rule['mimes'] = $this->getValues('mimes');
+    $rule['dsidregexs'] = $this->getValues('dsidregexs');
+    $rule['mimeregexs'] = $this->getValues('mimeregexs');
+    
     if ($this->xacml->managementRule->isPopulated()) {
       $rule['users'] = array_unique(array_merge($rule['users'], $this->xacml->managementRule->getUsers()));
       $rule['roles'] = array_unique(array_merge($rule['roles'], $this->xacml->managementRule->getRoles()));
@@ -429,7 +434,17 @@ class XacmlDatastreamRule extends XacmlRule {
   function addDsid($dsid) {
     $this->setValue('dsids', $dsid);
   }
-
+  
+  /**
+   * Add a dsid regex to the rule.
+   *
+   * @param $regex
+   *   String or array of strings containing the datastream to add.
+   */
+  function addDsidRegex($regex) {
+    $this->setValue('dsidregexs', $regex);
+  }
+  
   /**
    * Add a mimetype to the rule.
    *
@@ -439,7 +454,17 @@ class XacmlDatastreamRule extends XacmlRule {
   function addMimetype($mime) {
     $this->setValue('mimes', $mime);
   }
-
+  
+ /**
+   * Add a mimetype regex to the rule.
+   *
+   * @param $regex
+   *   String or array of strings to add to the rule.
+   */
+  function addMimetypeRegex($regex) {
+    $this->setValue('mimeregexs', $regex);
+  }
+  
   /**
    * Remove mimetypes from the rule.
    *
@@ -449,7 +474,17 @@ class XacmlDatastreamRule extends XacmlRule {
   function removeMimetype($mime) {
     $this->removeValues('mimes', $mime);
   }
-
+  
+  /**
+   * Remove mimetype regexs from the rule.
+   *
+   * @param $regex
+   *   String or array ofs tring to remove from the rule.
+   */
+  function removeMimetypeRegex($regex) {
+    $this->removeValues('mimeregexs', $regex);
+  }
+  
   /**
    * Remove dsids from the rule.
    *
@@ -459,7 +494,17 @@ class XacmlDatastreamRule extends XacmlRule {
   function removeDsid($dsid) {
     $this->removeValues('dsids', $dsid);
   }
-
+  
+  /**
+   * Remove dsid regexs from the rule.
+   *
+   * @param $regex
+   *   String or array ofs tring to remove from the rule.
+   */
+  function removeDsidRegex($regex) {
+    $this->removeValues('dsidregexs', $regex);
+  }
+  
   /**
    * Mimetypes associated with this rule.
    *
@@ -468,6 +513,16 @@ class XacmlDatastreamRule extends XacmlRule {
    */
   function getMimetypes() {
     return $this->getValues('mimes');
+  }
+  
+ /**
+   * Mimetypes associated with this rule.
+   *
+   * @return
+   *   array of mimetype regexss.
+   */
+  function getMimetypeRegexs() {
+    return $this->getValues('mimeregexs');
   }
 
   /**
@@ -479,6 +534,16 @@ class XacmlDatastreamRule extends XacmlRule {
   function getDsids() {
     return $this->getValues('dsids');
   }
+  
+ /**
+   * Dsid regexs associated with this rule.
+   *
+   * @return
+   *   array of dsid regexs.
+   */
+  function getDsidRegexs() {
+    return $this->getValues('dsidregexs');
+  }
 
   /**
    * Returns true if the rule is populated with data, otherwise returns false.
@@ -489,7 +554,7 @@ class XacmlDatastreamRule extends XacmlRule {
    * @return boolean
    */
   function isPopulated() {
-    return parent::isPopulated() && ($this->getMimetypes() || $this->getDsids());
+    return parent::isPopulated() && ($this->getMimetypes() || $this->getDsids() || $this->getDsidRegexs() || $this->getMimetypeRegexs());
   }
 
   /**
