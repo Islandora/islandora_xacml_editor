@@ -2,6 +2,7 @@
 
 /**
  * @file
+ *
  * The main module file for the Islanora XACML Editor
  */
 
@@ -27,7 +28,6 @@ function islandora_xacml_editor_menu() {
     'page arguments' => array('islandora_xacml_editor_page', 1, 2),
     'access arguments' => array('Edit XACML Policies'),
   );
-
   $items['admin/settings/islandora_xacml_editor'] = array(
     'title' => 'Islandora XACML Editor',
     'description' => 'Settings for the Islandora XACML module.',
@@ -35,8 +35,680 @@ function islandora_xacml_editor_menu() {
     'page arguments' => array('islandora_xacml_editor_settings'),
     'access arguments' => array('administer islandora_xacml_editor'),
   );
-
+  $items['xacml/dsidautocomplete/%/%'] = array(
+    'page callback' => 'islandora_xacml_editor_dsid_autocomplete',
+    'page arguments' => array(2, 3),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('Edit XACML Policies'),
+  );
+  $items['xacml/mimeautocomplete/%/%/%'] = array(
+    'page callback' => 'islandora_xacml_editor_mime_autocomplete',
+    'page arguments' => array(2, 3, 4),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('Edit XACML Policies'),
+  );
+  $items['xacml/ahah/%/remove'] = array(
+    'page callback' => 'islandora_xacml_editor_remove_js',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['xacml/ahah/add/dsid/%/%'] = array(
+    'page callback' => 'islandora_xacml_editor_add_dsid_js',
+    'page arguments' => array(4, 5),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['xacml/ahah/add/dsidregex/%/%'] = array(
+    'page callback' => 'islandora_xacml_editor_add_dsid_regex_js',
+    'page arguments' => array(4, 5),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['xacml/ahah/add/mime/%/%'] = array(
+    'page callback' => 'islandora_xacml_editor_add_mime_js',
+    'page arguments' => array(4, 5),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['xacml/ahah/add/mimeregex/%/%'] = array(
+    'page callback' => 'islandora_xacml_editor_add_mime_regex_js',
+    'page arguments' => array(4, 5),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
+}
+
+function islandora_xacml_editor_remove_js($xacml_dsid) {
+  module_load_include('inc', 'php_lib', 'Ahah');
+  
+  list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
+  
+  // Get the values of the selects to keep them persistant across AHAH callbacks
+  if (isset($_POST['dsidmime']['enabled'])) {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($_POST['access']['enabled'])) {
+    $form_state['storage']['access']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['access']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($form_state['post']['dsidmime']['users'])) {
+    $form_state['storage']['dsidmime']['users'] = $form_state['post']['dsidmime']['users'];
+  }
+  
+  if (isset($form_state['post']['dsidmime']['roles'])) {
+    $form_state['storage']['dsidmime']['roles'] = $form_state['post']['dsidmime']['roles'];
+  }
+  
+  if (isset($form_state['post']['manage']['users'])) {
+    $form_state['storage']['manage']['users'] = $form_state['post']['manage']['users'];
+  }
+  
+  if (isset($form_state['post']['manage']['roles'])) {
+    $form_state['storage']['manage']['roles'] = $form_state['post']['manage']['roles'];
+  }
+  
+  if (isset($form_state['post']['access']['users'])) {
+    $form_state['storage']['access']['users'] = $form_state['post']['access']['users'];
+  }
+  
+  if (isset($form_state['post']['access']['roles'])) {
+    $form_state['storage']['access']['roles'] = $form_state['post']['access']['roles'];
+  }
+  
+  $values = $form_state['storage']['dsidmime'];
+  
+  if (isset($form_state['storage']['adddsid'])) {
+    $values['dsid'] = array_merge($values['dsid'], $form_state['storage']['adddsid']);
+  }
+  
+  if (isset($form_state['storage']['addmime'])) {
+    $values['mime'] = array_merge($values['mime'], $form_state['storage']['addmime']);
+  }
+  
+  $removeval = array_search('Remove', $form_state['post']);
+  $removeval = str_replace('~SPACE~', ' ', $removeval);
+  
+  preg_match('/(.*)---(.*)/', $removeval, $match);
+  $removeval = $match[2];
+  $type = $match[1];
+ 
+  if ($type == 'DSID') {
+    $form_state['storage']['removedsid'] = $form_state['storage']['rows'][$removeval]['Filter'];
+  }
+  elseif ($type == 'MIME Type') {
+    $form_state['storage']['removemime'] = $form_state['storage']['rows'][$removeval]['Filter'];
+  }
+  elseif ($type == 'MIME Type Regex') {
+    $form_state['storage']['removemimeregex'] = $form_state['storage']['rows'][$removeval]['Filter'];
+  }
+  elseif ($type == 'DSID Regex') {
+    $form_state['storage']['removedsidregex'] = $form_state['storage']['rows'][$removeval]['Filter'];
+ }
+  
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $childvalue = $_POST['update_options'];
+  }
+  
+  $form_state['action'] = $form['#action'];
+  
+  $tempvalues = $_POST;
+  
+  $form = Ahah::rebuildForm($form_id, $form_build_id, $form, $form_state);
+  
+  $form['dsidmime']['#collapsed'] = FALSE;
+  
+  if (!empty($tempvalues['dsidmime']['newdsid'])) {
+    $form['dsidmime']['newdsid']['#value'] = $tempvalues['dsidmime']['newdsid'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['newmime'])) {
+    $form['dsidmime']['newmime']['#value'] = $tempvalues['dsidmime']['newmime'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['mimeregex'])) {
+    $form['dsidmime']['mimeregex']['#value'] = $tempvalues['dsidmime']['mimeregex'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['dsidregex'])) {
+    $form['dsidmime']['dsidregex']['#value'] = $tempvalues['dsidmime']['dsidregex'];
+  }
+  
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $form['update_options']['#value'] = $childvalue;
+  }
+   
+  Ahah::respond($form);
+  exit();
+}
+
+function islandora_xacml_editor_add_dsid_regex_js($xacml_dsid, $pid) {
+  module_load_include('inc', 'php_lib', 'Ahah');
+  
+  list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
+  
+  // Get the values of the selects to keep them persistant across AHAH callbacks
+  if (isset($_POST['dsidmime']['enabled'])) {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($_POST['access']['enabled'])) {
+    $form_state['storage']['access']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['access']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($form_state['post']['dsidmime']['users'])) {
+    $form_state['storage']['dsidmime']['users'] = $form_state['post']['dsidmime']['users'];
+  }
+  
+  if (isset($form_state['post']['dsidmime']['roles'])) {
+    $form_state['storage']['dsidmime']['roles'] = $form_state['post']['dsidmime']['roles'];
+  }
+  
+  if (isset($form_state['post']['manage']['users'])) {
+    $form_state['storage']['manage']['users'] = $form_state['post']['manage']['users'];
+  }
+  
+  if (isset($form_state['post']['manage']['roles'])) {
+    $form_state['storage']['manage']['roles'] = $form_state['post']['manage']['roles'];
+  }
+  
+  if (isset($form_state['post']['access']['users'])) {
+    $form_state['storage']['access']['users'] = $form_state['post']['access']['users'];
+  }
+  
+  if (isset($form_state['post']['access']['roles'])) {
+    $form_state['storage']['access']['roles'] = $form_state['post']['access']['roles'];
+  }
+  
+  // Store and checks
+  
+  if (!isset($form_state['storage']['dsidregexs'])) {
+    $form_state['storage']['dsidregexs'] = array();
+  }
+  $addvalue = trim($_POST['dsidmime']['dsidregex']);
+  
+  if (!empty($addvalue) && !ctype_space($addvalue)) {
+  // Check the additional dsids and the dsids from the XACML rules
+
+    if (isset($form_state['storage']['dsidregexs'])) {
+      $added = array_search($addvalue, $form_state['storage']['dsidregexs']);
+    }
+
+    if (isset($form_state['storage']['selecteddsidregexs'])) {
+      $rules = array_search($addvalue, $form_state['storage']['selecteddsidregexs']);
+    }
+
+    if (!is_numeric($added) && $rules != $addvalue) {
+      $form_state['storage']['dsidregexs'][] = $addvalue;
+    }
+    else {
+      drupal_set_message(t('The DSID regex %regex was not added as it already exists as a filter!',
+        array(
+          '%regex' => $addvalue,
+        )
+      ), 'warning');
+    }
+  }
+  else {
+    drupal_set_message(t('No DSID regex value entered!'), 'error');
+  }
+      
+  $form_state['action'] = $form['#action'];
+  $tempvalues = $_POST;
+  
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $childvalue = $_POST['update_options'];
+  }
+  
+  $form = Ahah::rebuildForm($form_id, $form_build_id, $form, $form_state);
+ 
+  $form['dsidmime']['#collapsed'] = FALSE;
+    
+  if (!empty($tempvalues['dsidmime']['newmime'])) {
+    $form['dsidmime']['newmime']['#value'] = $tempvalues['dsidmime']['newmime'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['mimeregex'])) {
+    $form['dsidmime']['mimeregex']['#value'] = $tempvalues['dsidmime']['mimeregex'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['newdsid'])) {
+    $form['dsidmime']['newdsid']['#value'] = $tempvalues['dsidmime']['newdsid'];
+  }
+  
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $form['update_options']['#value'] = $childvalue;
+  }  
+  
+  Ahah::respond($form);
+  exit();
+}
+
+function islandora_xacml_editor_add_dsid_js($xacml_dsid, $pid) {
+  module_load_include('inc', 'php_lib', 'Ahah');
+  
+  list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
+  
+  // Get the values of the selects to keep them persistant across AHAH callbacks
+  if (isset($_POST['dsidmime']['enabled'])) {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($_POST['access']['enabled'])) {
+    $form_state['storage']['access']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['access']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($form_state['post']['dsidmime']['users'])) {
+    $form_state['storage']['dsidmime']['users'] = $form_state['post']['dsidmime']['users'];
+  }
+  
+  if (isset($form_state['post']['dsidmime']['roles'])) {
+    $form_state['storage']['dsidmime']['roles'] = $form_state['post']['dsidmime']['roles'];
+  }
+  
+  if (isset($form_state['post']['manage']['users'])) {
+    $form_state['storage']['manage']['users'] = $form_state['post']['manage']['users'];
+  }
+  
+  if (isset($form_state['post']['manage']['roles'])) {
+    $form_state['storage']['manage']['roles'] = $form_state['post']['manage']['roles'];
+  }
+  
+  if (isset($form_state['post']['access']['users'])) {
+    $form_state['storage']['access']['users'] = $form_state['post']['access']['users'];
+  }
+  
+  if (isset($form_state['post']['access']['roles'])) {
+    $form_state['storage']['access']['roles'] = $form_state['post']['access']['roles'];
+  }
+    
+  if (!isset($form_state['storage']['adddsid'])) {
+    $form_state['storage']['adddsid'] = array();
+  }
+  $addvalue = trim($_POST['dsidmime']['newdsid']);
+  if (!empty($addvalue) && !ctype_space($addvalue)) {
+    // Check the additional dsids and the dsids from the XACML rules
+
+    if (isset($form_state['storage']['adddsid'])) {
+      $added = array_search($addvalue, $form_state['storage']['adddsid']);
+    }
+    
+    if (isset($form_state['storage']['selecteddsid'])) {
+      $rules = array_search($addvalue, $form_state['storage']['selecteddsid']);
+    }
+
+    if (!is_numeric($added) && $rules != $addvalue) {
+      $form_state['storage']['adddsid'][] = $addvalue;
+    }
+    else {
+      drupal_set_message(t('The DSID %dsid was not added as it already exists as a filter!',
+        array(
+          '%dsid' => $addvalue,
+        )
+      ), 'warning');
+    }
+  }
+  else {
+    drupal_set_message(t('No DSID value entered!'), 'error');
+  }
+  
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $childvalue = $_POST['update_options'];
+  }
+      
+  $form_state['action'] = $form['#action'];
+  $tempvalues = $_POST;
+  $form = Ahah::rebuildForm($form_id, $form_build_id, $form, $form_state);
+ 
+  $form['dsidmime']['#collapsed'] = FALSE;
+    
+  if (!empty($tempvalues['dsidmime']['newmime'])) {
+    $form['dsidmime']['newmime']['#value'] = $tempvalues['dsidmime']['newmime'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['mimeregex'])) {
+    $form['dsidmime']['mimeregex']['#value'] = $tempvalues['dsidmime']['mimeregex'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['dsidregex'])) {
+    $form['dsidmime']['dsidregex']['#value'] = $tempvalues['dsidmime']['dsidregex'];
+  }
+  
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $form['update_options']['#value'] = $childvalue;
+  }  
+  
+  Ahah::respond($form);
+  exit();
+}
+
+function islandora_xacml_editor_add_mime_regex_js($xacml_dsid, $pid) {
+  module_load_include('inc', 'php_lib', 'Ahah');
+  
+  list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
+  
+  // Get the values of the selects to keep them persistant across AHAH callbacks
+  if (isset($_POST['dsidmime']['enabled'])) {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($_POST['access']['enabled'])) {
+    $form_state['storage']['access']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['access']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($form_state['post']['dsidmime']['users'])) {
+    $form_state['storage']['dsidmime']['users'] = $form_state['post']['dsidmime']['users'];
+  }
+  
+  if (isset($form_state['post']['dsidmime']['roles'])) {
+    $form_state['storage']['dsidmime']['roles'] = $form_state['post']['dsidmime']['roles'];
+  }
+  
+  if (isset($form_state['post']['manage']['users'])) {
+    $form_state['storage']['manage']['users'] = $form_state['post']['manage']['users'];
+  }
+  
+  if (isset($form_state['post']['manage']['roles'])) {
+    $form_state['storage']['manage']['roles'] = $form_state['post']['manage']['roles'];
+  }
+  
+  if (isset($form_state['post']['access']['users'])) {
+    $form_state['storage']['access']['users'] = $form_state['post']['access']['users'];
+  }
+  
+  if (isset($form_state['post']['access']['roles'])) {
+    $form_state['storage']['access']['roles'] = $form_state['post']['access']['roles'];
+  }
+  
+  // Store and checks
+  
+  if (!isset($form_state['storage']['mimeregexs'])) {
+    $form_state['storage']['mimeregexs'] = array();
+  }
+  
+  $addvalue = trim($_POST['dsidmime']['mimeregex']);
+  
+  if (!empty($addvalue) && !ctype_space($addvalue)) {
+  // Check the additional dsids and the dsids from the XACML rules
+    if (isset($form_state['storage']['mimeregexs'])) {
+      $added = array_search($addvalue, $form_state['storage']['mimeregexs']);
+    }
+    
+    if (isset($form_state['storage']['selectedmimeregexs'])) {
+      $rules = array_search($addvalue, $form_state['storage']['selectedmimeregexs']);
+    }
+    
+    if (!is_numeric($added) && $rules != $addvalue) {
+      $form_state['storage']['mimeregexs'][] = $addvalue;
+    }
+    else {
+      drupal_set_message(t('The MIME type regex %regex was not added as it already exists as a filter!',
+        array(
+          '%regex' => $addvalue,
+        )
+      ), 'warning');
+    }
+  }
+  else {
+    drupal_set_message(t('No MIME type regex value entered!'), 'error');
+  }   
+  $form_state['action'] = $form['#action'];
+  $tempvalues = $_POST;
+
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $childvalue = $_POST['update_options'];
+  }
+  
+  $form = Ahah::rebuildForm($form_id, $form_build_id, $form, $form_state);
+ 
+  $form['dsidmime']['#collapsed'] = FALSE;
+    
+  if (!empty($tempvalues['dsidmime']['newmime'])) {
+    $form['dsidmime']['newmime']['#value'] = $tempvalues['dsidmime']['newmime'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['dsidregex'])) {
+    $form['dsidmime']['dsidregex']['#value'] = $tempvalues['dsidmime']['dsidregex'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['newdsid'])) {
+    $form['dsidmime']['newdsid']['#value'] = $tempvalues['dsidmime']['newdsid'];
+  }
+  
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $form['update_options']['#value'] = $childvalue;
+  }  
+  
+  Ahah::respond($form);
+  exit();
+}
+
+function islandora_xacml_editor_add_mime_js($xacml_dsid, $pid) {
+  module_load_include('inc', 'php_lib', 'Ahah');
+    
+  list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
+    
+  // Get the values of the selects to keep them persistant across AHAH callbacks
+  if (isset($_POST['dsidmime']['enabled'])) {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['dsidmime']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($_POST['access']['enabled'])) {
+    $form_state['storage']['access']['enabled']['#value'] = TRUE;
+  }
+  else {
+    $form_state['storage']['access']['enabled']['#value'] = FALSE;
+  }
+  
+  if (isset($form_state['post']['dsidmime']['users'])) {
+    $form_state['storage']['dsidmime']['users'] = $form_state['post']['dsidmime']['users'];
+  }
+  
+  if (isset($form_state['post']['dsidmime']['roles'])) {
+    $form_state['storage']['dsidmime']['roles'] = $form_state['post']['dsidmime']['roles'];
+  }
+  
+  if (isset($form_state['post']['manage']['users'])) {
+    $form_state['storage']['manage']['users'] = $form_state['post']['manage']['users'];
+  }
+  
+  if (isset($form_state['post']['manage']['roles'])) {
+    $form_state['storage']['manage']['roles'] = $form_state['post']['manage']['roles'];
+  }
+  
+  if (isset($form_state['post']['access']['users'])) {
+    $form_state['storage']['access']['users'] = $form_state['post']['access']['users'];
+  }
+  
+  if (isset($form_state['post']['access']['roles'])) {
+    $form_state['storage']['access']['roles'] = $form_state['post']['access']['roles'];
+  }
+  
+  if (!isset($form_state['storage']['addmime'])) {
+    $form_state['storage']['addmime'] = array();
+  }
+  
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    module_load_include('inc', 'fedora_repository', 'CollectionPolicy');  
+
+    $collection = CollectionPolicy::loadFromCollection($pid);
+    if ($collection) {
+      $cms = $collection->getContentModels();
+      foreach ($cms as $cm) {
+        $contentmodel = ContentModel::loadFromModel($cm->pid);
+        if ($contentmodel) {
+          $tmp = $contentmodel->getMimetypes();
+          foreach ($tmp as $t) {
+            $mime[$t] = $t;
+          }
+        }
+      }
+    }
+  }
+  else {
+    module_load_include('inc', 'fedora_repository', 'ContentModel');
+    $contentmodel = ContentModel::loadFromObject($pid);
+    if ($contentmodel) {
+      $tmp = $contentmodel->getMimetypes();
+      foreach ($tmp as $t) {
+        $mime[$t] = $t;
+      }
+    }
+  }
+  $addvalue = trim($_POST['dsidmime']['newmime']);
+  if (!empty($addvalue) && !ctype_space($addvalue)) {
+    if (isset($form_state['storage']['addmime'])) {
+      $added = array_search($addvalue, $form_state['storage']['addmime']);
+    }
+
+    if (isset($form_state['storage']['selectedmime'])) {
+      $rules = array_search($addvalue, $form_state['storage']['selectedmime']);
+    } 
+
+    if (!is_numeric($added) && $rules != $addvalue) {
+      $form_state['storage']['addmime'][] = $addvalue;
+    }
+    else {
+      drupal_set_message(t('The MIME type %mime was not added as it already exists as a filter!',
+        array(
+          '%mime' => $addvalue,
+        )
+      ), 'warning');
+    }
+  }
+  else {
+    drupal_set_message(t('No MIME type value entered!'), 'error');
+  }
+ 
+  $form_state['action'] = $form['#action']; 
+  $tempvalues = $_POST;
+  
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $childvalue = $_POST['update_options'];
+  }
+  
+  $form = Ahah::rebuildForm($form_id, $form_build_id, $form, $form_state);
+  
+  $form['dsidmime']['#collapsed'] = FALSE;
+    
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $form['update_options']['#value'] = $childvalue;
+  }
+  
+  if (!empty($tempvalues['dsidmime']['newdsid'])) {
+    $form['dsidmime']['newdsid']['#value'] = $tempvalues['dsidmime']['newdsid'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['mimeregex'])) {
+    $form['dsidmime']['mimeregex']['#value'] = $tempvalues['dsidmime']['mimeregex'];
+  }
+  
+  if (!empty($tempvalues['dsidmime']['dsidregex'])) {
+    $form['dsidmime']['dsidregex']['#value'] = $tempvalues['dsidmime']['dsidregex'];
+  }
+  
+  Ahah::respond($form);
+  exit();
+}
+
+function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
+  module_load_include('inc', 'fedora_repository', 'api/fedora_item');
+  
+  $object = new Fedora_Item($pid);
+  $dslist = $object->get_datastreams_list_as_array();
+  
+  $output = array();
+  
+  foreach ($dslist as $key => $value) {
+    if ($string != '*') {
+      if (strpos(strtoupper($key), strtoupper($string)) !== false) {
+        $output[$key] = check_plain($key);
+      }
+    }
+    else {
+      $output[$key] = check_plain($key);
+    }
+  }
+    
+  print drupal_to_js($output);
+  exit();
+}
+
+function islandora_xacml_editor_mime_autocomplete($xacml_dsid, $pid, $string) {
+  module_load_include('inc', 'fedora_repository', 'ContentModel');
+  
+  $output = array();
+  if($xacml_dsid == 'CHILD_SECURITY') {
+    module_load_include('inc', 'fedora_repository', 'CollectionPolicy');  
+
+    $collection = CollectionPolicy::loadFromCollection($pid);
+    if ($collection) {
+      $cms = $collection->getContentModels();
+      foreach($cms as $cm) {
+        $contentmodel = ContentModel::loadFromModel($cm->pid);
+        if($contentmodel) {
+          $tmp = $contentmodel->getMimetypes();
+          foreach ($tmp as $t) {
+            $mime[$t] = $t;
+          }
+        }
+      }
+    }
+  }
+  else {
+    $contentmodel = ContentModel::loadFromObject($pid);
+    if ($contentmodel) {
+      $tmp = $contentmodel->getMimetypes();
+      foreach( $tmp as $t) {
+        $mime[$t] = $t;
+      }
+    }
+  }
+  foreach ($mime as $key => $value) {
+    if ($string != "*") { 
+      if (strpos(strtoupper($key), strtoupper($string)) !== false) {
+        $output[$key] = check_plain($key);
+      }
+    }
+    else {
+      $output[$key] = check_plain($key);
+    }
+  }
+  
+  print drupal_to_js($output);
+  exit();
+   
 }
 
 /**
@@ -95,22 +767,26 @@ function islandora_xacml_editor_settings() {
  * The XACML editing form.
  */
 function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
-
+  drupal_add_css(drupal_get_path('module', 'islandora_xacml_editor') . '/css/islandora_xacml_editor.css');
   module_load_include('inc', 'fedora_repository', 'api/fedora_utils');
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
   module_load_include('inc', 'islandora_xacml_api', 'Xacml');
   module_load_include('inc', 'fedora_repository', 'ObjectHelper');
-
+  module_load_include('inc', 'php_lib', 'Ahah');
+  
+  Ahah::get_ahah_js();
   // when we call in from top level collections in JS get get the
   // pid being undefined
   if ($object_pid == 'undefined' || !$object_pid) {
     $object_pid = variable_get('fedora_repository_pid', 'islandora:top');
   }
-
-  $form_state['storage'] = array();
-  $form_state['storage']['object_pid'] = $object_pid;
-  $form_state['storage']['xacml_dsid'] = $xacml_dsid;
-
+  
+  if (!isset($form_state['storage'])) {
+    $form_state['storage'] = array();
+    $form_state['storage']['object_pid'] = $object_pid;
+    $form_state['storage']['xacml_dsid'] = $xacml_dsid;
+  }
+  
   if (!valid_pid($object_pid) || !valid_dsid($xacml_dsid)) {
     drupal_not_found();
     exit();
@@ -134,7 +810,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   module_load_include('inc', 'fedora_repository', 'ContentModel');
 
   if ($xacml_dsid == 'CHILD_SECURITY') {
-    module_load_include('inc', 'fedora_repository', 'CollectionPolicy');
+    module_load_include('inc', 'fedora_repository', 'CollectionPolicy'); 
 
     $collection = CollectionPolicy::loadFromCollection($object_pid);
     if ($collection) {
@@ -198,6 +874,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     }
     catch (XacmlException $e) {
       watchdog('islandora_xacml_editor', $e->getMessage(), array(), WATCHDOG_ERROR);
+      drupal_set_message($e->getMessage());
       drupal_set_message(t("Xacml Parser failed to parse @object_pid/@xacml_dsid. It is likely this POLICY wasn't written by the islandora XACML editor, it will have to be modified by hand.",
                           array("@object_pid" => $object_pid, "@xacml_dsid" => $xacml_dsid))
                         );
@@ -212,8 +889,15 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   // select the admin user and the current user by default
   $selected_users = $GLOBALS['user']->name == $admin_user ? array($admin_user) : array($GLOBALS['user']->name, $admin_user);
 
-  $form = array();
-
+  $form = array(
+    '#prefix' => '<div id="islandora_xacml">',
+    '#suffix' => '</div>',
+  );
+  $form['#cache'] = TRUE;
+  
+  if (isset($form_state['action'])) {
+    $form['#action'] = $form_state['action'];
+  }
   $form['#tree'] = TRUE;
 
   $form['access'] = array(
@@ -226,16 +910,17 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form['access']['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable XACML Restrictions on Object Viewing'),
-    '#default_value' => $xacml->viewingRule->isPopulated(),
+    '#default_value' => isset($form_state['storage']['access']['enabled']) ? $form_state['storage']['access']['enabled']['#value'] : $xacml->viewingRule->isPopulated(),
   );
 
   $form['access']['users'] = array(
     '#type' => 'select',
     '#title' => t('Allowed Users'),
-    '#default_value' => $xacml->viewingRule->isPopulated() ? $xacml->viewingRule->getUsers() : $selected_users,
+    '#default_value' => isset($form_state['storage']['access']['users']) ? $form_state['storage']['access']['users'] : $xacml->viewingRule->getUsers(),
     '#options' => $users,
     '#multiple' => TRUE,
     '#size' => 10,
+    '#prefix' => '<div class="islandora_xacml_selects">',
   );
 
   $form['access']['roles'] = array(
@@ -244,7 +929,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#options' => $roles,
     '#multiple' => TRUE,
     '#size' => 10,
-    '#default_value' => $xacml->viewingRule->isPopulated() ? $xacml->viewingRule->getRoles() : NULL,
+    '#default_value' => isset($form_state['storage']['access']['roles']) ? $form_state['storage']['access']['roles'] : $xacml->viewingRule->getRoles(),
+    '#suffix' => '</div>',
   );
 
   $form['manage'] = array(
@@ -262,20 +948,22 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#type' => 'select',
     '#title' => t('Users'),
     '#options' => $users,
-    '#default_value' => $xacml->managementRule->isPopulated() ? $xacml->managementRule->getUsers() : $selected_users,
+    '#default_value' => isset($form_state['storage']['manage']['users']) ? $form_state['storage']['manage']['users'] : $xacml->managementRule->getUsers(),
     '#multiple' => TRUE,
-    '#size' => 10
+    '#size' => 10,
+    '#prefix' => '<div class="islandora_xacml_selects">',
   );
 
   $form['manage']['roles'] = array(
     '#type' => 'select',
     '#title' => t('Roles'),
-    '#default_value' => $xacml->managementRule->isPopulated() ? $xacml->managementRule->getRoles() : NULL,
+    '#default_value' => isset($form_state['storage']['manage']['roles']) ? $form_state['storage']['manage']['roles'] : $xacml->managementRule->getRoles(),
     '#options' => $roles,
     '#multiple' => TRUE,
-    '#size' => 10
+    '#size' => 10,
+    '#suffix' => '</div>',
   );
-
+  
   $form['dsidmime'] = array(
     '#type' => 'fieldset',
     '#title' => t('Datastreams and MIME types'),
@@ -286,46 +974,9 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form['dsidmime']['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable XACML Restrictions on DSIDs and MIME types'),
-    '#default_value' => $xacml->datastreamRule->isPopulated(),
+    '#default_value' => isset($form_state['storage']['dsidmime']['enabled']) ? $form_state['storage']['dsidmime']['enabled']['#value'] : $xacml->datastreamRule->isPopulated(),
   );
-
-  $form['dsidmime']['users'] = array(
-    '#type' => 'select',
-    '#title' => t('Users'),
-    '#default_value' => $selected_users,
-    '#options' => $users,
-    '#multiple' => TRUE,
-    '#size' => 10,
-    '#default_value' => $xacml->datastreamRule->isPopulated() ? $xacml->datastreamRule->getUsers() : $selected_users,
-  );
-
-  $form['dsidmime']['roles'] = array(
-    '#type' => 'select',
-    '#title' => t('Roles'),
-    '#options' => $roles,
-    '#multiple' => TRUE,
-    '#size' => 10,
-    '#default_value' => $xacml->datastreamRule->isPopulated() ? $xacml->datastreamRule->getRoles() : NULL,
-  );
-
-  $form['dsidmime']['dsid'] = array(
-    '#type' => 'select',
-    '#title' => t('DSIDs'),
-    '#options' => $dsid,
-    '#multiple' => TRUE,
-    '#size' => 10,
-    '#default_value' => $xacml->datastreamRule->isPopulated() ? $xacml->datastreamRule->getDsids() : NULL,
-  );
-
-  $form['dsidmime']['mime'] = array(
-    '#type' => 'select',
-    '#title' => t('Mimetype'),
-    '#options' => $mime,
-    '#multiple' => TRUE,
-    '#size' => 10,
-    '#default_value' => $xacml->datastreamRule->isPopulated() ? $xacml->datastreamRule->getMimetypes() : NULL,
-  );
-
+     
   if ($xacml_dsid == 'CHILD_SECURITY') {
     $form['update_options'] = array(
       '#type' => 'select',
@@ -338,17 +989,455 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
       ),
     );
   }
-
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Set Permissions')
+  
+  $form['dsidmime']['users'] = array(
+    '#type' => 'select',
+    '#title' => t('Users'),
+    '#options' => $users,
+    '#default_value' => isset($form_state['storage']['dsidmime']['users']) ? $form_state['storage']['dsidmime']['users'] : $xacml->datastreamRule->getUsers(),
+    '#multiple' => TRUE,
+    '#size' => 10,
+    '#prefix' => '<div class="islandora_xacml_selects">',
   );
 
+  $form['dsidmime']['roles'] = array(
+    '#type' => 'select',
+    '#title' => t('Roles'),
+    '#default_value' => isset($form_state['storage']['dsidmime']['roles']) ? $form_state['storage']['dsidmime']['roles'] : $xacml->datastreamRule->getRoles(),
+    '#options' => $roles,
+    '#multiple' => TRUE,
+    '#size' => 10,
+    '#suffix' => '</div>',
+  );
+  
+  // Grab these values to handle removal
+  $tempmime = $xacml->datastreamRule->getMimetypes();
+  $tempdsid = $xacml->datastreamRule->getDsids();
+  $tempmimeregexs = $xacml->datastreamRule->getMimetypeRegexs();
+  $tempdsidregexs = $xacml->datastreamRule->getDsidRegexs();
+      
+  if (isset($form_state['storage']['removedsid'])) {
+    $key = array_search($form_state['storage']['removedsid'], $tempdsid);
+    
+    // If the value is not one of our 'hidden DSIDs'
+    if (is_numeric($key)) {
+      $xacml->datastreamRule->removeDsid($tempdsid[$key]);
+      $form_state['storage']['hidedsids'][] = $form_state['storage']['removedsid'];
+    }  
+       
+    $dsid = $form_state['storage']['removedsid'];
+    unset($form_state['storage']['removedsid']);
+    
+    if (isset($form_state['storage']['adddsid'])) {
+      $search = array_search($dsid, $form_state['storage']['adddsid']);
+      
+      if (is_numeric($search)) {
+        unset($form_state['storage']['adddsid'][$search]);
+      }
+    }
+  }
+  
+  if (isset($form_state['storage']['removemime'])) {
+    $key = array_search($form_state['storage']['removemime'], $tempmime);
+    
+    // If the value is not one of our 'hidden mimes'
+    if (is_numeric($key)) {
+      $xacml->datastreamRule->removeMimetype($tempmime[$key]);
+      $form_state['storage']['hidemimes'][] = $form_state['storage']['removemime'];
+    }
+        
+    $mime = $form_state['storage']['removemime'];
+    unset($form_state['storage']['removemime']);
+    
+    if (isset($form_state['storage']['addmime'])) {
+      $search = array_search($mime, $form_state['storage']['addmime']);
+      
+      if (is_numeric($search)) {
+        unset($form_state['storage']['addmime'][$search]);
+      }
+    }
+  }
+  
+  if (isset($form_state['storage']['removemimeregex'])) {
+    $key = array_search($form_state['storage']['removemimeregex'], $tempmimeregexs);
+    
+    // If the value is not one of our 'hidden mimes'
+    if (is_numeric($key)) {
+      $xacml->datastreamRule->removeMimetypeRegex($tempmimeregexs[$key]);
+      $form_state['storage']['hidemimeregexs'][] = $form_state['storage']['removemimeregex'];
+    }
+        
+    $mime = $form_state['storage']['removemimeregex'];
+    unset($form_state['storage']['removemimeregex']);
+    
+    if (isset($form_state['storage']['mimeregexs'])) {
+      $search = array_search($mime, $form_state['storage']['mimeregexs']);
+      
+      if (is_numeric($search)) {
+        unset($form_state['storage']['mimeregexs'][$search]);
+      }
+    }
+  }
+  
+  if (isset($form_state['storage']['removedsidregex'])) {
+    $key = array_search($form_state['storage']['removedsidregex'], $tempdsidregexs);
+    
+    // If the value is not one of our 'hidden mimes'
+    if (is_numeric($key)) {
+      $xacml->datastreamRule->removeDsidRegex($tempmimeregexs[$key]);
+      $form_state['storage']['hidedsidregexs'][] = $form_state['storage']['removedsidregex'];
+    }
+        
+    $dsid = $form_state['storage']['removedsidregex'];
+    unset($form_state['storage']['removedsidregex']);
+    
+    if (isset($form_state['storage']['dsidregexs'])) {
+      $search = array_search($dsid, $form_state['storage']['dsidregexs']);
+      
+      if (is_numeric($search)) {
+        unset($form_state['storage']['dsidregexs'][$search]);
+      }
+    }
+  }
+    
+  // If we are carrying values from the original rule that need to be removed
+  // remove them.
+  if (isset($form_state['storage']['hidemimes'])) {
+    foreach ($form_state['storage']['hidemimes'] as $key => $value) {
+      $xacml->datastreamRule->removeMimetype($value);
+    }
+  }
+  
+  if (isset($form_state['storage']['hidedsids'])) {
+    foreach ($form_state['storage']['hidedsids'] as $key => $value) {
+      $xacml->datastreamRule->removeDsid($value);
+    }
+  }
+  
+  if (isset($form_state['storage']['hidemimeregexs'])) {
+    foreach ($form_state['storage']['hidemimeregexs'] as $key => $value) {
+      $xacml->datastreamRule->removeMimetypeRegex($value);
+    }
+  }
+  
+  if (isset($form_state['storage']['hidedsidregexs'])) {
+    foreach ($form_state['storage']['hidedsidregexs'] as $key => $value) {
+      $xacml->datastreamRule->removeDsidRegex($value);
+    }
+  }
+  
+  // Grab the updated values to handle addition of rules.
+  $tempmime = $xacml->datastreamRule->getMimetypes();
+  $tempdsid = $xacml->datastreamRule->getDsids();
+  $tempmimeregexs = $xacml->datastreamRule->getMimetypeRegexs();
+  $tempdsidregexs = $xacml->datastreamRule->getDsidRegexs();
+  
+  // Add any values we are carrying in the form storage to the datastream rules
+  if (isset($form_state['storage']['adddsid'])) {
+    foreach ($form_state['storage']['adddsid'] as $key => $value) {
+      $search = array_search($value, $tempdsid);
+      
+      if (!is_numeric($search)) {
+        $xacml->datastreamRule->addDsid($value);
+        
+        if (isset($form_state['storage']['hidedsids'])) {
+          $removedsid = array_search($value, $form_state['storage']['hidedsids']);
+          
+          if (is_numeric($removedsid)) {
+            unset($form_state['storage']['hidesids'][$removedsid]);
+          }
+        }
+      }
+    }
+  }
+  
+  if (isset($form_state['storage']['addmime'])) {
+    foreach ($form_state['storage']['addmime'] as $key => $value) {
+      $search = array_search($value, $tempmime);
+      
+      if (!is_numeric($search)) {
+        $xacml->datastreamRule->addMimetype($value);
+        
+        if (isset($form_state['storage']['hidemimes'])) {
+          $removemime = array_search($value, $form_state['storage']['hidemimes']);
+          
+          if (is_numeric($removemime)) {
+            unset($form_state['storage']['hidemimes'][$removemime]);
+          }
+        }
+      }
+    }
+  }
+    
+  if (isset($form_state['storage']['dsidregexs'])) {
+    foreach ($form_state['storage']['dsidregexs'] as $key => $value) {
+      $search = array_search($value, $tempdsidregexs);
+      
+      if (!is_numeric($search)) {
+        $xacml->datastreamRule->addDsidRegex($value);
+        
+        if (isset($form_state['storage']['hidedsidregexs'])) {
+          $removedsid = array_search($value, $form_state['storage']['hidedsidregexs']);
+          
+          if (is_numeric($removedsid)) {
+            unset($form_state['storage']['hidedsidregexs'][$removedsid]);
+          }
+        }
+      }
+    }
+  }  
+ 
+  if (isset($form_state['storage']['mimeregexs'])) {
+    foreach ($form_state['storage']['mimeregexs'] as $key => $value) {
+      $search = array_search($value, $tempmimeregexs);
+      
+      if (!is_numeric($search)) {
+        $xacml->datastreamRule->addMimetypeRegex($value);
+        
+        if (isset($form_state['storage']['hidemimeregexs'])) {
+          $removemime = array_search($value, $form_state['storage']['hidemimeregexs']);
+          
+          if (is_numeric($removemime)) {
+            unset($form_state['storage']['hidemimeregexs'][$removemime]);
+          }
+        }
+      }
+    }
+  } 
+  
+  // Grab the values one last time for storage and use in constructing the
+  // rules table.
+  $selectedmime = $xacml->datastreamRule->getMimetypes();
+  $selecteddsid = $xacml->datastreamRule->getDsids();
+  $selectedmimeregexs = $xacml->datastreamRule->getMimetypeRegexs();
+  $selecteddsidregexs = $xacml->datastreamRule->getDsidRegexs();
+  
+  // We store these values for use in the AHAH callbacks
+  $form_state['storage']['dsidmime']['dsid'] = $selecteddsid;
+  $form_state['storage']['dsidmime']['mime'] = $selectedmime;
+  $form_state['storage']['dsidmime']['dsidregexs'] = $selecteddsidregexs;
+  $form_state['storage']['dsidmime']['mimeregexs'] = $selectedmimeregexs;
+  
+  if (count($selectedmime) > 0) {
+    $form_state['storage']['selectedmime'] = array_combine($selectedmime, $selectedmime);
+  }
+  else {
+    unset($form_state['storage']['selectedmime']);
+  }
+  
+  if (count($selecteddsid) > 0) {
+    $form_state['storage']['selecteddsid'] = array_combine($selecteddsid, $selecteddsid);
+  }
+  else {
+    unset($form_state['storage']['selecteddsid']);
+  }
+  
+  if (count($selectedmimeregexs) > 0) {
+    $form_state['storage']['selectedmimeregexs'] = array_combine($selectedmimeregexs, $selectedmimeregexs);
+  }
+  else {
+    unset($form_state['storage']['selectedmimeregexs']);
+  }
+  
+  if (count($selecteddsidregexs) > 0) {
+    $form_state['storage']['selecteddsidregexs'] = array_combine($selecteddsidregexs, $selecteddsidregexs);
+  }
+  else {
+    unset($form_state['storage']['selecteddsidregexs']);
+  }
+  
+  $rows = array();
+  
+  if (!empty($selectedmime)) {
+    foreach ($selectedmime as $mime) {
+      $rows[] = array(
+        'Filter' => trim($mime),
+        'Type' => 'MIME Type',
+      );
+    }
+  }
+    
+  if (!empty($selectedmimeregexs)) {
+    foreach ($selectedmimeregexs as $mimeregex) {
+      $rows[] = array(
+        'Filter' => trim($mimeregex),
+        'Type' => 'MIME Type Regex',
+      );
+    }
+  }
+  
+  if (!empty($selecteddsid)) {
+    foreach ($selecteddsid as $dsid) {
+      $rows[] = array(
+        'Filter' => trim($dsid),
+        'Type' => 'DSID',
+      );
+    }
+  }
+    
+  if (!empty($selecteddsidregexs)) {
+    foreach ($selecteddsidregexs as $dsidregex) {
+      $rows[] = array(
+        'Filter' => trim($dsidregex),
+        'Type' => 'DSID Regex',
+      );
+    }
+  }
+  
+  $form_state['storage']['rows'] = $rows;
+  
+  $form['dsidmime']['table'] = array(
+    '#type' => 'item',
+    '#value' => (count($rows) > 0) ? '<strong>Applied Rules:</strong>' : '<strong>No rules applied!</strong>',
+    'table' => islandora_xacml_editor_form_table($rows, $xacml_dsid),
+  );
+  
+  $form['dsidmime']['newdsid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('DSID'),
+    '#autocomplete_path' => 'xacml/dsidautocomplete/'.$object_pid,
+    '#size' => 35,
+    '#prefix' => '<div class="islandora_xacml_block">',
+  );
+  $form['dsidmime']['newdsidadd'] = array(
+    '#type' => 'button',
+    '#value' => t('Add'),
+    '#suffix' => '</div>',
+    '#ahah' => array(
+      'event' => 'click',
+      'path' => "xacml/ahah/add/dsid/".$xacml_dsid.'/'.$object_pid,
+      'wrapper' => "islandora_xacml",
+      'method' => 'replace',
+    ),
+  );
+  $form['dsidmime']['dsidregex'] = array(
+    '#type' => 'textfield',
+    '#title' => t('DSID Regex'),
+    '#size' => 35,
+    '#prefix' => '<div class="islandora_xacml_block">',
+  );
+  $form['dsidmime']['dsidregexadd'] = array(
+    '#type' => 'button',
+    '#value' => t('Add'),
+    '#suffix' => '</div>',
+    '#ahah' => array(
+      'event' => 'click',
+      'path' => "xacml/ahah/add/dsidregex/".$xacml_dsid.'/'.$object_pid,
+      'wrapper' => "islandora_xacml",
+      'method' => 'replace',
+    ),
+  );
+  $form['dsidmime']['newmime'] = array(
+    '#type' => 'textfield',
+    '#title' => t('MIME type'),
+    '#autocomplete_path' => 'xacml/mimeautocomplete/'.$xacml_dsid.'/'.$object_pid,
+    '#size' => 35,
+    '#prefix' => '<div class="islandora_xacml_block">',
+  );
+  $form['dsidmime']['newmimeadd'] = array(
+    '#name' => 'newmimeadd',
+    '#type' => 'button',
+    '#value' => t('Add'),
+    '#suffix' => '</div>',
+    '#ahah' => array(
+      'event' => 'click',
+      'path' => "xacml/ahah/add/mime/".$xacml_dsid.'/'.$object_pid,
+      'wrapper' => "islandora_xacml",
+      'method' => 'replace',
+    ),
+  );
+  $form['dsidmime']['mimeregex'] = array(
+    '#type' => 'textfield',
+    '#title' => t('MIME type Regex'),
+    '#size' => 35,
+    '#prefix' => '<div class="islandora_xacml_block">',
+  );
+  $form['dsidmime']['mimeregexadd'] = array(
+    '#name' => 'mimeregexadd',
+    '#type' => 'button',
+    '#value' => t('Add'),
+    '#suffix' => '</div>',
+    '#ahah' => array(
+      'event' => 'click',
+      'path' => "xacml/ahah/add/mimeregex/".$xacml_dsid.'/'.$object_pid,
+      'wrapper' => "islandora_xacml",
+      'method' => 'replace',
+    ),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Set Permissions'),
+  );
+   
   return $form;
 }
 
-function islandora_xacml_editor_page_validate(&$form, &$form_state) {
+function islandora_xacml_editor_theme() {
+  return array(
+    'islandora_xacml_editor_theme' => array(
+      'arguments' => array('element' => NULL),
+    )
+  );
+}
 
+function theme_islandora_xacml_editor_theme(array $element) {
+  $rows = array();
+  foreach (element_children($element['rows']) as $child) {
+    $setting = $element['rows'][$child];
+    $fields = array();
+    foreach (element_children($setting) as $property) {
+      $field = $setting[$property];
+      $fields[] = drupal_render($field);
+    }
+    $rows[] = array(
+      'data' => $fields,
+      'class' => isset($setting['#attributes']['class']) ? $setting['#attributes']['class'] : NULL
+    );
+  }
+  $attributes = isset($element['#id']) ? array('id' => $element['#id']) : NULL;
+  return theme_table($element['#header'], $rows, $attributes);
+}
+
+function islandora_xacml_editor_form_table(array $selected, $xacml_dsid) {
+  $table = array(
+    '#header' => array(t('Filter'), t('Type'), t('Remove')
+      ),
+    '#theme' => 'islandora_xacml_editor_theme',
+    '#tree' => TRUE,
+    'rows' => array(),
+  );
+  $rows = &$table['rows'];
+  $count = 0;
+  foreach ($selected as $select) {
+    $filter = $select['Filter'];
+    $type = $select['Type'];
+    $buttonname = str_replace(' ', '~SPACE~', $type) . '---' . $count;
+    $rows[] = array(
+      'Filter' => array(
+        '#value' => $filter,
+      ),
+      'Type' => array(
+        '#value' => $type
+      ),
+      'remove' => array(
+        '#name' => $buttonname,
+        '#type' => 'button',
+        '#value' => t('Remove'),
+        '#ahah' => array(
+          'event' => 'click',
+          'path' => 'xacml/ahah/'.$xacml_dsid.'/remove',
+          'wrapper' => "islandora_xacml",
+          'method' => 'replace',
+        ),
+      )
+    );
+    $count++;    
+  }
+  return $table;
+}
+
+function islandora_xacml_editor_page_validate(&$form, &$form_state) {
+  drupal_add_css(drupal_get_path('module', 'islandora_xacml_editor') . '/css/islandora_xacml_editor.css');
   // test if the user is locking themselves or the admin out of the object
   $admin_user = $form_state['storage']['admin_user'];
   $current_user = $form_state['storage']['current_user'];
@@ -378,9 +1467,24 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
 
   // check datastreams and mime
   $values = $form_state['values']['dsidmime'];
+  
   if ($values['enabled']) {
-    $xacml->datastreamRule->addMimetype($values['mime']);
-    $xacml->datastreamRule->addDsid($values['dsid']);
+    if ($form_state['storage']['selectedmime']) {
+      $xacml->datastreamRule->addMimetype($form_state['storage']['selectedmime']);
+    }
+    
+    if ($form_state['storage']['selecteddsid']) {
+      $xacml->datastreamRule->addDsid($form_state['storage']['selecteddsid']);
+    }
+    
+    if ($form_state['storage']['selectedmimeregexs']) {
+      $xacml->datastreamRule->addMimetypeRegex($form_state['storage']['selectedmimeregexs']);
+    }
+    
+    if ($form_state['storage']['selecteddsidregexs']) {
+      $xacml->datastreamRule->addDsidRegex($form_state['storage']['selecteddsidregexs']);
+    }
+    
     $xacml->datastreamRule->addUser($values['users']);
     $xacml->datastreamRule->addRole($values['roles']);
   }
@@ -396,7 +1500,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     $xacml->viewingRule->addUser($values['users']);
     $xacml->viewingRule->addRole($values['roles']);
   }
-
+ 
   $xml = $xacml->getXmlString();
   $pid = $form_state['storage']['object_pid'];
   $dsid = $form_state['storage']['xacml_dsid'];
@@ -410,7 +1514,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   else {
     $object->add_datastream_from_string($xml, $dsid, 'Xacml Policy Stream', 'text/xml', 'X');
   }
-
+  
   // save relationships before $form_state['storage'] gets scrubbed, removing the object's PID
   $viewable_by_user = 'isViewableByUser';
   $viewable_by_role = 'isViewableByRole';
@@ -440,7 +1544,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
       'progress_message' => t('Please wait if many objects are being updated this could take a few minutes.'),
       'operations' => array(
         array(
-          'islandora_xacml_editor_batch_function',
+          'islandora_xacml_editor_batch_function', 
           array($xml, $pid, $option)
         ),
       ),
