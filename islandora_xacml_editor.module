@@ -136,6 +136,10 @@ function islandora_xacml_editor_remove_js($xacml_dsid) {
     $values['mime'] = array_merge($values['mime'], $form_state['storage']['addmime']);
   }
   
+  // Determine which button was pressed to initiate the AHAH callback. 
+  // The button naming conventions from the table function dictate that the portion
+  // to the left of the --- is the filter type and to the right is the
+  // corresponding row number. From this we get the row to remove.
   $removeval = array_search('Remove', $form_state['post']);
   $removeval = str_replace('~SPACE~', ' ', $removeval);
   
@@ -1061,7 +1065,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   if (isset($form_state['storage']['removemimeregex'])) {
     $key = array_search($form_state['storage']['removemimeregex'], $tempmimeregexs);
     
-    // If the value is not one of our 'hidden mimes'
+    // If the value is not one of our 'hidden mime regexs'
     if (is_numeric($key)) {
       $xacml->datastreamRule->removeMimetypeRegex($tempmimeregexs[$key]);
       $form_state['storage']['hidemimeregexs'][] = $form_state['storage']['removemimeregex'];
@@ -1084,7 +1088,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     
     // If the value is not one of our 'hidden mimes'
     if (is_numeric($key)) {
-      $xacml->datastreamRule->removeDsidRegex($tempmimeregexs[$key]);
+      $xacml->datastreamRule->removeDsidRegex($tempdsidregexs[$key]);
       $form_state['storage']['hidedsidregexs'][] = $form_state['storage']['removedsidregex'];
     }
         
