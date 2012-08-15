@@ -578,7 +578,36 @@ class XacmlDatastreamRule extends XacmlRule {
     if (!parent::hasPermission($user, $roles)) {
       $boolean_mime = $mime ? in_array($mime, $this->getMimetypes()) : FALSE;
       $boolean_dsid = $dsid ? in_array($dsid, $this->getDsids()) : FALSE;
-      if ($boolean_mime || $boolean_dsid) {
+      $boolean_mimeregex = FALSE;
+      $boolean_dsidregex = FALSE;
+      
+      $mimeregexs = $this->getMimetypeRegexs();
+      
+      if (isset($mimeregexs)) {
+        foreach ($mimeregexs as $key => $value) {
+          preg_match('/'.$value.'/', $mime, $match);
+
+          if (count($match) > 0) {
+            $boolean_mimeregex = TRUE;
+            break;
+          }
+        }
+      }
+      
+      $dsidregexs = $this->getDsidRegexs();
+      
+      if (isset($dsidregexs)) {
+        foreach ($dsidregexs as $key => $value) {
+          preg_match('/'.$value.'/', $dsid , $match);
+
+          if (count($match) > 0) {
+            $boolean_dsidregex = TRUE;
+            break;
+          }
+        }
+      }
+      
+      if ($boolean_mime || $boolean_dsid || $boolean_mimeregex || $boolean_dsidregex) {
         return FALSE;
       }
       else {
