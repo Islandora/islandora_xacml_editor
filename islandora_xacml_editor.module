@@ -764,6 +764,16 @@ function islandora_xacml_editor_settings() {
     '#description' => t("Add <islandora:isViewableByUser> and <islandora:isViewableByRole> relationships to objects' RELS-EXT datastreams when XACML viewing restrictions are in place."),
     '#default_value' => variable_get('islandora_xacml_editor_save_relationships', FALSE),
   );
+  $form['islandora_xacml_editor_show_dsidregex'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display the DSID regex textfield?'),
+    '#default_value' => variable_get('islandora_xacml_editor_show_dsidregex', 1),
+  );
+  $form['islandora_xacml_editor_show_mimeregex'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display the MIME type regex textfield?'),
+    '#default_value' => variable_get('islandora_xacml_editor_show_mimeregex' , 1),
+  );
   return system_settings_form($form);
 }
 
@@ -1301,7 +1311,8 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#title' => t('DSID'),
     '#autocomplete_path' => 'xacml/dsidautocomplete/'.$object_pid,
     '#size' => 35,
-    '#prefix' => '<div class="islandora_xacml_block">',
+    '#description' => t('Type "*" to list all DSIDs.'),
+    '#prefix' => '<div class="islandora_xacml_block_description">',
   );
   $form['dsidmime']['newdsidadd'] = array(
     '#type' => 'button',
@@ -1314,29 +1325,33 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
       'method' => 'replace',
     ),
   );
-  $form['dsidmime']['dsidregex'] = array(
-    '#type' => 'textfield',
-    '#title' => t('DSID Regex'),
-    '#size' => 35,
-    '#prefix' => '<div class="islandora_xacml_block">',
-  );
-  $form['dsidmime']['dsidregexadd'] = array(
-    '#type' => 'button',
-    '#value' => t('Add'),
-    '#suffix' => '</div>',
-    '#ahah' => array(
-      'event' => 'click',
-      'path' => "xacml/ahah/add/dsidregex/".$xacml_dsid.'/'.$object_pid,
-      'wrapper' => "islandora_xacml",
-      'method' => 'replace',
-    ),
-  );
+  
+  if (variable_get('islandora_xacml_editor_show_dsidregex', 1)) {
+    $form['dsidmime']['dsidregex'] = array(
+      '#type' => 'textfield',
+      '#title' => t('DSID Regex'),
+      '#size' => 35,
+      '#prefix' => '<div class="islandora_xacml_block">',
+    );
+    $form['dsidmime']['dsidregexadd'] = array(
+      '#type' => 'button',
+      '#value' => t('Add'),
+      '#suffix' => '</div>',
+      '#ahah' => array(
+        'event' => 'click',
+        'path' => "xacml/ahah/add/dsidregex/".$xacml_dsid.'/'.$object_pid,
+        'wrapper' => "islandora_xacml",
+        'method' => 'replace',
+      ),
+    );
+  }
   $form['dsidmime']['newmime'] = array(
     '#type' => 'textfield',
     '#title' => t('MIME type'),
     '#autocomplete_path' => 'xacml/mimeautocomplete/'.$xacml_dsid.'/'.$object_pid,
     '#size' => 35,
-    '#prefix' => '<div class="islandora_xacml_block">',
+    '#description' => t('Type "*" to list all MIME types.'),
+    '#prefix' => '<div class="islandora_xacml_block_description">',
   );
   $form['dsidmime']['newmimeadd'] = array(
     '#name' => 'newmimeadd',
@@ -1350,24 +1365,27 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
       'method' => 'replace',
     ),
   );
-  $form['dsidmime']['mimeregex'] = array(
-    '#type' => 'textfield',
-    '#title' => t('MIME type Regex'),
-    '#size' => 35,
-    '#prefix' => '<div class="islandora_xacml_block">',
-  );
-  $form['dsidmime']['mimeregexadd'] = array(
-    '#name' => 'mimeregexadd',
-    '#type' => 'button',
-    '#value' => t('Add'),
-    '#suffix' => '</div>',
-    '#ahah' => array(
-      'event' => 'click',
-      'path' => "xacml/ahah/add/mimeregex/".$xacml_dsid.'/'.$object_pid,
-      'wrapper' => "islandora_xacml",
-      'method' => 'replace',
-    ),
-  );
+  
+  if (variable_get('islandora_xacml_editor_show_mimeregex', 1)) {
+    $form['dsidmime']['mimeregex'] = array(
+      '#type' => 'textfield',
+      '#title' => t('MIME type Regex'),
+      '#size' => 35,
+      '#prefix' => '<div class="islandora_xacml_block">',
+    );
+    $form['dsidmime']['mimeregexadd'] = array(
+      '#name' => 'mimeregexadd',
+      '#type' => 'button',
+      '#value' => t('Add'),
+      '#suffix' => '</div>',
+      '#ahah' => array(
+        'event' => 'click',
+        'path' => "xacml/ahah/add/mimeregex/".$xacml_dsid.'/'.$object_pid,
+        'wrapper' => "islandora_xacml",
+        'method' => 'replace',
+      ),
+    );
+  }
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Set Permissions'),
