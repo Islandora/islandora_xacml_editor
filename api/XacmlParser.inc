@@ -52,7 +52,7 @@ class XacmlParser {
     $xpath = new DomXpath($dom);
     $xpath->registerNamespace('xacml', XacmlConstants::XACML);
     XacmlParser::parseXacml($xacml, $dom, $xpath);
-
+    
     return $xacml;
   }
 
@@ -66,18 +66,29 @@ class XacmlParser {
    */
   protected static function findDsidMime(&$rule, $element) {
     $resources = $element->getElementsByTagNameNS(XacmlConstants::XACML, "ResourceMatch");
-
+    
     foreach ($resources as $resource) {
+      $match = $resource->getAttribute('MatchId');
       $value = $resource->childNodes->item(0)->nodeValue;
       $type = $resource->childNodes->item(1)->getAttribute("AttributeId");
-
+      
       switch ($type) {
         case XacmlConstants::MIME:
-          $rule['mimes'][] = $value;
+          if ($match == XacmlConstants::STRINGEQUAL) {
+            $rule['mimes'][] = $value;
+          }
+          else {
+            $rule['mimeregexs'][] = $value;
+          }
           break;
 
         case XacmlConstants::DSID:
-          $rule['dsids'][] = $value;
+          if ($match == XacmlConstants::STRINGEQUAL) {
+            $rule['dsids'][] = $value;
+          }
+          else {
+            $rule['dsidregexs'][] = $value;
+          }
           break;
       }
     }
@@ -180,6 +191,8 @@ class XacmlParser {
       $rule['ruleid'] = $rule_element->getAttribute("RuleId");
       $rule['dsids'] = array();
       $rule['mimes'] = array();
+      $rule['dsidregexs'] = array();
+      $rule['mimeregexs'] = array();
       $rule['methods'] = array();
       $rule['users'] = array();
       $rule['roles'] = array();
