@@ -762,7 +762,7 @@ function islandora_xacml_editor_settings() {
     '#type' => 'checkbox',
     '#title' => t('Save policy details in RELS-EXT'),
     '#description' => t("Add <islandora:isViewableByUser> and <islandora:isViewableByRole> relationships to objects' RELS-EXT datastreams when XACML viewing restrictions are in place."),
-    '#default_value' => variable_get('islandora_xacml_editor_save_relationships', FALSE),
+    '#default_value' => variable_get('islandora_xacml_editor_save_relationships', TRUE),
   );
   $form['islandora_xacml_editor_show_dsidregex'] = array(
     '#type' => 'checkbox',
@@ -1544,7 +1544,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   $object->purge_relationships($viewable_by_user, NULL, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
   $object->purge_relationships($viewable_by_role, NULL, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
 
-  if (variable_get('islandora_xacml_editor_save_relationships', FALSE) && $xacml->viewingRule->isPopulated()) {
+  if (variable_get('islandora_xacml_editor_save_relationships', TRUE) && $xacml->viewingRule->isPopulated()) {
     $values = $form_state['values']['access'];
     // recompute the new values from the policy
     if (isset($values['users'])) {
