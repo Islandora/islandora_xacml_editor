@@ -56,21 +56,21 @@ class IslandoraXacml extends Xacml {
 
       if ($this->viewingRule->isPopulated()) {
         // recompute the new values from the policy
-        foreach ($this->viewingRule->getValues('users') as $account) {
+        foreach ($this->viewingRule->getUsers() as $account) {
           $this->item->add_relationship($viewable_by_user, $account, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
         }
-        foreach ($this->viewingRule->getValues('roles') as $role) {
+        foreach ($this->viewingRule->getRoles() as $role) {
           $this->item->add_relationship($viewable_by_role, $role, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
         }
       }
 
       if ($this->datastreamRule->isPopulated()) {
-        foreach ($this->datastreamRule->getValues('dsid') as $dsid) {
+        foreach ($this->datastreamRule->getDsids() as $dsid) {
           // recompute the new values from the policy
-          foreach ($this->datastreamRule->getValues('users') as $account) {
+          foreach ($this->datastreamRule->getUsers() as $account) {
             $this->item->add_dsid_relationship($dsid, $viewable_by_user, $account, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
           }
-          foreach ($this->datastreamRule->getValues('roles') as $role) {
+          foreach ($this->datastreamRule->getRoles() as $role) {
             $this->item->add_dsid_relationship($dsid, $viewable_by_role, $role, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
           }
         } 
