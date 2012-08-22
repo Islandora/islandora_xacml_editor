@@ -1,8 +1,13 @@
+---- Fedora configuration ----
+
+It may be desirable--and in fact necessary for some modules--to disable/remove
+one of the default XACML policies which denies any interactions with the
+POLICY datastream to users without the "administrator" role.
+
+---- Issues with autocomplete ----
+
 There are two known issues that exist within Drupal's autocomplete that can be fixed by patching Drupal.
 
 First issue is "."s appearing in the autocomplete field resulting in a 404 error (http://drupal.org/node/93854#comment-6164592).
-
 Second issue is when pressing the down arrow and focusing on another field "undefined" appears in the textfield (http://drupal.org/node/172755).
-
-
 
