@@ -1,0 +1,78 @@
+<?php
+
+/**
+ * @file
+ * Islandora Xacml module API functions.
+ */
+
+/**
+ * Hook to update the collection query when xacml is enabled.  By default the collection
+ * query does not respect xacml rules, now when the xacml editor module is enabled the
+ * query will be modified to use xacml rules.
+ *
+ * @param String $query
+ *   The query string sent from islandora.
+ * @param String $pid
+ *   The pd of the object
+ *
+ * @return String
+ *   The modified query after xacml rules have been added.
+ */
+function islandora_xacml_editor_islandora_collection_query_alter(&$query, $pid) {
+  global $user;
+  $query = 'select $object $title $model $parent_model $created from <#ri>
+            where
+            ((
+            $object <fedora-model:label> $title
+            and $object <fedora-model:hasModel> $model
+            and $object <fedora-model:createdDate> $created
+            and $model <fedora-model:hasModel> $parent_model
+            and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
+            and ( $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>
+            or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $pid . '> )
+            minus $object <http://islandora.ca/ontology/relsext#isViewableByRole> $role
+            minus $object <http://islandora.ca/ontology/relsext#isViewableByUser> $user
+            ) or (
+            $object <fedora-model:label> $title
+            and $object <fedora-model:hasModel> $model
+            and $object <fedora-model:createdDate> $created
+            and $model <fedora-model:hasModel> $parent_model
+            and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
+            and ( $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>
+            or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $pid . '> )
+            and (';
+  foreach ($user->roles as $role) {
+    $query .= '$object <http://islandora.ca/ontology/relsext#isViewableByRole> ' . "'$role' or ";
+  }
+  $query .= '$object <http://islandora.ca/ontology/relsext#isViewableByUser> ' . "'$user->name'" . ')';
+  $query .= '))
+            minus $model <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
+            minus $parent_model <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
+            order by $title';
+  return $query;
+}
+
+/**
+ * Hook to update solr queries to respect xacml rules when the xacml editor is enabled.
+ *
+ * @param IslandoraSolrQueryProcessor $processor
+ *   The Solr query processor to apply xacml rules to.
+ */
+function islandora_xacml_editor_islandora_solr_search_query_processor($processor) {
+  global $user;
+  // Check if this user is allowed.
+  if ($user->name) {
+    $fq = "RELS_EXT_isViewableByUser_literal_ms:\"" . $user->name . "\" OR ";
+  }
+  // If the user is anonymous then user->name won't resolve, so special catch for the anon user.
+  else {
+    $fq = "RELS_EXT_isViewableByUser_literal_ms:\"anonymous\" OR ";
+  }
+  // Check if any of my roles are allowed.
+  foreach ($user->roles as $role) {
+    $fq .= "RELS_EXT_isViewableByRole_literal_ms:\"" . $role . "\" OR ";
+  }
+  // Check if the object is open (unrestricted).
+  $fq .= "((*:* -RELS_EXT_isViewableByUser_literal_ms:[* TO *]) AND (*:* -RELS_EXT_isViewableByRole_literal_ms:[* TO *]))";
+  $processor->solrParams['fq'][] = $fq;
+}
