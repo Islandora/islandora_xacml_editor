@@ -1482,7 +1482,7 @@ function islandora_xacml_editor_page_validate(&$form, &$form_state) {
  * The submit function where all the XACML magic happens. Abracadabra.
  */
 function islandora_xacml_editor_page_submit(&$form, &$form_state) {
-  module_load_include('inc', 'islandora_xacml_api', 'Xacml');
+  module_load_include('inc', 'islandora_xacml_api', 'IslandoraXacml');
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
 
   $pid = $form_state['storage']['object_pid'];
