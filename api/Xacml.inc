@@ -146,6 +146,7 @@ abstract class XacmlRule {
     $dont_touch = array(
       'ruleid',
       'effect',
+      'methods',
     );
 
     $clearable = array_diff(array_keys($this->rule), $dont_touch);
