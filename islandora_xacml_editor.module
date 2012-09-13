@@ -990,7 +990,12 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#title' => t('Enable XACML Restrictions on DSIDs and MIME types'),
     '#default_value' => isset($form_state['storage']['dsidmime']['enabled']) ? $form_state['storage']['dsidmime']['enabled']['#value'] : $xacml->datastreamRule->isPopulated(),
   );
-
+  
+  // Grab the original value to be used in comparisons.
+  if (!isset($form_state['storage']['dsidmimeenabled'])) {
+    $form_state['storage']['dsidmimeenabled'] = $form['dsidmime']['enabled']['#default_value'];
+  }
+  
   if ($xacml_dsid == 'CHILD_SECURITY') {
     $form['update_options'] = array(
       '#type' => 'select',
@@ -1299,7 +1304,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   }
 
   $form_state['storage']['rows'] = $rows;
-
+  
   $form['dsidmime']['table'] = array(
     '#type' => 'item',
     '#value' => (count($rows) > 0) ? '<strong>Applied Rules:</strong>' : '<strong>No rules applied!</strong>',
@@ -1476,7 +1481,17 @@ function islandora_xacml_editor_page_validate(&$form, &$form_state) {
         section to prevent locking yourself and the admin user out of the object.", FALSE);
     }
   }
-}
+  
+  if ($form_state['values']['dsidmime']['enabled']) {
+    if (!array_key_exists($current_user, $form_state['values']['dsidmime']['users'])) {
+      form_set_error('dsidmime][users', "Please make sure that $current_user is selected in the datastream and MIME type section.", FALSE);
+    }
+    
+    if (count($form_state['storage']['rows']) == 0) {
+      form_set_error('dsidmime][enabled', "There are no filters applied in the datastream and MIME type section.", FALSE);
+    }
+  }  
+ }
 
 /**
  * The submit function where all the XACML magic happens. Abracadabra.
@@ -1491,7 +1506,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
 
   // check datastreams and mime
   $values = $form_state['values']['dsidmime'];
-
+  
   if ($values['enabled']) {
     $xacml->datastreamRule->clear();
 
@@ -1514,7 +1529,10 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     $xacml->datastreamRule->addUser($values['users']);
     $xacml->datastreamRule->addRole($values['roles']);
   }
-
+  // User selects to disable the datastream rule when it was previously enabled
+  elseif ($values['enabled'] != $form_state['storage']['dsidmimeenabled']) {
+    $xacml->datastreamRule->clear();
+  }
   // check admin (always have this rule)
   $values = $form_state['values']['manage'];
   $xacml->managementRule->clear();
