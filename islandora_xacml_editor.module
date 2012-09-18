@@ -362,9 +362,18 @@ function islandora_xacml_editor_add_dsid_js($xacml_dsid, $pid) {
     if (isset($form_state['storage']['selecteddsid'])) {
       $rules = array_search($addvalue, $form_state['storage']['selecteddsid']);
     }
-
-    if (!is_numeric($added) && $rules != $addvalue) {
+    $restricted_dsids = variable_get('islandora_xacml_editor_restricted_dsids', '');
+    $restricted_dsids = preg_split('/[\s,]+/', $restricted_dsids);
+    
+    if (!is_numeric($added) && $rules != $addvalue && !in_array($addvalue, $restricted_dsids)) {
       $form_state['storage']['adddsid'][] = $addvalue;
+    }
+    elseif (in_array($addvalue, $restricted_dsids)) {
+      drupal_set_message(t('The DSID %dsid was not added as it is restricted from the admin settings page!',
+        array(
+          '%dsid' => $addvalue,
+        )
+      ), 'warning');
     }
     else {
       drupal_set_message(t('The DSID %dsid was not added as it already exists as a filter!',
@@ -599,9 +608,19 @@ function islandora_xacml_editor_add_mime_js($xacml_dsid, $pid) {
     if (isset($form_state['storage']['selectedmime'])) {
       $rules = array_search($addvalue, $form_state['storage']['selectedmime']);
     }
-
-    if (!is_numeric($added) && $rules != $addvalue) {
+    
+    $restricted_mimes = variable_get('islandora_xacml_editor_restricted_mimes', '');
+    $restricted_mimes = preg_split('/[\s,]+/', $restricted_mimes);
+    
+    if (!is_numeric($added) && $rules != $addvalue && !in_array($addvalue, $restricted_mimes)) {
       $form_state['storage']['addmime'][] = $addvalue;
+    }
+    elseif (in_array($addvalue, $restricted_mimes)) {
+      drupal_set_message(t('The MIME type %mime was not added as it is restricted from the admin settings page!',
+        array(
+          '%mime' => $addvalue,
+        )
+      ), 'warning');
     }
     else {
       drupal_set_message(t('The MIME type %mime was not added as it already exists as a filter!',
@@ -653,7 +672,7 @@ function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
   $dslist = $object->get_datastreams_list_as_array();
 
   $output = array();
-
+  
   foreach ($dslist as $key => $value) {
     if ($string != '*') {
       if (strpos(strtoupper($key), strtoupper($string)) !== false) {
@@ -664,7 +683,11 @@ function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
       $output[$key] = check_plain($key);
     }
   }
-
+  $restricted_dsids = variable_get('islandora_xacml_editor_restricted_dsids', '');
+  $restricted_dsids = preg_split('/[\s,]+/', $restricted_dsids);
+  
+  $output = array_diff($output, $restricted_dsids);
+  
   print drupal_to_js($output);
   exit();
 }
@@ -709,7 +732,11 @@ function islandora_xacml_editor_mime_autocomplete($xacml_dsid, $pid, $string) {
       $output[$key] = check_plain($key);
     }
   }
-
+  $restricted_mimes = variable_get('islandora_xacml_editor_restricted_mimes', '');
+  $restricted_mimes = preg_split('/[\s,]+/', $restricted_mimes);
+  
+  $output = array_diff($output, $restricted_mimes);
+  
   print drupal_to_js($output);
   exit();
 
@@ -751,6 +778,7 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
  * Admin settings form.
  */
 function islandora_xacml_editor_settings() {
+  drupal_add_css(drupal_get_path('module', 'islandora_xacml_editor') . '/css/islandora_xacml_editor.css');
   $form = array();
   $form['islandora_xacml_editor_show_tabs'] = array(
     '#type' => 'checkbox',
@@ -772,7 +800,68 @@ function islandora_xacml_editor_settings() {
   $form['islandora_xacml_editor_show_mimeregex'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display the MIME type regex textfield?'),
-    '#default_value' => variable_get('islandora_xacml_editor_show_mimeregex' , 1),
+    '#default_value' => variable_get('islandora_xacml_editor_show_mimeregex', 1),
+  );
+  $form['islandora_xacml_editor_restrictions'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Restrictions for DSID and MIME type'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => 'DSIDs and MIMEs that will not appear in the autocomplete fields or be allowed as filters.'
+  );
+  $form['islandora_xacml_editor_restrictions']['islandora_xacml_editor_restricted_dsids'] = array(
+    '#type' => 'textarea',
+    '#title' => t('DSID'),
+    '#default_value' => variable_get('islandora_xacml_editor_restricted_dsids', ''),
+  );
+  $form ['islandora_xacml_editor_restrictions']['islandora_xacml_editor_restricted_mimes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('MIME type'),
+    '#default_value' => variable_get('islandora_xacml_editor_restricted_mimes', ''),
+  );
+  $form['islandora_xacml_editor_defaults'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Default users and roles'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('The users and roles that will appear as the default selected unless there is a existing XACML policy attached to an object.'),
+  );
+  
+  // get the user list
+  $users = array();
+  $result = db_query('SELECT u.uid, u.name FROM {users} u');
+  while ($user = db_fetch_object($result)) {
+    $user->uid == 0 ? $users['anonymous'] = 'anonymous' : $users[$user->name] = $user->name;
+    if ($user->uid == 1) {
+      $admin_user = $user->name;
+      $form_state['storage']['admin_user'] = $user->name;
+    }
+  }
+
+  // get role list
+  $roles = array();
+  $result = db_query('SELECT r.rid, r.name FROM {role} r');
+  while ($role = db_fetch_object($result)) {
+    $role->rid == 0 ? $roles['anonymous'] = 'anonymous' : $roles[$role->name] = $role->name;
+  }
+  
+  $form['islandora_xacml_editor_defaults']['islandora_xacml_editor_default_users'] = array(
+   '#type' => 'select',
+   '#title' => t('Users'),
+   '#options' => $users,
+   '#default_value' => variable_get('islandora_xacml_editor_default_users', 'admin'),
+   '#multiple' => TRUE,
+   '#size' => 10,
+   '#prefix' => '<div class="islandora_xacml_selects">',
+  );
+  $form['islandora_xacml_editor_defaults']['islandora_xacml_editor_default_roles'] = array(
+   '#type' => 'select',
+   '#title' => t('Roles'),
+   '#default_value' => variable_get('islandora_xacml_editor_default_roles', 'administrator'),
+   '#options' => $roles,
+   '#multiple' => TRUE,
+   '#size' => 10,
+   '#suffix' => '</div>',
   );
   return system_settings_form($form);
 }
@@ -897,12 +986,10 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     }
   }
   else {
+    $new_xacml = TRUE;
     $xacml = new Xacml();
   }
-
-  // select the admin user and the current user by default
-  $selected_users = $GLOBALS['user']->name == $admin_user ? array($admin_user) : array($GLOBALS['user']->name, $admin_user);
-
+  
   $form = array(
     '#prefix' => '<div id="islandora_xacml">',
     '#suffix' => '</div>',
@@ -930,7 +1017,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form['access']['users'] = array(
     '#type' => 'select',
     '#title' => t('Allowed Users'),
-    '#default_value' => isset($form_state['storage']['access']['users']) ? $form_state['storage']['access']['users'] : $xacml->viewingRule->getUsers(),
+    '#default_value' => isset($form_state['storage']['access']['users']) ? $form_state['storage']['access']['users'] : islandora_xacml_editor_retrieve_users($xacml, $new_xacml, 'viewing'),
     '#options' => $users,
     '#multiple' => TRUE,
     '#size' => 10,
@@ -943,7 +1030,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#options' => $roles,
     '#multiple' => TRUE,
     '#size' => 10,
-    '#default_value' => isset($form_state['storage']['access']['roles']) ? $form_state['storage']['access']['roles'] : $xacml->viewingRule->getRoles(),
+    '#default_value' => isset($form_state['storage']['access']['roles']) ? $form_state['storage']['access']['roles'] : islandora_xacml_editor_retrieve_roles($xacml, $new_xacml, 'viewing'),
     '#suffix' => '</div>',
   );
 
@@ -962,7 +1049,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#type' => 'select',
     '#title' => t('Users'),
     '#options' => $users,
-    '#default_value' => isset($form_state['storage']['manage']['users']) ? $form_state['storage']['manage']['users'] : $xacml->managementRule->getUsers(),
+    '#default_value' => isset($form_state['storage']['manage']['users']) ? $form_state['storage']['manage']['users'] : islandora_xacml_editor_retrieve_users($xacml, $new_xacml, 'management'),
     '#multiple' => TRUE,
     '#size' => 10,
     '#prefix' => '<div class="islandora_xacml_selects">',
@@ -971,7 +1058,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form['manage']['roles'] = array(
     '#type' => 'select',
     '#title' => t('Roles'),
-    '#default_value' => isset($form_state['storage']['manage']['roles']) ? $form_state['storage']['manage']['roles'] : $xacml->managementRule->getRoles(),
+    '#default_value' => isset($form_state['storage']['manage']['roles']) ? $form_state['storage']['manage']['roles'] : islandora_xacml_editor_retrieve_roles($xacml, $new_xacml, 'management'),
     '#options' => $roles,
     '#multiple' => TRUE,
     '#size' => 10,
@@ -1013,7 +1100,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#type' => 'select',
     '#title' => t('Users'),
     '#options' => $users,
-    '#default_value' => isset($form_state['storage']['dsidmime']['users']) ? $form_state['storage']['dsidmime']['users'] : $xacml->datastreamRule->getUsers(),
+    '#default_value' => isset($form_state['storage']['dsidmime']['users']) ? $form_state['storage']['dsidmime']['users'] : islandora_xacml_editor_retrieve_users($xacml, $new_xacml, 'datastream'),
     '#multiple' => TRUE,
     '#size' => 10,
     '#prefix' => '<div class="islandora_xacml_selects">',
@@ -1022,7 +1109,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   $form['dsidmime']['roles'] = array(
     '#type' => 'select',
     '#title' => t('Roles'),
-    '#default_value' => isset($form_state['storage']['dsidmime']['roles']) ? $form_state['storage']['dsidmime']['roles'] : $xacml->datastreamRule->getRoles(),
+    '#default_value' => isset($form_state['storage']['dsidmime']['roles']) ? $form_state['storage']['dsidmime']['roles'] : islandora_xacml_editor_retrieve_roles($xacml, $new_xacml, 'datastream'),
     '#options' => $roles,
     '#multiple' => TRUE,
     '#size' => 10,
@@ -1397,6 +1484,46 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   );
 
   return $form;
+}
+
+function islandora_xacml_editor_retrieve_users($xacml, $new_xacml, $rule) {
+  if ($new_xacml == FALSE) {
+    if ($rule == 'viewing' && $xacml->viewingRule->isPopulated()) {
+      return $xacml->viewingRule->getUsers();
+    }
+    elseif ($rule == 'datastream' && $xacml->datastreamRule->isPopulated()) {
+     return $xacml->datastreamRule->getUsers();
+    }
+    elseif ($rule == 'management' && $xacml->managementRule->isPopulated()) {
+      return $xacml->managementRule->getUsers(); 
+    } 
+    else {
+      return variable_get('islandora_xacml_editor_default_users', '');
+    } 
+  }
+  else {
+    return variable_get('islandora_xacml_editor_default_users', '');
+  }
+}
+
+function islandora_xacml_editor_retrieve_roles($xacml, $new_xacml, $rule) {
+  if ($new_xacml == FALSE) {
+    if ($rule == 'viewing' && $xacml->viewingRule->isPopulated()) {
+      return $xacml->viewingRule->getRoles();
+    }
+    elseif ($rule == 'datastream' && $xacml->datastreamRule->isPopulated()) {
+     return $xacml->datastreamRule->getRoles();
+    }
+    elseif ($rule == 'management' && $xacml->managementRule->isPopulated()) {
+      return $xacml->managementRule->getRoles(); 
+    } 
+    else {
+      return variable_get('islandora_xacml_editor_default_roles', '');
+    }
+  }
+  else {
+    return variable_get('islandora_xacml_editor_default_roles', '');
+  }
 }
 
 function islandora_xacml_editor_theme() {
