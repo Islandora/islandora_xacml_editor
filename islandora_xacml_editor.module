@@ -146,7 +146,6 @@ function islandora_xacml_editor_remove_js($xacml_dsid) {
   preg_match('/(.*)---(.*)/', $removeval, $match);
   $removeval = $match[2];
   $type = $match[1];
-
   if ($type == 'DSID') {
     $form_state['storage']['removedsid'] = $form_state['storage']['rows'][$removeval]['Filter'];
   }
@@ -801,6 +800,16 @@ function islandora_xacml_editor_settings() {
     '#type' => 'checkbox',
     '#title' => t('Display the MIME type regex textfield?'),
     '#default_value' => variable_get('islandora_xacml_editor_show_mimeregex', 1),
+  );
+  $form['islandora_xacml_editor_rels_viewable_user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr RELS-EXT ViewableByUser field'),
+    '#default_value' => variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms'),
+  );
+  $form ['islandora_xacml_editor_rels_viewable_role'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr RELS-EXT ViewableByRole field'),
+    '#default_value' => variable_get('islandora_xacml_editor_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms'),
   );
   $form['islandora_xacml_editor_restrictions'] = array(
     '#type' => 'fieldset',
