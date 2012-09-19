@@ -4,6 +4,12 @@ It may be desirable--and in fact necessary for some modules--to disable/remove
 one of the default XACML policies which denies any interactions with the
 POLICY datastream to users without the "administrator" role.
 
+---- Solr searching hook ----
+
+In order to comply with XACML restrictions placed on objects, a hook is used to filter results that do not conform to a searching user's roles and name.
+This hook will not function correctly if the Solr fields for 'ViewableByUser' and 'ViewableByRole' are not defined correctly. These values can be set through
+the admin page for the module.
+
 ---- Issues with autocomplete ----
 
 There are two known issues that exist within Drupal's autocomplete that can be fixed by patching Drupal.
