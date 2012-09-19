@@ -62,17 +62,17 @@ function islandora_xacml_editor_islandora_solr_search_query_processor($processor
   global $user;
   // Check if this user is allowed.
   if ($user->name) {
-    $fq = "RELS_EXT_isViewableByUser_literal_ms:\"" . $user->name . "\" OR ";
+    $fq = variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"" . $user->name . "\" OR ";
   }
   // If the user is anonymous then user->name won't resolve, so special catch for the anon user.
   else {
-    $fq = "RELS_EXT_isViewableByUser_literal_ms:\"anonymous\" OR ";
+    $fq = variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"anonymous\" OR ";
   }
   // Check if any of my roles are allowed.
   foreach ($user->roles as $role) {
-    $fq .= "RELS_EXT_isViewableByRole_literal_ms:\"" . $role . "\" OR ";
+    $fq .= variable_get('islandora_xacml_editor_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":\"" . $role . "\" OR ";
   }
   // Check if the object is open (unrestricted).
-  $fq .= "((*:* -RELS_EXT_isViewableByUser_literal_ms:[* TO *]) AND (*:* -RELS_EXT_isViewableByRole_literal_ms:[* TO *]))";
+  $fq .= "((*:* -" . variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":[* TO *]) AND (*:* -" . variable_get('islandora_xacml_editor_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":[* TO *]))";
   $processor->solrParams['fq'][] = $fq;
 }
