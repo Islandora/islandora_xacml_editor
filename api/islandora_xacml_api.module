@@ -6,8 +6,9 @@
  */
 
 /**
- * Hook to update the collection query when xacml is enabled.  By default the collection
- * query does not respect xacml rules, now when the xacml editor module is enabled the
+ * Hook to update the collection query when xacml is enabled.
+ * By default the collectionquery does not respect xacml rules,
+ * now when the xacml editor module is enabled the
  * query will be modified to use xacml rules.
  *
  * @param String $query
@@ -53,7 +54,8 @@ function islandora_xacml_editor_islandora_collection_query_alter(&$query, $pid) 
 }
 
 /**
- * Hook to update solr queries to respect xacml rules when the xacml editor is enabled.
+ * Hook to update solr queries to respect xacml rules when the xacml
+ * editor is enabled.
  *
  * @param IslandoraSolrQueryProcessor $processor
  *   The Solr query processor to apply xacml rules to.
@@ -64,7 +66,8 @@ function islandora_xacml_editor_islandora_solr_search_query_processor($processor
   if ($user->name) {
     $fq = variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"" . $user->name . "\" OR ";
   }
-  // If the user is anonymous then user->name won't resolve, so special catch for the anon user.
+  // If the user is anonymous then user->name won't resolve,
+  // so special catch for the anon user.
   else {
     $fq = variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"anonymous\" OR ";
   }
