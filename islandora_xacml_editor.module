@@ -27,12 +27,13 @@ function islandora_xacml_editor_menu() {
     'page arguments' => array('islandora_xacml_editor_page', 1, 2),
     'access arguments' => array('Edit XACML Policies'),
   );
-  $items['admin/settings/islandora_xacml_editor'] = array(
+  $items['admin/settings/islandora_xacml/editor'] = array(
     'title' => 'Islandora XACML Editor',
     'description' => 'Settings for the Islandora XACML module.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_xacml_editor_settings'),
     'access arguments' => array('administer islandora_xacml_editor'),
+    'type' => MENU_LOCAL_TASK,
   );
   $items['xacml/dsidautocomplete/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_dsid_autocomplete',

@@ -12,16 +12,30 @@
  */
 function islandora_xacml_api_menu() {
   $items = array();
-
   $items['admin/settings/islandora_xacml'] = array(
     'title' => 'Islandora XACML',
-    'description' => 'Settings for the Islandora XACML API module.',
+    'description' => 'Settings for the Islandora XACML modules.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_xacml_api_settings'),
-    'access arguments' => array('administer islandora_xacml'),
+    'access arguments' => array('administer islandora_xacml_api'),
+  );
+
+  $items['admin/settings/islandora_xacml/api'] = array(
+    'title' => 'Islandora XACML API',
+    'description' => 'Settings for the Islandora XACML API module.',
+    'access arguments' => array('administer islandora_xacml_api'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_perm().
+ */
+function islandora_xacml_api_perm() {
+  return array('administer islandora_xacml_api', 'Manage XACML API settings.');
 }
 
 /**
