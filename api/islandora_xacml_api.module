@@ -1,13 +1,65 @@
 <?php
-
 /**
  * @file
- * Islandora Xacml module API functions.
+ *   Islandora Xacml module API functions.
  */
 
 /**
- * Hook to update the collection query when xacml is enabled.  By default the collection
- * query does not respect xacml rules, now when the xacml editor module is enabled the
+ * Implements hook_menu().
+ *
+ * @return array
+ *   $items the array defining the menu paths for this module.
+ */
+function islandora_xacml_api_menu() {
+  $items = array();
+  $items['admin/settings/islandora_xacml'] = array(
+    'title' => 'Islandora XACML',
+    'description' => 'Settings for the Islandora XACML modules.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_xacml_api_settings'),
+    'access arguments' => array('administer islandora_xacml_api'),
+  );
+
+  $items['admin/settings/islandora_xacml/api'] = array(
+    'title' => 'Islandora XACML API',
+    'description' => 'Settings for the Islandora XACML API module.',
+    'access arguments' => array('administer islandora_xacml_api'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_perm().
+ */
+function islandora_xacml_api_perm() {
+  return array('administer islandora_xacml_api', 'Manage XACML API settings.');
+}
+
+/**
+ * Admin settings form.
+ */
+function islandora_xacml_api_settings() {
+
+  $form['islandora_xacml_api_rels_viewable_user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr RELS-EXT ViewableByUser field'),
+    '#default_value' => variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms'),
+  );
+  $form ['islandora_xacml_api_rels_viewable_role'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr RELS-EXT ViewableByRole field'),
+    '#default_value' => variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms'),
+  );
+
+  return system_settings_form($form);
+}
+/**
+ * Hook to update the collection query when xacml is enabled.
+ * By default the collectionquery does not respect xacml rules,
+ * now when the xacml editor module is enabled the
  * query will be modified to use xacml rules.
  *
  * @param String $query
@@ -53,7 +105,8 @@ function islandora_xacml_editor_islandora_collection_query_alter(&$query, $pid) 
 }
 
 /**
- * Hook to update solr queries to respect xacml rules when the xacml editor is enabled.
+ * Hook to update solr queries to respect xacml rules when the xacml
+ * editor is enabled.
  *
  * @param IslandoraSolrQueryProcessor $processor
  *   The Solr query processor to apply xacml rules to.
@@ -62,17 +115,18 @@ function islandora_xacml_editor_islandora_solr_search_query_processor($processor
   global $user;
   // Check if this user is allowed.
   if ($user->name) {
-    $fq = variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"" . $user->name . "\" OR ";
+    $fq = variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"" . $user->name . "\" OR ";
   }
-  // If the user is anonymous then user->name won't resolve, so special catch for the anon user.
+  // If the user is anonymous then user->name won't resolve,
+  // so special catch for the anon user.
   else {
-    $fq = variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"anonymous\" OR ";
+    $fq = variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"anonymous\" OR ";
   }
   // Check if any of my roles are allowed.
   foreach ($user->roles as $role) {
-    $fq .= variable_get('islandora_xacml_editor_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":\"" . $role . "\" OR ";
+    $fq .= variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":\"" . $role . "\" OR ";
   }
   // Check if the object is open (unrestricted).
-  $fq .= "((*:* -" . variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":[* TO *]) AND (*:* -" . variable_get('islandora_xacml_editor_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":[* TO *]))";
+  $fq .= "((*:* -" . variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":[* TO *]) AND (*:* -" . variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":[* TO *]))";
   $processor->solrParams['fq'][] = $fq;
 }
