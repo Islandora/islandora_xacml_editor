@@ -819,22 +819,12 @@ function islandora_xacml_editor_settings() {
     '#title' => t('Display the MIME type regex textfield?'),
     '#default_value' => variable_get('islandora_xacml_editor_show_mimeregex', 1),
   );
-  $form['islandora_xacml_editor_rels_viewable_user'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Solr RELS-EXT ViewableByUser field'),
-    '#default_value' => variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms'),
-  );
-  $form ['islandora_xacml_editor_rels_viewable_role'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Solr RELS-EXT ViewableByRole field'),
-    '#default_value' => variable_get('islandora_xacml_editor_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms'),
-  );
   $form['islandora_xacml_editor_restrictions'] = array(
     '#type' => 'fieldset',
     '#title' => t('Restrictions for DSID and MIME type'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
-    '#description' => 'DSIDs and MIMEs that will not appear in the autocomplete fields or be allowed as filters.'
+    '#description' => 'DSIDs and MIMEs that will not appear in the autocomplete fields or be allowed as filters.',
   );
   $form['islandora_xacml_editor_restrictions']['islandora_xacml_editor_restricted_dsids'] = array(
     '#type' => 'textarea',

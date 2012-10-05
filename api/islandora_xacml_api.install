@@ -1,0 +1,33 @@
+<?php
+/**
+ * @file
+ *   Islandora Xacml module API functions.
+ */
+
+/**
+ * Implements hook_update_N().
+ *
+ * This function will help fix an issue where the dependent islandora_xacml_editor
+ * module set variables that are only used in this module.
+ * The issue would requre the islandora_xacml_editor module to be enabled to
+ * alter these variables.  It is desirable for some users to customize these
+ * variables but not enable the islandora_xacml_editor, so management of these
+ * variables is being passed to islandora_xacml_api.
+ */
+function islandora_xacml_api_update_6001() {
+  // Get variables to set.
+  $viewable_by_user = variable_get('islandora_xacml_editor_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms');
+  $viewable_by_role = variable_get('islandora_xacml_editor_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms');
+
+  // Set new variables.
+  variable_set('islandora_xacml_api_rels_viewable_user', $viewable_by_user);
+  variable_set('islandora_xacml_api_rels_viewable_role', $viewable_by_role);
+
+  // Kill old variables.
+  variable_del('islandora_xacml_editor_rels_viewable_user');
+  variable_del('islandora_xacml_editor_rels_viewable_role');
+
+  return array(
+      array('success' => TRUE, 'query' => 'Islandora XACML Solr variables updated.'),
+    );
+}
