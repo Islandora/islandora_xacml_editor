@@ -1066,6 +1066,11 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#suffix' => '</div>',
   );
 
+  // Grab original value used in comparisons.
+  if (!isset($form_state['storage']['accessenabled'])) {
+    $form_state['storage']['accessenabled'] = $form['access']['enabled']['#default_value'];
+  }  
+
   $form['manage'] = array(
     '#weight' => -1,
     '#type' => 'fieldset',
@@ -1730,6 +1735,10 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
     $xacml->viewingRule->addUser($values['users']);
     $xacml->viewingRule->addRole($values['roles']);
   }
+  // User selects to disable the access rule when it was previously enabled.
+  elseif ($values['enabled'] != $form_state['storage']['accessenabled']) {
+    $xacml->viewingRule->clear();
+  }  
 
   $xacml->writeBackToFedora();
 
