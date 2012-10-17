@@ -31,3 +31,28 @@ function islandora_xacml_api_update_6001() {
       array('success' => TRUE, 'query' => 'Islandora XACML Solr variables updated.'),
     );
 }
+
+/**
+ * Implements hook_update_N().
+ *
+ * This function will help fix an issue where the dependent islandora_xacml_editor
+ * module set variables that are only used in this module.
+ * The issue would require the islandora_xacml_editor module to be enabled to
+ * alter this variable.  It is desirable for some users to customize these
+ * variables but not enable the islandora_xacml_editor, so management of these
+ * variables is being passed to islandora_xacml_api.
+ */
+function islandora_xacml_api_update_6002() {
+  // Get current variable value.
+  $set_relationships = variable_get('islandora_xacml_editor_save_relationships', TRUE);
+
+  // Set new variable.
+  variable_set('islandora_xacml_api_save_relationships', $viewable_by_user);
+
+  // Kill old variable.
+  variable_del('islandora_xacml_editor_save_relationships');
+
+  return array(
+    array('success' => TRUE, 'query' => 'Islandora XACML relationships variable updated.'),
+  );
+}
