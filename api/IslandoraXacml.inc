@@ -57,10 +57,8 @@ class IslandoraXacml extends Xacml {
       $this->item->add_datastream_from_string($xml, $this->dsid, 'Xacml Policy Stream', 'text/xml', 'X');
     }
 
-
-
     //Only add relationships on POLICY datastream, as only the POLICY is enforced.
-    if ($this->dsid == 'POLICY' && variable_get('islandora_xacml_editor_save_relationships', TRUE)) {
+    if ($this->dsid == 'POLICY' && variable_get('islandora_xacml_api_save_relationships', TRUE)) {
       $this->writeRelations();
     }
     return TRUE;
