@@ -996,7 +996,9 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   while ($role = db_fetch_object($result)) {
     $role->rid == 0 ? $roles['anonymous'] = 'anonymous' : $roles[$role->name] = $role->name;
   }
-
+  
+  $new_xacml = FALSE;
+  
   if (array_key_exists($xacml_dsid, $datastreams)) {
     module_load_include('inc', 'islandora_xacml_api', 'XacmlException');
 
