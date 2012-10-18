@@ -80,11 +80,13 @@ class IslandoraXacml extends Xacml {
 
     if ($this->viewingRule->isPopulated()) {
       // recompute the new values from the policy
-      foreach ($this->viewingRule->getUsers() as $account) {
-        $this->item->add_relationship($viewable_by_user, $account, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+      $view_users = $this->viewingRule->getUsers();
+      $view_roles = $this->viewingRule->getRoles();
+      if (count($view_users) > 0) {
+        $this->item->add_relationship($viewable_by_user, $view_users, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
       }
-      foreach ($this->viewingRule->getRoles() as $role) {
-        $this->item->add_relationship($viewable_by_role, $role, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+      if (count($view_roles) > 0) {
+        $this->item->add_relationship($viewable_by_role, $view_roles, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
       }
     }
 
@@ -92,11 +94,13 @@ class IslandoraXacml extends Xacml {
       foreach ($this->datastreamRule->getDsids() as $dsid) {
         // recompute the new values from the policy
         //XXX:  These use the RELS-EXT URI...
-        foreach ($this->datastreamRule->getUsers() as $account) {
-          $this->item->add_dsid_relationship($dsid, $viewable_by_user, $account, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+        $ds_users = $this->datastreamRule->getUsers();
+        $ds_roles = $this->datastreamRule->getRoles();
+        if (count($ds_users) > 0) {
+          $this->item->add_dsid_relationship($dsid, $viewable_by_user, $ds_users, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
         }
-        foreach ($this->datastreamRule->getRoles() as $role) {
-          $this->item->add_dsid_relationship($dsid, $viewable_by_role, $role, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+        if (count($ds_roles) > 0) {
+          $this->item->add_dsid_relationship($dsid, $viewable_by_role, $ds_roles, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
         }
       }
     }
