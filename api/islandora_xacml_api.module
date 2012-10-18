@@ -149,24 +149,30 @@ function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user) {
 
   $item = new Fedora_Item($pid);
   if (array_key_exists('POLICY', $item->datastreams)) {
-    $xacml = new IslandoraXacml($pid);
+    try {
+      $xacml = new IslandoraXacml($pid);
 
-    // Map the Islandora/fedora_repository perms to our rules.
-    if ($op == ObjectHelper::$OBJECT_HELPER_VIEW_FEDORA || $op == ObjectHelper::$VIEW_DETAILED_CONTENT_LIST) {
-      return $xacml->viewingRule->hasPermission($user->name, $user->roles);
+      // Map the Islandora/fedora_repository perms to our rules.
+      if ($op == ObjectHelper::$OBJECT_HELPER_VIEW_FEDORA || $op == ObjectHelper::$VIEW_DETAILED_CONTENT_LIST) {
+        return $xacml->viewingRule->hasPermission($user->name, $user->roles);
+      }
+      elseif (in_array($op, array(
+        ObjectHelper::$EDIT_FEDORA_METADATA,
+        ObjectHelper::$PURGE_FEDORA_OBJECTSANDSTREAMS,
+        ObjectHelper::$ADD_FEDORA_STREAMS,
+        ObjectHelper::$INGEST_FEDORA_OBJECTS,
+        ObjectHelper::$EDIT_TAGS_DATASTREAM))) {
+        return $xacml->managementRule->hasPermission($user->name, $user->roles);
+      }
+      else {
+        // Unknown operation; make no assertion.
+        return NULL;
+      }
     }
-    elseif (in_array($op, array(
-      ObjectHelper::$EDIT_FEDORA_METADATA,
-      ObjectHelper::$PURGE_FEDORA_OBJECTSANDSTREAMS,
-      ObjectHelper::$ADD_FEDORA_STREAMS,
-      ObjectHelper::$INGEST_FEDORA_OBJECTS,
-      ObjectHelper::$EDIT_TAGS_DATASTREAM))) {
-      return $xacml->managementRule->hasPermission($user->name, $user->roles);
-    }
-    else {
-      // Unknown operation; make no assertion.
+    catch (XacmlException $e) {
+      // Likely an error parsing the POLICY stream...  Let's make no assertion.
       return NULL;
-    }
+    } 
   }
   else {
     // No POLICY stream; make no assertion.
