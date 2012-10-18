@@ -49,6 +49,11 @@ class IslandoraXacml extends Xacml {
    * Writes our XACML stream to our PID/DSID pair...
    */
   function writeBackToFedora() {
+    //Only add relationships on POLICY datastream, as only the POLICY is enforced.
+    if ($this->dsid == 'POLICY' && variable_get('islandora_xacml_api_save_relationships', TRUE)) {
+      $this->writeRelations();
+    }
+
     $xml = $this->getXmlString();
     if (array_key_exists($this->dsid, $this->item->datastreams)) {
       $this->item->modify_datastream($xml, $this->dsid, 'Xacml Policy Stream', 'text/xml');
@@ -57,10 +62,6 @@ class IslandoraXacml extends Xacml {
       $this->item->add_datastream_from_string($xml, $this->dsid, 'Xacml Policy Stream', 'text/xml', 'X');
     }
 
-    //Only add relationships on POLICY datastream, as only the POLICY is enforced.
-    if ($this->dsid == 'POLICY' && variable_get('islandora_xacml_api_save_relationships', TRUE)) {
-      $this->writeRelations();
-    }
     return TRUE;
   }
 
