@@ -136,3 +136,47 @@ function islandora_xacml_editor_islandora_solr_search_query_processor($processor
   $fq .= "((*:* -" . variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":[* TO *]) AND (*:* -" . variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":[* TO *]))";
   $processor->solrParams['fq'][] = $fq;
 }
+
+/**
+ * Implements hook_fedora_repository_check_perm().
+ *
+ * Uses any existing POLICY stream to allow or deny the operation.
+ */
+function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user) {
+  module_load_include('inc', 'fedora_repository', 'ObjectHelper');
+  module_load_include('inc', 'fedora_repository', 'api/fedora_item');
+  module_load_include('inc', 'islandora_xacml_api', 'IslandoraXacml');
+
+  $item = new Fedora_Item($pid);
+  if (array_key_exists('POLICY', $item->datastreams)) {
+    try {
+      $xacml = new IslandoraXacml($pid);
+
+      // Map the Islandora/fedora_repository perms to our rules.
+      if ($op == ObjectHelper::$OBJECT_HELPER_VIEW_FEDORA || $op == ObjectHelper::$VIEW_DETAILED_CONTENT_LIST) {
+        return $xacml->viewingRule->hasPermission($user->name, $user->roles);
+      }
+      elseif (in_array($op, array(
+        ObjectHelper::$EDIT_FEDORA_METADATA,
+        ObjectHelper::$PURGE_FEDORA_OBJECTSANDSTREAMS,
+        ObjectHelper::$ADD_FEDORA_STREAMS,
+        ObjectHelper::$INGEST_FEDORA_OBJECTS,
+        ObjectHelper::$EDIT_TAGS_DATASTREAM))) {
+        return $xacml->managementRule->hasPermission($user->name, $user->roles);
+      }
+      else {
+        // Unknown operation; make no assertion.
+        return NULL;
+      }
+    }
+    catch (XacmlException $e) {
+      // Likely an error parsing the POLICY stream...  Let's make no assertion.
+      return NULL;
+    } 
+  }
+  else {
+    // No POLICY stream; make no assertion.
+    return NULL;
+  }
+}
+
