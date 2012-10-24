@@ -151,10 +151,14 @@ function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user) {
   if (array_key_exists('POLICY', $item->datastreams)) {
     try {
       // Always let the site admin have all permissions.
-      GLOBAL $user;
       if ($user->uid == 1) {
         return TRUE;
       }
+      // Always let users with the admin role have all permissions.
+      if (in_array('admin', $user->roles)) {
+        return TRUE;
+      }
+
       $xacml = new IslandoraXacml($pid);
 
       // Map the Islandora/fedora_repository perms to our rules.
