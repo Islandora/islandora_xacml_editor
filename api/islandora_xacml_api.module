@@ -150,6 +150,11 @@ function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user) {
   $item = new Fedora_Item($pid);
   if (array_key_exists('POLICY', $item->datastreams)) {
     try {
+      // Always let the site admin have all permissions.
+      GLOBAL $user;
+      if ($user->uid == 1) {
+        return TRUE;
+      }
       $xacml = new IslandoraXacml($pid);
 
       // Map the Islandora/fedora_repository perms to our rules.
@@ -172,11 +177,10 @@ function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user) {
     catch (XacmlException $e) {
       // Likely an error parsing the POLICY stream...  Let's make no assertion.
       return NULL;
-    } 
+    }
   }
   else {
     // No POLICY stream; make no assertion.
     return NULL;
   }
 }
-
