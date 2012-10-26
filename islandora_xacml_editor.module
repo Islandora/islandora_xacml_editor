@@ -1441,6 +1441,13 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#size' => 35,
     '#description' => t('Type "*" to list all DSIDs.'),
     '#prefix' => '<div class="islandora_xacml_block_description">',
+    '#ahah' => array(
+      'event' => '',
+      'path' => "xacml/ahah/add/dsid/" . $xacml_dsid . '/' . $object_pid,
+      'wrapper' => "islandora_xacml",
+      'method' => 'replace',
+      'keypress' => TRUE,
+    ),
   );
   $form['dsidmime']['newdsidadd'] = array(
     '#type' => 'button',
@@ -1460,6 +1467,13 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
       '#title' => t('DSID Regex'),
       '#size' => 35,
       '#prefix' => '<div class="islandora_xacml_block">',
+      '#ahah' => array(
+        'event' => '',
+        'path' => "xacml/ahah/add/dsidregex/" . $xacml_dsid . '/' . $object_pid,
+        'wrapper' => "islandora_xacml",
+        'method' => 'replace',
+        'keypress' => TRUE,
+      ),
     );
     $form['dsidmime']['dsidregexadd'] = array(
       '#type' => 'button',
@@ -1480,6 +1494,13 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#size' => 35,
     '#description' => t('Type "*" to list all MIME types.'),
     '#prefix' => '<div class="islandora_xacml_block_description">',
+    '#ahah' => array(
+        'event' => '',
+        'path' => "xacml/ahah/add/mime/" . $xacml_dsid . '/' . $object_pid,
+        'wrapper' => "islandora_xacml",
+        'method' => 'replace',
+        'keypress' => TRUE,
+      ),
   );
   $form['dsidmime']['newmimeadd'] = array(
     '#name' => 'newmimeadd',
@@ -1500,6 +1521,13 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
       '#title' => t('MIME type Regex'),
       '#size' => 35,
       '#prefix' => '<div class="islandora_xacml_block">',
+      '#ahah' => array(
+        'event' => '',
+        'path' => "xacml/ahah/add/mimeregex/" . $xacml_dsid . '/' . $object_pid,
+        'wrapper' => "islandora_xacml",
+        'method' => 'replace',
+        'keypress' => TRUE,
+      ),
     );
     $form['dsidmime']['mimeregexadd'] = array(
       '#name' => 'mimeregexadd',
