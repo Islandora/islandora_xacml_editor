@@ -1,0 +1,109 @@
+<?php
+
+/**
+ *  @file
+ *  All tests associated with the Islandora Xacml Api module
+ */
+
+module_load_include('inc', 'fedora_repository', 'fedora_repository.test');
+
+class IslandoraXacmlApiTestCase extends IslandoraTestCase {
+  
+  public static function getInfo() {
+    return array(
+      'name' => 'Islandora Xacml Api Test Case',
+      'description' => "Functional tests for the Islandora Xacml Api.",
+      'group' => 'Xacml Editor',
+    );
+  }
+
+  protected function getModuleName() {
+    return 'islandora_xacml_api';
+  }
+
+  /**
+   *  Validates hook_menu() results.
+   */
+  public function testIslandoraXacmlApiMenu() {
+    // vars to test schema
+    $main_page = 'admin/settings/islandora_xacml'; 
+    $api_page = $main_page . '/api';
+    $title = 'title';
+    $dsc = 'description';
+    $access_args = 'access arguments';
+    $perm = 'administer islandora_xacml_api';
+
+    // Invoke the hook
+    $results = $this->invoke('menu');
+
+    /**
+     *  Assert the schema of the results of the hook
+     */
+    $this->assertNotNull($results, "Hook returns non-null value.");
+    $this->assertTrue(is_array($results), "Hook returns an array.");
+
+    // admin/settings/islandora_xacml page
+    $this->assertTrue(array_key_exists($main_page, $results), "Returned array contains $main_page key.");
+    $this->assertTrue(is_array($results[$main_page]), "Value associated with $main_page is an array.");
+    $this->assertTrue(array_key_exists($title, $results[$main_page]), "$main_page array has $title key");
+    $this->assertTrue($results[$main_page][$title], "Value associated with $title evaluates to TRUE");
+    $this->assertTrue(is_string($results[$main_page][$title]), "Value associated with $title is a string");
+    $this->assertTrue(array_key_exists($dsc, $results[$main_page]), "$main_page array has $dsc key");
+    $this->assertTrue($results[$main_page][$dsc], "Value associated with $dsc evaluates to TRUE");
+    $this->assertTrue(is_string($results[$main_page][$dsc]), "Value associated with $dsc is a string");
+    $this->assertTrue(array_key_exists($access_args, $results[$main_page]), "$main_page array has $access_args key");
+    $this->assertTrue($results[$main_page][$access_args], "Value associated with $access_args evaluates to TRUE");
+    $this->assertTrue(is_array($results[$main_page][$access_args]), "Value associated with $access_args is an array");
+    $this->assertTrue(in_array($perm, $results[$main_page][$access_args]), "$access_args array contains $perm");
+
+    // admin/settings/islandora_xacml/api page
+    $this->assertTrue(array_key_exists($api_page, $results), "Returned array contains $api_page key.");
+    $this->assertTrue(is_array($results[$api_page]), "Value associated with $api_page is an array.");
+    $this->assertTrue(array_key_exists($title, $results[$api_page]), "$api_page array has $title key");
+    $this->assertTrue($results[$api_page][$title], "Value associated with $title evaluates to TRUE");
+    $this->assertTrue(is_string($results[$api_page][$title]), "Value associated with $title is a string");
+    $this->assertTrue(array_key_exists($dsc, $results[$api_page]), "$api_page array has $dsc key");
+    $this->assertTrue($results[$api_page][$dsc], "Value associated with $dsc evaluates to TRUE");
+    $this->assertTrue(is_string($results[$api_page][$dsc]), "Value associated with $dsc is a string");
+    $this->assertTrue(array_key_exists($access_args, $results[$api_page]), "$api_page array has $access_args key");
+    $this->assertTrue($results[$api_page][$access_args], "Value associated with $access_args evaluates to TRUE");
+    $this->assertTrue(is_array($results[$api_page][$access_args]), "Value associated with $access_args is an array");
+    $this->assertTrue(in_array($perm, $results[$api_page][$access_args]), "$access_args array contains $perm");
+  }
+
+  /**
+   *  Validates hook_perm() results.
+   */
+  public function testIslandoraXacmlApiPerm() {
+    // vars to test schema
+    $expected_perms = array('administer islandora_xacml_api', 'Manage XACML API settings.');
+
+    // Invoke the hook
+    $results = $this->invoke('perm');
+    
+    //Validate the result
+    $this->assertNotNull($results, "Hook returns non-null value.");
+    $this->assertTrue(is_array($results), "Hook returns an array.");
+    foreach ($expected_perms as $perm) {
+      $this->assertTrue(in_array($perm, $results), "Array contains $perm permission.");
+    }
+  }
+
+  /**
+   *  Validates hook_islandora_collection_query_alter() results.
+   */
+  public function testIslandoraXacmlEditorIslandoraCollectionQueryAlter() {
+    // hook parameters
+    $query = '';
+    $pid = "SOME_PID";
+
+    // invoke the hook
+    // use drupal alter instead, since it's supposed to take $query by reference
+    drupal_alter('islandora_collection_query', &$query, $pid);
+
+    $this->assertNotNull($query, "Hook altered results are non-null.");
+    $this->assertTrue(is_string($query), "Hook altered results are a string.");
+    $this->assertTrue($query, "Altered string is not empty.");
+  }
+
+}
