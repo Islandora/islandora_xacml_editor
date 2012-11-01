@@ -45,7 +45,7 @@ class XacmlWriter {
    *   String containing the XACML as XML.
    */
   public static function toXML($xacml, $pretty_print = FALSE) {
-    $dom = XacmlWriter::toDom($xacml);
+    $dom = XacmlWriter::toDOM($xacml);
     $dom->formatOutput = $pretty_print;
 
     return $dom->saveXML();

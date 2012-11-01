@@ -1,0 +1,211 @@
+<?php
+
+class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Islandora Xacml Api Unit Tests',
+      'description' => 'Unit tests for the Islandora Xacml Api',
+      'group' => 'Xacml Editor',
+    );
+  }
+
+  function testDefaultConstructorWithNoArgs() {
+
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // get an DOMXPath to search the Xacml
+    $xpath = $this->constructXPathForXacml($xacml);
+
+    /*
+     * test structure
+     */
+    $this->inspectRootNode($xpath);
+
+    $this->inspectEmptyTarget($xpath, "/ns:Policy/ns:Target" );
+
+    $this->inspectAllowEverythingElseRule($xpath);
+  }
+
+  /**
+   *  Instantiates and returns a DOMXPath object for the supplied Xacml object.
+   *
+   *  @param $xacml - Xacml
+   *    The xacml object that the DOMXPath will search
+   *
+   *  @return DOMXPath
+   *    The DOMXPath to search the supplied Xacml object
+   */
+  private function constructXPathForXacml($xacml) {
+    
+    // XACML policy namespace
+    $ns = 'urn:oasis:names:tc:xacml:1.0:policy';
+    
+    // create the xpath
+    $xpath = new DOMXPath($xacml->getDomDocument());
+    
+    // register the namespace   
+    $xpath->registerNamespace("ns", $ns);
+
+    return $xpath;
+  }
+
+  /**
+   *  Asserts on the structure of the root node of an xacml policy.
+   *  Looks for a root node named 'Policy', and ensures it has two
+   *  attributes: 'PolicyId' and 'RuleCombiningAlgId'.
+   *
+   *  @param $xpath
+   *    An DOMXPath object for the XACML DOM with namespace registered as 'ns'
+   */
+  private function inspectRootNode($xpath) {
+    // inspect root node
+    $query = "/ns:Policy";
+    $policy = $xpath->query($query)->item(0);
+    $this->assertNotNull($policy, "Root node is not null");
+    $this->assertTrue($policy->hasAttributes(), "Root node has attributes");
+
+    // inspect attributes
+
+    // policy id
+    $policy_id = $policy->attributes->getNamedItem("PolicyId");
+    $this->assertNotNull($policy_id, "Root node has policy id");
+    $this->assertTrue($policy_id->nodeValue, "Policy id is not an empty string");
+
+    // rule combining algorithm
+    $alg = $policy->attributes->getNamedItem("RuleCombiningAlgId");
+    $this->assertNotNull($alg, "Root node has a rule combining algorithm");
+    $this->assertTrue($alg->nodeValue, "Rule combining algorithm is not an empty string");
+  }
+
+  /**
+   *  Asserts on the structure of the empty target provided for specification
+   *  compliance when constructing an Xacml object.  Checks to make sure 
+   *  there's a 'Target' node which has 'Subjects', 'Resources', and 
+   *  'Actions' as children.  These children should contain 'AnySubject', 
+   *  'AnyResource', and 'AnyAction' as children, respectively.
+   *
+   *  @param $xpath - DOMXPath
+   *    An DOMXPath object for the XACML DOM with namespace registered as 'ns'
+   *
+   *  @param $target_path - String
+   *    Path to the empty target's root
+   */
+  private function inspectEmptyTarget($xpath, $target_path) {
+    
+    // look for 'Target' node
+    $query = $target_path;
+    $target = $xpath->query($query)->item(0);
+    $this->assertNotNull($target, "Empty target is not null");
+    
+    // inspect children
+
+    // subjects
+    $query .= "/ns:Subjects";
+    $subjects = $xpath->query($query)->item(0);
+    $this->assertNotNull($subjects, "Default subjects is not null");
+    $query .= "/ns:AnySubject";
+    $this->assertNotNull($xpath->query($query)->item(0), "Default subject is AnySubject");
+
+    // resources
+    $query = "$target_path/ns:Resources";
+    $resources = $xpath->query($query)->item(0);
+    $this->assertNotNull($resources, "Empty resources is not null");
+    $query .= "/ns:AnyResource";
+    $this->assertNotNull($xpath->query($query)->item(0), "Default subject is AnyResource");
+
+    // actions
+    $query = "$target_path/ns:Actions";
+    $actions = $xpath->query($query)->item(0);
+    $this->assertNotNull($actions, "Empty actions is not null");
+    $query .= "/ns:AnyAction";
+    $this->assertNotNull($xpath->query($query)->item(0), "Default subject is AnyAction");
+  }
+
+  /**
+   *  Asserts the structure of the 'allow-everything-else' rule given to an Xacml
+   *  object by default.  Searches based on the attributes of the rule, and asserts
+   *  its child is an empty target a la the one given to an empty Xacml object
+   *  for conforming to spec.
+   *
+   *  @param $xpath - DOMXPath
+   *    An DOMXPath object for the XACML DOM with namespace registered as 'ns'
+   */
+  private function inspectAllowEverythingElseRule($xpath) {
+
+    // look for the rule
+    // must have attribute 'RuleId' == 'allow-everything-else'
+    // and attribute 'Effect' == 'Permit'
+    $query = "/ns:Policy/ns:Rule[@RuleId='allow-everything-else' and @Effect='Permit']";
+    $rule = $xpath->query($query)->item(0);
+    $this->assertNotNull($rule, "Rule to allow everything else exists");
+
+    // the rule should contain an empty target, 
+    // just like what is given to the root node by default so
+    // the XACML conforms to spec
+    $query .= "/ns:Target";
+    $this->inspectEmptyTarget($xpath, $query);
+  }
+
+  /**
+   *  Asserts that when a user is added to an XacmlRule, 
+   *  that user appears in the resultant DOM.
+   */
+  public function testAddUserToRule() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a dummy user
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // get an DOMXPath to search the Xacml
+    $xpath = $this->constructXPathForXacml($xacml);
+
+    // search for the dummy user in the management rule
+    $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='$user_name']";
+    $results = $xpath->query($query)->item(0);
+
+    // assert
+    $this->assertNotNull($results, "The query for user $user_name return non-null results"); 
+    $this->assertEqual($results->nodeValue, $user_name, "Search result's nodeValue is equal to '$user_name'");
+  }
+
+  /**
+   *  Asserts that when users are added to an XacmlRule using an array,
+   *  that the users appear in the resultant DOM.
+   */
+  public function testAddUsersToRule() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add dummy users using an array
+    $user_array = array('foo', 'bar');
+    $xacml->managementRule->addUser($user_array);
+
+    // get an DOMXPath to search the Xacml
+    $xpath = $this->constructXPathForXacml($xacml);
+
+    // search for the dummy users in the management rule
+    // and assert their existence
+    for( $i = 0; $i < count($user_array); $i++ ) {
+      $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$user_array[$i]}']";
+      $results = $xpath->query($query)->item(0);
+     
+      $this->assertNotNull($results, "The query for user {$user_array[$i]} return non-null results"); 
+      $this->assertEqual($results->nodeValue, $user_array[$i], "Search result's nodeValue is equal to '{$user_array[$i]}'");
+    }
+    
+  }
+
+}

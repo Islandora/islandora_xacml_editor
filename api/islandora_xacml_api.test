@@ -89,6 +89,80 @@ class IslandoraXacmlApiTestCase extends IslandoraTestCase {
     }
   }
 
+  public function testIslandoraXacmlApiSettings() {
+    // Invoke the hook
+    $results = $this->invoke('settings');
+
+    // array keys
+    $rels_viewable_user = 'islandora_xacml_api_rels_viewable_user';
+    $rels_viewable_role = 'islandora_xacml_api_rels_viewable_role';
+    $save_relationships = 'islandora_xacml_api_save_relationships';
+    $type = '#type';
+    $title = '#title';
+    $default_value = '#default_value';
+    
+    /**
+     *  Validate the schema of the returned results
+     */ 
+
+    // Top level results
+    $this->assertNotNull($results, "Returned value is not null.");
+    $this->assertTrue(is_array($results), "Returned value is an array.");
+
+    // rels_viewable_user field
+    $this->assertTrue(array_key_exists($rels_viewable_user, $results), "Returned array has $rels_viewable_user key");
+    $viewable_user_array = $results[$rels_viewable_user];
+    $this->assertNotNull($viewable_user_array, "$rels_viewable_user value is not null");
+    $this->assertTrue($viewable_user_array, "$rels_viewable_user value is an array");
+    $this->assertTrue(array_key_exists($type, $viewable_user_array), "$rels_viewable_user array has $type key");
+    $this->assertNotNull($viewable_user_array[$type], "$rels_viewable_user's $type value is not null");
+    $this->assertTrue(is_string($viewable_user_array[$type]), "$rels_viewable_user's $type value is a string");
+    $this->assertTrue($viewable_user_array[$type], "$rels_viewable_user's $type is not a blank string");
+    $this->assertTrue(array_key_exists($title, $viewable_user_array), "$rels_viewable_user array has $title key");
+    $this->assertNotNull($viewable_user_array[$title], "$rels_viewable_user's $title value is not null");
+    $this->assertTrue(is_string($viewable_user_array[$title]), "$rels_viewable_user's $title value is a string");
+    $this->assertTrue($viewable_user_array[$title], "$rels_viewable_user's $title is not a blank string");
+    $this->assertTrue(array_key_exists($default_value, $viewable_user_array), "$rels_viewable_user array has $default_value key");
+    $this->assertNotNull($viewable_user_array[$default_value], "$rels_viewable_user's $default_value value is not null");
+    $this->assertTrue(is_string($viewable_user_array[$default_value]), "$rels_viewable_user's $default_value value is a string");
+    $this->assertTrue($viewable_user_array[$default_value], "$rels_viewable_user's $default_value is not a blank string");
+
+    // rels_viewable_role field
+    $this->assertTrue(array_key_exists($rels_viewable_role, $results), "Returned array has $rels_viewable_role key");
+    $viewable_role_array = $results[$rels_viewable_role];
+    $this->assertNotNull($viewable_role_array, "$rels_viewable_role value is not null");
+    $this->assertTrue($viewable_role_array, "$rels_viewable_role value is an array");
+    $this->assertTrue(array_key_exists($type, $viewable_role_array), "$rels_viewable_role array has $type key");
+    $this->assertNotNull($viewable_role_array[$type], "$rels_viewable_role's $type value is not null");
+    $this->assertTrue(is_string($viewable_role_array[$type]), "$rels_viewable_role's $type value is a string");
+    $this->assertTrue($viewable_role_array[$type], "$rels_viewable_role's $type is not a blank string");
+    $this->assertTrue(array_key_exists($title, $viewable_role_array), "$rels_viewable_role array has $title key");
+    $this->assertNotNull($viewable_role_array[$title], "$rels_viewable_role's $title value is not null");
+    $this->assertTrue(is_string($viewable_role_array[$title]), "$rels_viewable_role's $title value is a string");
+    $this->assertTrue($viewable_role_array[$title], "$rels_viewable_role's $title is not a blank string");
+    $this->assertTrue(array_key_exists($default_value, $viewable_role_array), "$rels_viewable_role array has $default_value key");
+    $this->assertNotNull($viewable_role_array[$default_value], "$rels_viewable_role's $default_value value is not null");
+    $this->assertTrue(is_string($viewable_role_array[$default_value]), "$rels_viewable_role's $default_value value is a string");
+    $this->assertTrue($viewable_role_array[$default_value], "$rels_viewable_role's $default_value is not a blank string");
+    
+    // save_relationships field
+    $this->assertTrue(array_key_exists($save_relationships, $results), "Returned array has $save_relationships key");
+    $save_relationships_array = $results[$save_relationships];
+    $this->assertNotNull($save_relationships_array, "$save_relationships value is not null");
+    $this->assertTrue($save_relationships_array, "$save_relationships value is an array");
+    $this->assertTrue(array_key_exists($type, $save_relationships_array), "$save_relationships array has $type key");
+    $this->assertNotNull($save_relationships_array[$type], "$save_relationships's $type value is not null");
+    $this->assertTrue(is_string($save_relationships_array[$type]), "$save_relationships's $type value is a string");
+    $this->assertTrue($save_relationships_array[$type], "$save_relationships's $type is not a blank string");
+    $this->assertTrue(array_key_exists($title, $save_relationships_array), "$save_relationships array has $title key");
+    $this->assertNotNull($save_relationships_array[$title], "$save_relationships's $title value is not null");
+    $this->assertTrue(is_string($save_relationships_array[$title]), "$save_relationships's $title value is a string");
+    $this->assertTrue($save_relationships_array[$title], "$save_relationships's $title is not a blank string");
+    $this->assertTrue(array_key_exists($default_value, $save_relationships_array), "$save_relationships array has $default_value key");
+    $this->assertNotNull($save_relationships_array[$default_value], "$save_relationships's $default_value value is not null");
+
+  }
+
   /**
    *  Validates hook_islandora_collection_query_alter() results.
    */
@@ -105,5 +179,7 @@ class IslandoraXacmlApiTestCase extends IslandoraTestCase {
     $this->assertTrue(is_string($query), "Hook altered results are a string.");
     $this->assertTrue($query, "Altered string is not empty.");
   }
+
+
 
 }

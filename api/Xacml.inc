@@ -3,7 +3,7 @@
 /**
  * @file
  * This file defines a set of object for manipulating XACML. Other files in the
- * XACML module provide a lower level access to creating XCAML these objects
+ * XACML module provide a lower level access to creating XACML these objects
  * work together to provide a nice high level view of a standard islandora
  * XACML object.
  */
@@ -35,7 +35,7 @@ abstract class XacmlRule {
   protected $xacml;
 
   /**
-   * Initialized a rule datastructure for XacmlWriter.
+   * Initializes a rule datastructure for XacmlWriter.
    *
    * @param $id
    *   Takes the ID for the new rule as a string.
