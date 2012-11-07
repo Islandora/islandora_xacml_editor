@@ -45,7 +45,7 @@ function islandora_xacml_api_settings() {
   $form['islandora_xacml_api_save_relationships'] = array(
     '#type' => 'checkbox',
     '#title' => t('Save relationships'),
-    '#description' => t('Causes relationships to be written to the REL-INT/EXT when the policy is saved. (required to make use of the Solr field values above)'),
+    '#description' => t('Causes relationships to be written to the REL-INT/EXT when the policy is saved.'),
     '#default_value' => variable_get('islandora_xacml_api_save_relationships', TRUE),
   );
 
