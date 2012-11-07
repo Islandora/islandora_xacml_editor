@@ -738,32 +738,6 @@ class Xacml {
   }
 
   /**
-   * Alternate Constructor for the Xacml object. This constructs from a PID instead of
-   * from a string.
-   *
-   * @param $pid
-   *   A string containing the PID
-   * @param $dsid
-   *   (Optional) Defaults to POLICY. A string contrining the DSID to parse.
-   *
-   * @throws XacmlException
-   * @return
-   *   an initialized Xacml object.
-   */
-  static public function constructFromPid($pid, $dsid = 'POLICY') {
-    module_load_include('inc', 'fedora_repository', 'api/fedora_item');
-    $item = new Fedora_Item($pid);
-    $datastreams = $item->get_datastreams_list_as_array();
-    if (isset($datastreams[$dsid])) {
-      $xacml = $item->get_datastream_dissemination($dsid);
-    }
-    else {
-      $xacml = NULL;
-    }
-    return new Xacml($xacml);
-  }
-
-  /**
    * This function updates the rules array before it is passed to XacmlWriter. It takes into
    * account which rules have been populated.
    */
