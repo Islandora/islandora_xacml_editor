@@ -12,7 +12,7 @@
  */
 function islandora_xacml_api_menu() {
   $items = array();
-  $items['admin/settings/islandora_xacml'] = array(
+  $items['admin/islandora/xacml'] = array(
     'title' => 'Islandora XACML',
     'description' => 'Settings for the Islandora XACML modules.',
     'page callback' => 'drupal_get_form',
@@ -20,7 +20,7 @@ function islandora_xacml_api_menu() {
     'access arguments' => array('administer islandora_xacml_api'),
   );
 
-  $items['admin/settings/islandora_xacml/api'] = array(
+  $items['admin/islandora/xacml/api'] = array(
     'title' => 'Islandora XACML API',
     'description' => 'Settings for the Islandora XACML API module.',
     'access arguments' => array('administer islandora_xacml_api'),
@@ -34,7 +34,7 @@ function islandora_xacml_api_menu() {
 /**
  * Implements hook_perm().
  */
-function islandora_xacml_api_perm() {
+function islandora_xacml_api_permission() {
   return array('administer islandora_xacml_api', 'Manage XACML API settings.');
 }
 
@@ -42,17 +42,6 @@ function islandora_xacml_api_perm() {
  * Admin settings form.
  */
 function islandora_xacml_api_settings() {
-
-  $form['islandora_xacml_api_rels_viewable_user'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Solr RELS-EXT ViewableByUser field'),
-    '#default_value' => variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms'),
-  );
-  $form ['islandora_xacml_api_rels_viewable_role'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Solr RELS-EXT ViewableByRole field'),
-    '#default_value' => variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms'),
-  );
   $form['islandora_xacml_api_save_relationships'] = array(
     '#type' => 'checkbox',
     '#title' => t('Save relationships'),
@@ -61,130 +50,4 @@ function islandora_xacml_api_settings() {
   );
 
   return system_settings_form($form);
-}
-/**
- * Hook to update the collection query when xacml is enabled.
- * By default the collectionquery does not respect xacml rules,
- * now when the xacml editor module is enabled the
- * query will be modified to use xacml rules.
- *
- * @param String $query
- *   The query string sent from islandora.
- * @param String $pid
- *   The pd of the object
- *
- * @return String
- *   The modified query after xacml rules have been added.
- */
-function islandora_xacml_editor_islandora_collection_query_alter(&$query, $pid) {
-  global $user;
-  $query = 'select $object $title $model $parent_model $created from <#ri>
-            where
-            ((
-            $object <fedora-model:label> $title
-            and $object <fedora-model:hasModel> $model
-            and $object <fedora-model:createdDate> $created
-            and $model <fedora-model:hasModel> $parent_model
-            and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
-            and ( $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>
-            or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $pid . '> )
-            minus $object <http://islandora.ca/ontology/relsext#isViewableByRole> $role
-            minus $object <http://islandora.ca/ontology/relsext#isViewableByUser> $user
-            ) or (
-            $object <fedora-model:label> $title
-            and $object <fedora-model:hasModel> $model
-            and $object <fedora-model:createdDate> $created
-            and $model <fedora-model:hasModel> $parent_model
-            and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
-            and ( $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>
-            or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $pid . '> )
-            and (';
-  foreach ($user->roles as $role) {
-    $query .= '$object <http://islandora.ca/ontology/relsext#isViewableByRole> ' . "'$role' or ";
-  }
-  $query .= '$object <http://islandora.ca/ontology/relsext#isViewableByUser> ' . "'$user->name'" . ')';
-  $query .= '))
-            minus $model <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
-            minus $parent_model <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
-            order by $title';
-  return $query;
-}
-
-/**
- * Hook to update solr queries to respect xacml rules when the xacml
- * editor is enabled.
- *
- * @param IslandoraSolrQueryProcessor $processor
- *   The Solr query processor to apply xacml rules to.
- */
-function islandora_xacml_editor_islandora_solr_search_query_processor($processor) {
-  global $user;
-  // Check if this user is allowed.
-  if ($user->name) {
-    $fq = variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"" . $user->name . "\" OR ";
-  }
-  // If the user is anonymous then user->name won't resolve,
-  // so special catch for the anon user.
-  else {
-    $fq = variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"anonymous\" OR ";
-  }
-  // Check if any of my roles are allowed.
-  foreach ($user->roles as $role) {
-    $fq .= variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":\"" . $role . "\" OR ";
-  }
-  // Check if the object is open (unrestricted).
-  $fq .= "((*:* -" . variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":[* TO *]) AND (*:* -" . variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":[* TO *]))";
-  $processor->solrParams['fq'][] = $fq;
-}
-
-/**
- * Implements hook_fedora_repository_check_perm().
- *
- * Uses any existing POLICY stream to allow or deny the operation.
- */
-function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user) {
-  module_load_include('inc', 'fedora_repository', 'ObjectHelper');
-  module_load_include('inc', 'fedora_repository', 'api/fedora_item');
-  module_load_include('inc', 'islandora_xacml_api', 'IslandoraXacml');
-
-  $item = new Fedora_Item($pid);
-  if (array_key_exists('POLICY', $item->datastreams)) {
-    try {
-      // Always let the site admin have all permissions.
-      if ($user->uid == 1) {
-        return TRUE;
-      }
-      // Always let users with the admin role have all permissions.
-      if (in_array('admin', $user->roles)) {
-        return TRUE;
-      }
-
-      $xacml = new IslandoraXacml($pid);
-
-      // Map the Islandora/fedora_repository perms to our rules.
-      if ($op == ObjectHelper::$OBJECT_HELPER_VIEW_FEDORA || $op == ObjectHelper::$VIEW_DETAILED_CONTENT_LIST) {
-        return $xacml->viewingRule->hasPermission($user->name, $user->roles);
-      }
-      elseif (in_array($op, array(
-        ObjectHelper::$EDIT_FEDORA_METADATA,
-        ObjectHelper::$PURGE_FEDORA_OBJECTSANDSTREAMS,
-        ObjectHelper::$ADD_FEDORA_STREAMS,
-        ObjectHelper::$INGEST_FEDORA_OBJECTS,
-        ObjectHelper::$EDIT_TAGS_DATASTREAM))) {
-        return $xacml->managementRule->hasPermission($user->name, $user->roles);
-      }
-      else {
-        // Unknown operation; make no assertion.
-        return NULL;
-      }
-    }
-    catch (XacmlException $e) {
-      // Likely an error parsing the POLICY stream...  Let's make no assertion.
-      return NULL;
-    }
-  }
-  else {
-    // No POLICY stream; make no assertion.
-    return NULL;
-  }
 }

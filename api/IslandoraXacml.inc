@@ -1,7 +1,5 @@
 <?php
 
-module_load_include('inc', 'islandora_xacml_api', 'Xacml');
-
 /**
  * Subclass Xacml to facilitate communication to Islandora/Fedora.
  *

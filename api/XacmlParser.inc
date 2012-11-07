@@ -5,9 +5,6 @@
  * Contains the XacmlParser class.
  */
 
-include_once 'XacmlConstants.inc';
-include_once 'XacmlException.inc';
-
 /**
  * This static class takes an XACML XML file and parses it into the datastructures used by the XACML class.
  */
@@ -52,7 +49,7 @@ class XacmlParser {
     $xpath = new DomXpath($dom);
     $xpath->registerNamespace('xacml', XacmlConstants::XACML);
     XacmlParser::parseXacml($xacml, $dom, $xpath);
-    
+
     return $xacml;
   }
 
@@ -66,12 +63,12 @@ class XacmlParser {
    */
   protected static function findDsidMime(&$rule, $element) {
     $resources = $element->getElementsByTagNameNS(XacmlConstants::XACML, "ResourceMatch");
-    
+
     foreach ($resources as $resource) {
       $match = $resource->getAttribute('MatchId');
       $value = $resource->childNodes->item(0)->nodeValue;
       $type = $resource->childNodes->item(1)->getAttribute("AttributeId");
-      
+
       switch ($type) {
         case XacmlConstants::MIME:
           if ($match == XacmlConstants::STRINGEQUAL) {

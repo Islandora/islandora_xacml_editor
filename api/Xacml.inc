@@ -50,7 +50,7 @@ abstract class XacmlRule {
 
     $rule['ruleid'] = $id;
     $rule['effect'] = $effect;
-    
+
     $rule['dsids'] = array();
     $rule['mimes'] = array();
     $rule['dsidregexs'] = array();
@@ -441,7 +441,7 @@ class XacmlDatastreamRule extends XacmlRule {
     $rule['mimes'] = $this->getValues('mimes');
     $rule['dsidregexs'] = $this->getValues('dsidregexs');
     $rule['mimeregexs'] = $this->getValues('mimeregexs');
-    
+
     if ($this->xacml->managementRule->isPopulated()) {
       $rule['users'] = array_unique(array_merge($rule['users'], $this->xacml->managementRule->getUsers()));
       $rule['roles'] = array_unique(array_merge($rule['roles'], $this->xacml->managementRule->getRoles()));
@@ -459,7 +459,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function addDsid($dsid) {
     $this->setValue('dsids', $dsid);
   }
-  
+
   /**
    * Add a dsid regex to the rule.
    *
@@ -469,7 +469,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function addDsidRegex($regex) {
     $this->setValue('dsidregexs', $regex);
   }
-  
+
   /**
    * Add a mimetype to the rule.
    *
@@ -479,7 +479,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function addMimetype($mime) {
     $this->setValue('mimes', $mime);
   }
-  
+
  /**
    * Add a mimetype regex to the rule.
    *
@@ -489,7 +489,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function addMimetypeRegex($regex) {
     $this->setValue('mimeregexs', $regex);
   }
-  
+
   /**
    * Remove mimetypes from the rule.
    *
@@ -499,7 +499,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function removeMimetype($mime) {
     $this->removeValues('mimes', $mime);
   }
-  
+
   /**
    * Remove mimetype regexs from the rule.
    *
@@ -509,7 +509,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function removeMimetypeRegex($regex) {
     $this->removeValues('mimeregexs', $regex);
   }
-  
+
   /**
    * Remove dsids from the rule.
    *
@@ -519,7 +519,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function removeDsid($dsid) {
     $this->removeValues('dsids', $dsid);
   }
-  
+
   /**
    * Remove dsid regexs from the rule.
    *
@@ -529,7 +529,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function removeDsidRegex($regex) {
     $this->removeValues('dsidregexs', $regex);
   }
-  
+
   /**
    * Mimetypes associated with this rule.
    *
@@ -539,7 +539,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function getMimetypes() {
     return $this->getValues('mimes');
   }
-  
+
  /**
    * Mimetypes associated with this rule.
    *
@@ -559,7 +559,7 @@ class XacmlDatastreamRule extends XacmlRule {
   function getDsids() {
     return $this->getValues('dsids');
   }
-  
+
  /**
    * Dsid regexs associated with this rule.
    *
@@ -605,12 +605,12 @@ class XacmlDatastreamRule extends XacmlRule {
       $boolean_dsid = $dsid ? in_array($dsid, $this->getDsids()) : FALSE;
       $boolean_mimeregex = FALSE;
       $boolean_dsidregex = FALSE;
-      
+
       $mimeregexs = $this->getMimetypeRegexs();
-      
+
       if (isset($mimeregexs)) {
         foreach ($mimeregexs as $key => $value) {
-          preg_match('/'.$value.'/', $mime, $match);
+          preg_match('/' . $value . '/', $mime, $match);
 
           if (count($match) > 0) {
             $boolean_mimeregex = TRUE;
@@ -618,12 +618,12 @@ class XacmlDatastreamRule extends XacmlRule {
           }
         }
       }
-      
+
       $dsidregexs = $this->getDsidRegexs();
-      
+
       if (isset($dsidregexs)) {
         foreach ($dsidregexs as $key => $value) {
-          preg_match('/'.$value.'/', $dsid , $match);
+          preg_match('/' . $value . '/', $dsid , $match);
 
           if (count($match) > 0) {
             $boolean_dsidregex = TRUE;
@@ -631,7 +631,7 @@ class XacmlDatastreamRule extends XacmlRule {
           }
         }
       }
-      
+
       if ($boolean_mime || $boolean_dsid || $boolean_mimeregex || $boolean_dsidregex) {
         return FALSE;
       }
@@ -709,7 +709,6 @@ class Xacml {
    * @throws XacmlException if the XML cannot be parsed
    */
   function __construct($xacml = NULL) {
-    module_load_include('inc', 'islandora_xacml_api', 'XacmlParser');
 
     $management_rule = NULL;
     $datastream_rule = NULL;
@@ -790,7 +789,6 @@ class Xacml {
    *   The DomDocument associated with this Xacml rule.
    */
   function getDomDocument() {
-    module_load_include('inc', 'islandora_xacml_api', 'XacmlWriter');
     $this->updateRulesArray();
     return XacmlWriter::toDOM($this->xacml);
   }
@@ -805,7 +803,6 @@ class Xacml {
    *   string containing xacml xml
    */
   function getXmlString($pretty_print = TRUE) {
-    module_load_include('inc', 'islandora_xacml_api', 'XacmlWriter');
     $this->updateRulesArray();
     return XacmlWriter::toXML($this->xacml, $pretty_print);
   }

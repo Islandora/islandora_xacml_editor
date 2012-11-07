@@ -5,8 +5,6 @@
  * This file has functions for writing the XACML class datastructures out to XML.
  */
 
-include_once 'XacmlConstants.inc';
-
 /**
  * Class for writing XACML editor datastructures out to XML.
  */
@@ -205,7 +203,7 @@ class XacmlWriter {
   private static function createRuleTargetResource(&$dom, &$resources, $name, $type) {
     $resource = $dom->createElementNS(XacmlConstants::XACML, 'Resource');
     $resource_match = $dom->createElementNS(XacmlConstants::XACML, 'ResourceMatch');
-    
+
     if ($type == 'mime' || $type == 'dsid') {
       $resource_match->setAttribute('MatchId', XacmlConstants::STRINGEQUAL);
     }
@@ -225,12 +223,12 @@ class XacmlWriter {
       case 'mimeregex':
         $resource_attribute_designator->setAttribute("AttributeId", "urn:fedora:names:fedora:2.1:resource:datastream:mimeType");
         break;
-       
+
       case 'dsid':
       case 'dsidregex':
         $resource_attribute_designator->setAttribute("AttributeId", "urn:fedora:names:fedora:2.1:resource:datastream:id");
         break;
-      
+
       default:
         return FALSE;
     }
