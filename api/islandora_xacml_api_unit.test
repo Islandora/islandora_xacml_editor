@@ -11,29 +11,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
-   *  Instantiates and returns a DOMXPath object for the supplied Xacml object.
-   *
-   *  @param Xacml $xacml
-   *    The xacml object that the DOMXPath will search
-   *
-   *  @return DOMXPath
-   *    The DOMXPath to search the supplied Xacml object
-   */
-  private function constructXPathForXacml($xacml) {
-    
-    // XACML policy namespace
-    $ns = 'urn:oasis:names:tc:xacml:1.0:policy';
-    
-    // create the xpath
-    $xpath = new DOMXPath($xacml->getDomDocument());
-    
-    // register the namespace   
-    $xpath->registerNamespace("ns", $ns);
-
-    return $xpath;
-  }
-
-  /**
    *  Asserts that a new rule is not populated.
    *
    *  I've yet to determine if this actually IS the desired behavior.
@@ -239,11 +216,113 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
-   *  Asserts that when a user is added to an XacmlRule, 
-   *  that user appears in both the rule's users array and
-   *  the resultant DOM.
+   *  Asserts that a user added to an XacmlRule has permission.
    */
-  public function testAddUserToRule() {
+  public function testAddedUserHasPermission() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a user
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // assert that the newly added user has permission 
+    $this->assertTrue($xacml->managementRule->hasPermission($user_name, array(), FALSE), "Added user has permission in the xacml rule");
+  }
+
+  /**
+   *  Asserts that a role added to an XacmlRule has permission.
+   */
+  public function testAddedRoleHasPermission() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a role
+    $role_name = 'baz';
+    $xacml->managementRule->addRole($role_name);
+
+    // assert that the newly added role has permission 
+    $this->assertTrue($xacml->managementRule->hasPermission(NULL, array($role_name), FALSE), "Added role has permission in the xacml rule");
+  }
+
+  /**
+   *  Asserts that a user who is removed from an xacml rule no longer has permission.
+   */
+  public function testRemovedUserDoesNotHavePermission() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a user
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // remove the user
+    $xacml->managementRule->removeUser($user_name);
+
+    // assert that the newly added user has permission 
+    $this->assertFalse($xacml->managementRule->hasPermission($user_name, array(), FALSE), "Removed user does not have permission in the xacml rule");
+  }
+
+  /**
+   *  Asserts that a role that is removed from an xacml rule no longer has permission.
+   */
+  public function testRemovedRoleDoesNotHavePermission() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a role
+    $role_name = 'baz';
+    $xacml->managementRule->addRole($role_name);
+
+    // remove the role
+    $xacml->managementRule->removeRole($role_name);
+
+    // assert that the newly added role has permission 
+    $this->assertFalse($xacml->managementRule->hasPermission(NULL, array($role_name), FALSE), "Removed role does not have permission in the xacml rule");
+  }
+
+  /**
+   *  Utility function that instantiates and returns a DOMXPath object for the 
+   *  supplied Xacml object.  Used in the unit tests that verify elements
+   *  of an Xacml object's DOM that results from the getDomDocument() function.
+   *  
+   *  @param Xacml $xacml
+   *    The xacml object that the DOMXPath will search
+   *
+   *  @return DOMXPath
+   *    The DOMXPath to search the supplied Xacml object
+   */
+  private function constructXPathForXacml($xacml) {
+    
+    // XACML policy namespace
+    $ns = 'urn:oasis:names:tc:xacml:1.0:policy';
+    
+    // create the xpath
+    $xpath = new DOMXPath($xacml->getDomDocument());
+    
+    // register the namespace   
+    $xpath->registerNamespace("ns", $ns);
+
+    return $xpath;
+  }
+
+  /**
+   *  Asserts that when a user is added to an XacmlRule, the user appears in 
+   *  the XacmlRule's resultant DOM.
+   */
+  public function testAddedUserIsInDOM() {
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
 
@@ -253,9 +332,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // add a dummy user
     $user_name = 'foo';
     $xacml->managementRule->addUser($user_name);
-
-    // make sure the dummy user is in the users array of the rule
-    $this->assertTrue($xacml->managementRule->hasPermission($user_name, array(), FALSE), "User $user_name is in XacmlRule's users array");
 
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
@@ -270,10 +346,10 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
-   *  Asserts that when users are added to an XacmlRule using an array,
-   *  that the users in the rule's users array as well as in the resultant DOM.
+   *  Asserts that when users are added to an XacmlRule using an array, that 
+   *  the users appear in the XacmlRule's resultant DOM.
    */
-  public function testAddUsersToRule() {
+  public function testAddedUsersAreInDOM() {
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
 
@@ -283,11 +359,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // add dummy users using an array
     $user_array = array('foo', 'bar');
     $xacml->managementRule->addUser($user_array);
-
-    // make sure the dummy users are in the users array of the rule
-    for ( $i = 0; $i < count($user_array); $i++ ) {
-      $this->assertTrue($xacml->managementRule->hasPermission($user_array[$i], array(), FALSE), "User {$user_array[$i]} is in the XacmlRule's users array");
-    }
 
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
@@ -301,14 +372,41 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
       $this->assertNotNull($results, "The query for user {$user_array[$i]} return non-null results"); 
       $this->assertEqual($results->nodeValue, $user_array[$i], "Search result's nodeValue is equal to '{$user_array[$i]}'");
     }
-    
   }
 
   /**
-   *  Asserts that when a user is removed from an XacmlRule that the user
-   *  no longer appears in the rule's users array nor the resultant DOM
+   *  Asserts that when a user is removed from an XacmlRule that the user no 
+   *  longer appears in the XacmlRule's resultant DOM
    */
-  public function testRemoveUserFromRule() {
+  public function testRemovedUserIsNotInDOM() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add dummy user to the rule
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // remove one of the dummy users
+    $xacml->managementRule->removeUser($user_name);
+
+    // get an DOMXPath to search the Xacml
+    $xpath = $this->constructXPathForXacml($xacml);
+
+    // search the DOM for the removed dummy user in the management rule
+    // and ensure it is not present
+    $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$user_name}']";
+    $results = $xpath->query($query)->item(0);
+    $this->assertNull($results, "The query for user {$user_name} returns null results"); 
+  }
+
+  /**
+   *  Asserts that when users are removed from an XacmlRule using an array 
+   *  that they no longer appear in the XacmlRule's resultant DOM
+   */
+  public function testRemovedUsersAreNotInDOM() {
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
 
@@ -319,75 +417,15 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $user_array = array('foo', 'bar');
     $xacml->managementRule->addUser($user_array);
 
-    // remove one of the dummy users
-    $xacml->managementRule->removeUser($user_array[0]);
-
-    // assert the removed user is not in the rule,
-    // while the other remains
-    $rule_users = $xacml->managementRule->getUsers();
-    $this->assertFalse(in_array($user_array[0], $rule_users), "User {$user_array[0]} has been removed from rule and is not in users array");
-    $this->assertTrue(in_array($user_array[1], $rule_users), "User {$user_array[1]} has not been removed from rule and still is in users array");
-
-    // get an DOMXPath to search the Xacml
-    $xpath = $this->constructXPathForXacml($xacml);
-
-    // search the DOM for the removed dummy user in the management rule
-    // and ensure it is not present
-    $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$user_array[0]}']";
-    $results = $xpath->query($query)->item(0);
-    $this->assertNull($results, "The query for user {$user_array[0]} returns null results"); 
-
-    // search the DOM for the dummy user that remains and ensure it is present 
-    $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$user_array[1]}']";
-    $results = $xpath->query($query)->item(0);
-    $this->assertNotNull($results, "The query for user {$user_array[1]} return non-null results"); 
-    $this->assertEqual($results->nodeValue, $user_array[1], "Search result's nodeValue is equal to '{$user_array[1]}'");
-  }
-
-  /**
-   *  Asserts that when users are removed from an XacmlRule that they
-   *  no longer appear in the rule's users array nor the resultant DOM
-   */
-  public function testRemoveUsersFromRule() {
-    // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
-
-    // instantiate the xacml object
-    $xacml = new Xacml();
-
-    // add dummy users using an array
-    $user_array = array('foo', 'bar', 'baz', 'boo');
-    $xacml->managementRule->addUser($user_array);
-
     // remove some of the dummy users
-    $to_remove = array_slice($user_array, 2);
-    $xacml->managementRule->removeUser($to_remove);
-
-    // assert the removed users are not in the rule
-    $rule_users = $xacml->managementRule->getUsers();
-    for ($i = 0; $i < 2; $i++) {
-      $this->assertTrue(in_array($user_array[$i], $rule_users), "User {$user_array[$i]} has not been removed from rule and still is in users array");
-    }
-
-    // assert the others remain
-    for ($i = 2; $i < count($user_array); $i++) {
-      $this->assertFalse(in_array($user_array[$i], $rule_users), "User {$user_array[$i]} has been removed from rule and is not in users array");
-    }
+    $xacml->managementRule->removeUser($user_array);
 
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
-
-    // search the DOM for the dummy users that remain and ensure they are present 
-    for ($i = 0; $i < 2; $i++) {
-      $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$user_array[$i]}']";
-      $results = $xpath->query($query)->item(0);
-      $this->assertNotNull($results, "The query for user {$user_array[$i]} return non-null results"); 
-      $this->assertEqual($results->nodeValue, $user_array[$i], "Search result's nodeValue is equal to '{$user_array[$i]}'");
-    }
 
     // search the DOM for the removed dummy users in the management rule
     // and ensure they are not present
-    for ($i = 2; $i < count($user_array); $i++) {
+    for ($i = 0; $i < count($user_array); $i++) {
       $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$user_array[$i]}']";
       $results = $xpath->query($query)->item(0);
       $this->assertNull($results, "The query for user {$user_array[$i]} returns null results"); 
@@ -395,11 +433,10 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
-   *  Asserts that when a role is added to an XacmlRule, 
-   *  that role appears in both the rule's roles array and
-   *  the resultant DOM.
+   *  Asserts that when a role is added to an XacmlRule, the role appears in
+   *  the XacmlRule's resultant DOM.
    */
-  public function testAddRoleToRule() {
+  public function testAddedRoleIsInDOM() {
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
 
@@ -409,10 +446,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // add a dummy role
     $role_name = 'foo';
     $xacml->managementRule->addRole($role_name);
-
-    // make sure the dummy role is in the roles array of the rule
-    $rule_roles = $xacml->managementRule->getRoles();
-    $this->assertTrue(in_array($role_name, $rule_roles), "Role $role_name is in XacmlRule's roles array");
 
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
@@ -427,11 +460,10 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
-   *  Asserts that when a roles are added to an XacmlRule
-   *  using an array, that roles appear in both the rule's 
-   *  roles array and the resultant DOM.
+   *  Asserts that when a roles are added to an XacmlRule using an array, the
+   *  roles appear in the XacmlRule's resultant DOM.
    */
-  public function testAddRolesToRule() {
+  public function testAddedRolesAreInDOM() {
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
 
@@ -441,12 +473,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // add dummy roles using an array
     $role_array = array('foo', 'bar');
     $xacml->managementRule->addRole($role_array);
-
-    // make sure the dummy roles are in the roles array of the rule
-    $rule_roles = $xacml->managementRule->getRoles();
-    for ( $i = 0; $i < count($role_array); $i++ ) {
-      $this->assertTrue(in_array($role_array[$i], $rule_roles), "User {$role_array[$i]} is in the XacmlRule's roles array");
-    }
 
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
@@ -463,10 +489,38 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
-   *  Asserts that when a role is removed from an XacmlRule that the role 
-   *  no longer appears in the rule's roles array nor the resultant DOM
+   *  Asserts that when a role is removed from an XacmlRule that the role no 
+   *  longer appears in the XacmlRule's resultant DOM
    */
-  public function testRemoveRoleFromRule() {
+  public function testRemovedRoleIsNotInDOM() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add dummy role
+    $role_name = 'foo';
+    $xacml->managementRule->addRole($role_name);
+
+    // remove the dummy role
+    $xacml->managementRule->removeRole($role_name);
+
+    // get an DOMXPath to search the Xacml
+    $xpath = $this->constructXPathForXacml($xacml);
+
+    // search the DOM for the removed dummy role in the management rule
+    // and ensure it is not present
+    $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$role_name}']";
+    $results = $xpath->query($query)->item(0);
+    $this->assertNull($results, "The query for role {$role_name} returns null results"); 
+  }
+
+  /**
+   *  Asserts that when roles are removed from an XacmlRule using an array that
+   *  the roles no longer appear in the XacmlRule's resultant DOM
+   */
+  public function testRemovedRolesAreNotInDOM() { 
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
 
@@ -477,81 +531,18 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $role_array = array('foo', 'bar');
     $xacml->managementRule->addRole($role_array);
 
-    // remove one of the dummy roles
-    $xacml->managementRule->removeRole($role_array[0]);
-
-    // assert the removed role is not in the rule,
-    // while the other remains
-    $rule_roles = $xacml->managementRule->getRoles();
-    $this->assertFalse(in_array($role_array[0], $rule_roles), "Role {$role_array[0]} has been removed from rule and is not in roles array");
-    $this->assertTrue(in_array($role_array[1], $rule_roles), "Role {$role_array[1]} has not been removed from rule and still is in roles array");
-
-    // get an DOMXPath to search the Xacml
-    $xpath = $this->constructXPathForXacml($xacml);
-
-    // search the DOM for the removed dummy role in the management rule
-    // and ensure it is not present
-    $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$role_array[0]}']";
-    $results = $xpath->query($query)->item(0);
-    $this->assertNull($results, "The query for role {$role_array[0]} returns null results"); 
-
-    // search the DOM for the dummy role that remains and ensure it is present 
-    $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$role_array[1]}']";
-    $results = $xpath->query($query)->item(0);
-    $this->assertNotNull($results, "The query for role {$role_array[1]} return non-null results"); 
-    $this->assertEqual($results->nodeValue, $role_array[1], "Search result's nodeValue is equal to '{$role_array[1]}'");
-  }
-
-  /**
-   *  Asserts that when roles are removed from an XacmlRule using an array
-   *  that the roles no longer appear in the rule's roles array nor the 
-   *  resultant DOM
-   */
-  public function testRemoveRolesFromRule() { 
-    // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
-
-    // instantiate the xacml object
-    $xacml = new Xacml();
-
-    // add dummy roles using an array
-    $role_array = array('foo', 'bar', 'baz', 'boo');
-    $xacml->managementRule->addRole($role_array);
-
     // remove some of the dummy roles
-    $to_remove = array_slice($role_array, 2);
-    $xacml->managementRule->removeRole($to_remove);
-
-    // assert the removed roles are not in the rule
-    $rule_roles = $xacml->managementRule->getRoles();
-    for ($i = 0; $i < 2; $i++) {
-      $this->assertTrue(in_array($role_array[$i], $rule_roles), "Role {$role_array[$i]} has not been removed from rule and still is in roles array");
-    }
-
-    // assert the others remain
-    for ($i = 2; $i < count($role_array); $i++) {
-      $this->assertFalse(in_array($role_array[$i], $rule_roles), "Role {$role_array[$i]} has been removed from rule and is not in roles array");
-    }
+    $xacml->managementRule->removeRole($role_array);
 
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
-
-    // search the DOM for the dummy roles that remain and ensure they are present 
-    for ($i = 0; $i < 2; $i++) {
-      $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$role_array[$i]}']";
-      $results = $xpath->query($query)->item(0);
-      $this->assertNotNull($results, "The query for role {$role_array[$i]} return non-null results"); 
-      $this->assertEqual($results->nodeValue, $role_array[$i], "Search result's nodeValue is equal to '{$role_array[$i]}'");
-    }
 
     // search the DOM for the removed dummy roles in the management rule
     // and ensure they are not present
-    for ($i = 2; $i < count($role_array); $i++) {
+    for ($i = 0; $i < count($role_array); $i++) {
       $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$role_array[$i]}']";
       $results = $xpath->query($query)->item(0);
       $this->assertNull($results, "The query for role {$role_array[$i]} returns null results"); 
     }
-
   }
-
 }
