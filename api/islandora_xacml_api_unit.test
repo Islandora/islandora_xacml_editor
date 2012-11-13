@@ -10,6 +10,9 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     );
   }
 
+  /**
+   *  Verify the construction of an Xacml object when no arguments are supplied
+   */
   function testDefaultConstructorWithNoArgs() {
 
     // for Xacml
@@ -34,7 +37,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   /**
    *  Instantiates and returns a DOMXPath object for the supplied Xacml object.
    *
-   *  @param $xacml - Xacml
+   *  @param Xacml $xacml
    *    The xacml object that the DOMXPath will search
    *
    *  @return DOMXPath
@@ -59,7 +62,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    *  Looks for a root node named 'Policy', and ensures it has two
    *  attributes: 'PolicyId' and 'RuleCombiningAlgId'.
    *
-   *  @param $xpath
+   *  @param DOMXPath $xpath
    *    An DOMXPath object for the XACML DOM with namespace registered as 'ns'
    */
   private function inspectRootNode($xpath) {
@@ -89,10 +92,10 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    *  'Actions' as children.  These children should contain 'AnySubject', 
    *  'AnyResource', and 'AnyAction' as children, respectively.
    *
-   *  @param $xpath - DOMXPath
+   *  @param DOMXPath $xpath
    *    An DOMXPath object for the XACML DOM with namespace registered as 'ns'
    *
-   *  @param $target_path - String
+   *  @param string $target_path
    *    Path to the empty target's root
    */
   private function inspectEmptyTarget($xpath, $target_path) {
@@ -132,7 +135,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    *  its child is an empty target a la the one given to an empty Xacml object
    *  for conforming to spec.
    *
-   *  @param $xpath - DOMXPath
+   *  @param DOMXPath $xpath 
    *    An DOMXPath object for the XACML DOM with namespace registered as 'ns'
    */
   private function inspectAllowEverythingElseRule($xpath) {
@@ -152,8 +155,214 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
+   *  Asserts that a new rule is not populated.
+   *
+   *  I've yet to determine if this actually IS the desired behavior.
+   *  New rules are only given the default fedoraAdmin user and administrator
+   *  role if they are populated from an already existing rule.  Otherwise,
+   *  they are added only when getRuleArray() is called.  This is performed
+   *  in the functions that export the xacml rule, specifically the toXML and
+   *  toDOM functions of the Xacml class, so we should be ok.  But it still
+   *  all seems a little too brittle for my tastes.
+   */
+  public function testNewRuleIsNotPopulated() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // assert that the new rule is not populated
+    $this->assertFalse($xacml->managementRule->isPopulated(), "New rule is not populated");
+  }
+
+  /**
+   *  Asserts that after adding a user, the rule is populated.  
+   */
+  public function testRuleWithUserIsPopulated() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a user
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // assert that rule is now populated
+    $this->assertTrue($xacml->managementRule->isPopulated(), "Rule with user is populated");
+  }
+
+  /**
+   *  Asserts that after adding a role, the rule is populated.
+   */
+  public function testRuleWithRoleIsPopulated() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a role
+    $role_name = 'baz';
+    $xacml->managementRule->addRole($role_name);
+
+    // assert that rule is now populated
+    $this->assertTrue($xacml->managementRule->isPopulated(), "Rule with role is populated");
+  }
+
+  /**
+   *  Asserts that after adding both a user and a role, the rule is populated.
+   */
+  public function testRuleWithBothUserAndRoleIsPopulated() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a user
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // add a role
+    $role_name = 'baz';
+    $xacml->managementRule->addRole($role_name);
+
+    // assert that rule is now populated
+    $this->assertTrue($xacml->managementRule->isPopulated(), "Rule with both user and role is populated");
+  }
+
+  /**
+   *  Asserts that after removing all roles, an XacmlRule with a user is still
+   *  considered populated.
+   */
+  public function testRuleWithUserAfterRemovingRolesIsPopulated() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a user
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // add a role
+    $role_name = 'baz';
+    $xacml->managementRule->addRole($role_name);
+
+    // remove the role
+    $xacml->managementRule->removeRole($role_name);
+
+    // assert that rule is still populated
+    $this->assertTrue($xacml->managementRule->isPopulated(), "Rule with user after removing roles is populated");
+  }
+
+  /**
+   *  Asserts that after removing all users, an XacmlRule with a role is still
+   *  considered populated.
+   */
+  public function testRuleWithRoleAfterRemovingUsersIsPopulated() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a user
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // add a role
+    $role_name = 'baz';
+    $xacml->managementRule->addRole($role_name);
+
+    // remove the user
+    $xacml->managementRule->removeRole($role_name);
+
+    // assert that rule is still populated
+    $this->assertTrue($xacml->managementRule->isPopulated(), "Rule with role after removing users is populated");
+  }
+  
+  /**
+   *  Asserts that a rule with users and no roles is not populated after
+   *  removing all users.
+   */
+  public function testEmptyRuleAfterRemovingUsersIsNotPopulated() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a user
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // remove the user
+    $xacml->managementRule->removeUser($user_name);
+
+    // assert that rule is not populated
+    $this->assertFalse($xacml->managementRule->isPopulated(), "Empty rule after removing user is not populated");
+  }
+
+  /**
+   *  Asserts that a rule with no users and roles is not populated after
+   *  removing all roles.
+   */
+  public function testEmptyRuleAfterRemovingRolesIsNotPopulated() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a role
+    $role_name = 'baz';
+    $xacml->managementRule->addRole($role_name);
+
+    // remove the role
+    $xacml->managementRule->removeRole($role_name);
+
+    // assert that rule is not populated
+    $this->assertFalse($xacml->managementRule->isPopulated(), "Empty rule after removing role is not populated");
+  }
+
+  /**
+   *  Asserts that a rule with no users and roles is not populated after
+   *  removing all users and roles.
+   */
+  public function testEmptyRuleAfterRemovingBothUsersAndRolesIsNotPopulated() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a role
+    $role_name = 'baz';
+    $xacml->managementRule->addRole($role_name);
+
+    // add a user
+    $user_name = 'foo';
+    $xacml->managementRule->addUser($user_name);
+
+    // remove the role
+    $xacml->managementRule->removeRole($role_name);
+
+    // remove the user
+    $xacml->managementRule->removeUser($user_name);
+    
+    // assert that rule is not populated
+    $this->assertFalse($xacml->managementRule->isPopulated(), "Empty rule after removing role and user is not populated");
+  }
+
+  /**
    *  Asserts that when a user is added to an XacmlRule, 
-   *  that user appears in the resultant DOM.
+   *  that user appears in both the rule's users array and
+   *  the resultant DOM.
    */
   public function testAddUserToRule() {
     // for Xacml
@@ -167,8 +376,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $xacml->managementRule->addUser($user_name);
 
     // make sure the dummy user is in the users array of the rule
-    $rule_users = $xacml->managementRule->getUsers();
-    $this->assertTrue(in_array($user_name, $rule_users), "User $user_name is in XacmlRule's users array");
+    $this->assertTrue($xacml->managementRule->hasPermission($user_name, array(), FALSE), "User $user_name is in XacmlRule's users array");
 
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
@@ -198,9 +406,8 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $xacml->managementRule->addUser($user_array);
 
     // make sure the dummy users are in the users array of the rule
-    $rule_users = $xacml->managementRule->getUsers();
     for ( $i = 0; $i < count($user_array); $i++ ) {
-      $this->assertTrue(in_array($user_array[$i], $rule_users), "User {$user_array[$i]} is in the XacmlRule's users array");
+      $this->assertTrue($xacml->managementRule->hasPermission($user_array[$i], array(), FALSE), "User {$user_array[$i]} is in the XacmlRule's users array");
     }
 
     // get an DOMXPath to search the Xacml
@@ -308,6 +515,11 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     }
   }
 
+  /**
+   *  Asserts that when a role is added to an XacmlRule, 
+   *  that role appears in both the rule's roles array and
+   *  the resultant DOM.
+   */
   public function testAddRoleToRule() {
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
@@ -335,6 +547,11 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $this->assertEqual($results->nodeValue, $role_name, "Search result's nodeValue is equal to '$role_name'");
   }
 
+  /**
+   *  Asserts that when a roles are added to an XacmlRule
+   *  using an array, that roles appear in both the rule's 
+   *  roles array and the resultant DOM.
+   */
   public function testAddRolesToRule() {
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
@@ -366,6 +583,10 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     }
   }
 
+  /**
+   *  Asserts that when a role is removed from an XacmlRule that the role 
+   *  no longer appears in the rule's roles array nor the resultant DOM
+   */
   public function testRemoveRoleFromRule() {
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
@@ -402,6 +623,11 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $this->assertEqual($results->nodeValue, $role_array[1], "Search result's nodeValue is equal to '{$role_array[1]}'");
   }
 
+  /**
+   *  Asserts that when roles are removed from an XacmlRule using an array
+   *  that the roles no longer appear in the rule's roles array nor the 
+   *  resultant DOM
+   */
   public function testRemoveRolesFromRule() { 
     // for Xacml
     module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 

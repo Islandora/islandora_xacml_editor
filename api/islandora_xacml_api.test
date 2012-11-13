@@ -89,6 +89,9 @@ class IslandoraXacmlApiTestCase extends IslandoraTestCase {
     }
   }
 
+  /**
+   *  Validates the results of hook_settings().
+   */
   public function testIslandoraXacmlApiSettings() {
     // Invoke the hook
     $results = $this->invoke('settings');
