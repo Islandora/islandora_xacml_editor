@@ -610,7 +610,7 @@ class XacmlDatastreamRule extends XacmlRule {
       
       if (isset($mimeregexs)) {
         foreach ($mimeregexs as $key => $value) {
-          preg_match('/'.$value.'/', $mime, $match);
+          preg_match('/' . $value . '/', $mime, $match);
 
           if (count($match) > 0) {
             $boolean_mimeregex = TRUE;
@@ -623,7 +623,7 @@ class XacmlDatastreamRule extends XacmlRule {
       
       if (isset($dsidregexs)) {
         foreach ($dsidregexs as $key => $value) {
-          preg_match('/'.$value.'/', $dsid , $match);
+          preg_match('/' . $value . '/', $dsid , $match);
 
           if (count($match) > 0) {
             $boolean_dsidregex = TRUE;
