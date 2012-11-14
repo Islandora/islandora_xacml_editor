@@ -681,7 +681,8 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
-   *
+   *  Asserts that when a DSID regex is added to the datastream rule, it
+   *  appears in the resultant DOM.
    */
   public function testAddedDsidRegexIsInDOM() {
     // for Xacml
