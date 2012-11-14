@@ -1,5 +1,11 @@
 <?php
 
+/**
+ *  @file Subclass Xacml to facilitate communication to Islandora/Fedora.
+ *
+ *  Need to have Drupal bootstrapped, due to use of module_load_includes
+ */
+
 module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
 /**
