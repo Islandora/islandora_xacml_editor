@@ -11,6 +11,108 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
+   *  Asserts that each of the expected methods subject to the management rule
+   *  are contained in the rule's 'methods' array.
+   */
+  public function testManagementRuleHasCorrectMethods() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+  
+    // pull the 'methods' array out of the rule
+    $rule = $xacml->managementRule->getRuleArray();
+    $methods = $rule['methods'];
+
+    // list of methods we're expecting to see
+    $expected_methods = array(
+      'addDatastream',
+      'addDisseminator',
+      'adminPing',
+      'getDisseminatorHistory',
+      'getNextPid',
+      'ingest',
+      'modifyDatastreamByReference',
+      'modifyDatastreamByValue',
+      'modifyDisseminator',
+      'modifyObject',
+      'purgeObject',
+      'purgeDatastream',
+      'purgeDisseminator',
+      'setDatastreamState',
+      'setDisseminatorState',
+      'setDatastreamVersionable',
+      'compareDatastreamChecksum',
+      'serverShutdown',
+      'serverStatus',
+      'upload',
+      'dsstate',
+      'resolveDatastream',
+      'reloadPolicies',
+    ); 
+
+    // assert each of the expected methods is in the rule's 'methods' array
+    foreach ($expected_methods as $method) {
+      $this->assertTrue(in_array($method, $methods), "Method $method is in the management rule.");  
+    }
+  }
+
+  /**
+   *  Asserts that each of the expected methods subject to the viewing rule
+   *  are contained in the rule's 'methods' array.
+   */
+  public function testViewingRuleHasCorrectMethods() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // pull the 'methods' array out of the rule
+    $rule = $xacml->viewingRule->getRuleArray();
+    $methods = $rule['methods'];
+
+    // list of methods we're expecting to see
+    $expected_methods = array(
+      'api-a',
+      'getDatastreamHistory',
+      'listObjectInResourceIndexResults',
+    );
+
+    // assert each of the expected methods is in the rule's 'methods' array
+    foreach ($expected_methods as $method) {
+      $this->assertTrue(in_array($method, $methods), "Method $method is in the viewing rule.");  
+    }
+  }
+
+  /**
+   *  Asserts that each of the expected methods subject to the datastream rule
+   *  are contained in the rule's 'methods' array.
+   */
+  public function testDatastreamRuleHasCorrectMethods() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // pull the 'methods' array out of the rule
+    $rule = $xacml->datastreamRule->getRuleArray();
+    $methods = $rule['methods'];
+
+    // list of methods we're expecting to see
+    $expected_methods = array(
+      'getDatastreamDissemination'
+    );
+
+    // assert each of the expected methods is in the rule's 'methods' array
+    foreach ($expected_methods as $method) {
+      $this->assertTrue(in_array($method, $methods), "Method $method is in the datastream rule.");  
+    }
+  }
+
+  /**
    *  Asserts that a new rule is not populated.
    *
    *  I've yet to determine if this actually IS the desired behavior.
