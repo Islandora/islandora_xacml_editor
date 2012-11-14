@@ -1,5 +1,8 @@
 <?php
 
+/**
+ *  @file Unit tests for XacmlRule, its child classes, and Xacml.
+ */
 class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
 
   public static function getInfo() {
@@ -670,11 +673,39 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
 
-    // query the DOM and assert the existence of the mimetyep
+    // query the DOM and assert the existence of the DSID
     $query = "/ns:Policy/ns:Rule[@RuleId='deny-dsid-mime']/ns:Target/ns:Resources/ns:Resource/ns:ResourceMatch/ns:AttributeValue";
     $results = $xpath->query($query)->item(0);
-    $this->assertNotNull($results, "The query for mimetype $dsid returns non-null results");
+    $this->assertNotNull($results, "The query for DSID $dsid returns non-null results");
     $this->assertEqual($results->nodeValue, $dsid, "The AttributeValue is $dsid");
+  }
+
+  /**
+   *
+   */
+  public function testAddedDsidRegexIsInDOM() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a DSID regex to the datasream rule
+    $dsid_regex = 'foo';
+    $xacml->datastreamRule->addDsidRegex($dsid_regex);
+
+    // add a user to the datastream rule so that it appears in the DOM
+    $user_name = 'bar';
+    $xacml->datastreamRule->addUser($user_name);
+
+    // get an DOMXPath to search the Xacml
+    $xpath = $this->constructXPathForXacml($xacml);
+
+    // query the DOM and assert the existence of the DSID regex
+    $query = "/ns:Policy/ns:Rule[@RuleId='deny-dsid-mime']/ns:Target/ns:Resources/ns:Resource/ns:ResourceMatch/ns:AttributeValue";
+    $results = $xpath->query($query)->item(0);
+    $this->assertNotNull($results, "The query for DSID regex $dsid_regex returns non-null results");
+    $this->assertEqual($results->nodeValue, $dsid_regex, "The AttributeValue is $dsid_regex");
   }
 
   /**
@@ -706,5 +737,33 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $this->assertEqual($results->nodeValue, $mimetype, "The AttributeValue is $mimetype");
   }
 
+  /**
+   *  Asserts that when a mimetype regex is added to the datastream rule, it
+   *  appears in the resultant DOM.
+   */
+  public function testAddedMimetypeRegexIsInDOM() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+
+    // add a mimetype regex to the datasream rule
+    $mimetype_regex = 'foo';
+    $xacml->datastreamRule->addMimeType($mimetype_regex);
+
+    // add a user to the datastream rule so that it appears in the DOM
+    $user_name = 'bar';
+    $xacml->datastreamRule->addUser($user_name);
+
+    // get an DOMXPath to search the Xacml
+    $xpath = $this->constructXPathForXacml($xacml);
+
+    // query the DOM and assert the existence of the mimetyep
+    $query = "/ns:Policy/ns:Rule[@RuleId='deny-dsid-mime']/ns:Target/ns:Resources/ns:Resource/ns:ResourceMatch/ns:AttributeValue";
+    $results = $xpath->query($query)->item(0);
+    $this->assertNotNull($results, "The query for mimetype regex $mimetype_regex returns non-null results");
+    $this->assertEqual($results->nodeValue, $mimetype_regex, "The AttributeValue is $mimetype_regex");
+  }
 
 }
