@@ -730,7 +730,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
 
-    // query the DOM and assert the existence of the mimetyep
+    // query the DOM and assert the existence of the mimetype
     $query = "/ns:Policy/ns:Rule[@RuleId='deny-dsid-mime']/ns:Target/ns:Resources/ns:Resource/ns:ResourceMatch/ns:AttributeValue";
     $results = $xpath->query($query)->item(0);
     $this->assertNotNull($results, "The query for mimetype $mimetype returns non-null results");
@@ -759,7 +759,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
 
-    // query the DOM and assert the existence of the mimetyep
+    // query the DOM and assert the existence of the mimetype regex
     $query = "/ns:Policy/ns:Rule[@RuleId='deny-dsid-mime']/ns:Target/ns:Resources/ns:Resource/ns:ResourceMatch/ns:AttributeValue";
     $results = $xpath->query($query)->item(0);
     $this->assertNotNull($results, "The query for mimetype regex $mimetype_regex returns non-null results");
