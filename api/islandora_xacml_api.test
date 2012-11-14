@@ -649,6 +649,35 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
+   *  Asserts that when a dsid is added to the datastream rule, it appears
+   *  in the resultant DOM
+   */
+  public function testAddedDsidIsInDOM() {
+    // for Xacml
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+
+    // instantiate the xacml object
+    $xacml = new Xacml();
+    
+    // add a DSID to the datastream rule
+    $dsid = 'foo';
+    $xacml->datastreamRule->addDsid($dsid);
+
+    // add a user to the datastream rule so that it appears in the DOM
+    $user_name = 'bar';
+    $xacml->datastreamRule->addUser($user_name);
+
+    // get an DOMXPath to search the Xacml
+    $xpath = $this->constructXPathForXacml($xacml);
+
+    // query the DOM and assert the existence of the mimetyep
+    $query = "/ns:Policy/ns:Rule[@RuleId='deny-dsid-mime']/ns:Target/ns:Resources/ns:Resource/ns:ResourceMatch/ns:AttributeValue";
+    $results = $xpath->query($query)->item(0);
+    $this->assertNotNull($results, "The query for mimetype $dsid returns non-null results");
+    $this->assertEqual($results->nodeValue, $dsid, "The AttributeValue is $dsid");
+  }
+
+  /**
    *  Asserts that when a mimetype is added to the datastream rule, it appears
    *  in the resultant DOM.
    */
@@ -670,6 +699,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // get an DOMXPath to search the Xacml
     $xpath = $this->constructXPathForXacml($xacml);
 
+    // query the DOM and assert the existence of the mimetyep
     $query = "/ns:Policy/ns:Rule[@RuleId='deny-dsid-mime']/ns:Target/ns:Resources/ns:Resource/ns:ResourceMatch/ns:AttributeValue";
     $results = $xpath->query($query)->item(0);
     $this->assertNotNull($results, "The query for mimetype $mimetype returns non-null results");
