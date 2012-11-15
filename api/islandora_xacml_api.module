@@ -62,6 +62,7 @@ function islandora_xacml_api_settings() {
 
   return system_settings_form($form);
 }
+
 /**
  * Hook to update the collection query when xacml is enabled.
  * By default the collectionquery does not respect xacml rules,
@@ -76,7 +77,7 @@ function islandora_xacml_api_settings() {
  * @return String
  *   The modified query after xacml rules have been added.
  */
-function islandora_xacml_editor_islandora_collection_query_alter(&$query, $pid) {
+function islandora_xacml_api_islandora_collection_query_alter(&$query, $pid) {
   global $user;
   $query = 'select $object $title $model $parent_model $created from <#ri>
             where
@@ -117,7 +118,7 @@ function islandora_xacml_editor_islandora_collection_query_alter(&$query, $pid) 
  * @param IslandoraSolrQueryProcessor $processor
  *   The Solr query processor to apply xacml rules to.
  */
-function islandora_xacml_editor_islandora_solr_search_query_processor($processor) {
+function islandora_xacml_api_islandora_solr_search_query_processor($processor) {
   global $user;
   // Check if this user is allowed.
   if ($user->name) {
