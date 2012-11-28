@@ -2,5 +2,5 @@ name = Islandora Xacml Api
 dependencies[] = fedora_repository
 description = An API for editing XACML.
 package = Fedora Repository
-version = 6.x-0.1-dev
+version = 6.x-12.3.0-RC
 core = 6.x
