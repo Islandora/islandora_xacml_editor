@@ -1071,7 +1071,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
     '#weight' => -1,
     '#type' => 'fieldset',
     '#title' => t('Object Management'),
-    '#description' => 'Select the Users and Roles that are allowed to manage this object. These users will also be able to view the object even if not explicitly allowed to in the object access section. WARNING: If you unselect youself you will be locked out of the object.',
+    '#description' => 'Select the Users and Roles that are allowed to manage this object. These users will also be able to view the object even if not explicitly allowed to in the object access section. WARNING: If you unselect yourself you will be locked out of the object.',
     '#collapsible' => FALSE,
   );
 
