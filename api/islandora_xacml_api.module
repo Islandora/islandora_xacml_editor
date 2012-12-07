@@ -35,7 +35,11 @@ function islandora_xacml_api_menu() {
  * Implements hook_perm().
  */
 function islandora_xacml_api_permission() {
-  return array('administer islandora_xacml_api', 'Manage XACML API settings.');
+  return array(
+    'administer islandora_xacml_api' => array(
+      'title' => 'Manage XACML API settings.'
+    ),
+  );
 }
 
 /**

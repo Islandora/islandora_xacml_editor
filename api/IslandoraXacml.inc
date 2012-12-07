@@ -74,7 +74,7 @@ class IslandoraXacml extends Xacml {
   protected function writeRelations() {
     $viewable_by_user = 'isViewableByUser';
     $viewable_by_role = 'isViewableByRole';
-
+    
     $this->item->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
     $this->item->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
 
@@ -107,12 +107,16 @@ class IslandoraXacml extends Xacml {
         $ds_roles = $this->datastreamRule->getRoles();
         if (count($ds_users) > 0) {
           foreach ($ds_users as $user) {
-            $this->item[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
+            if (isset($this->item[$dsid])) {
+              $this->item[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
+            }
           }
         }
         if (count($ds_roles) > 0) {
           foreach ($ds_roles as $role) {
-            $this->item[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
+            if (isset($this->item[$dsid])) {
+              $this->item[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
+            }
           }
         }
       }
