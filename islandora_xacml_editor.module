@@ -25,7 +25,7 @@ function islandora_xacml_editor_menu() {
     'type' => MENU_CALLBACK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_xacml_editor_page', 1, 2),
-    'access arguments' => array('Edit XACML Policies'),
+    'access arguments' => array('administer islandora_xacml_editor'),
   );
   $items['admin/settings/islandora_xacml/editor'] = array(
     'title' => 'Islandora XACML Editor',
@@ -39,43 +39,48 @@ function islandora_xacml_editor_menu() {
     'page callback' => 'islandora_xacml_editor_dsid_autocomplete',
     'page arguments' => array(2, 3),
     'access callback' => TRUE,
+    'access arguments' => array('administer islandora_xacml_editor'),
     'type' => MENU_CALLBACK,
-    'access arguments' => array('Edit XACML Policies'),
   );
   $items['xacml/mimeautocomplete/%/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_mime_autocomplete',
     'page arguments' => array(2, 3, 4),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
-    'access arguments' => array('Edit XACML Policies'),
+    'access arguments' => array('administer islandora_xacml_editor'),
   );
   $items['xacml/ahah/%/remove'] = array(
     'page callback' => 'islandora_xacml_editor_remove_js',
     'page arguments' => array(2),
+    'access arguments' => array('administer islandora_xacml_editor'),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   $items['xacml/ahah/add/dsid/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_add_dsid_js',
     'page arguments' => array(4, 5),
+    'access arguments' => array('administer islandora_xacml_editor'),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   $items['xacml/ahah/add/dsidregex/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_add_dsid_regex_js',
     'page arguments' => array(4, 5),
+    'access arguments' => array('administer islandora_xacml_editor'),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   $items['xacml/ahah/add/mime/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_add_mime_js',
     'page arguments' => array(4, 5),
+    'access arguments' => array('administer islandora_xacml_editor'),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   $items['xacml/ahah/add/mimeregex/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_add_mime_regex_js',
     'page arguments' => array(4, 5),
+    'access arguments' => array('administer islandora_xacml_editor'),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -990,9 +995,9 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   while ($role = db_fetch_object($result)) {
     $role->rid == 0 ? $roles['anonymous'] = 'anonymous' : $roles[$role->name] = $role->name;
   }
-  
+
   $new_xacml = FALSE;
-  
+
   if (array_key_exists($xacml_dsid, $datastreams)) {
     module_load_include('inc', 'islandora_xacml_api', 'XacmlException');
 
@@ -1065,7 +1070,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
   // Grab original value used in comparisons.
   if (!isset($form_state['storage']['accessenabled'])) {
     $form_state['storage']['accessenabled'] = $form['access']['enabled']['#default_value'];
-  }  
+  }
 
   $form['manage'] = array(
     '#weight' => -1,
@@ -1762,7 +1767,7 @@ function islandora_xacml_editor_page_submit(&$form, &$form_state) {
   // User selects to disable the access rule when it was previously enabled.
   elseif ($values['enabled'] != $form_state['storage']['accessenabled']) {
     $xacml->viewingRule->clear();
-  }  
+  }
 
   $xacml->writeBackToFedora();
 
