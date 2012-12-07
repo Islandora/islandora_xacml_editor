@@ -30,11 +30,12 @@ class IslandoraXacml extends Xacml {
    *   PID and DSID.
    */
   function __construct($pid, $dsid = 'POLICY', $xacml = NULL) {
-    module_load_include('inc', 'fedora_repository', 'api/fedora_item');
-    $item = new Fedora_Item($pid);
+    module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
 
-    if ($xacml === NULL && isset($item->datastreams[$dsid])) {
-      $xacml = $item->get_datastream_dissemination($dsid);
+    $item = islandora_object_load($pid);
+
+    if ($xacml === NULL && isset($item[$dsid])) {
+      $xacml = $item->repository->api->a->getDatastreamDissemination($pid, $dsid);
     }
 
     parent::__construct($xacml);
@@ -53,11 +54,18 @@ class IslandoraXacml extends Xacml {
     }
 
     $xml = $this->getXmlString();
-    if (array_key_exists($this->dsid, $this->item->datastreams)) {
-      $this->item->modify_datastream($xml, $this->dsid, 'Xacml Policy Stream', 'text/xml');
+    if (isset($this->item[$this->dsid])) {
+      $params = array(
+        'dsString' => $xml,
+      );
+      $this->item->repository->api->m->modifyDatastream($this->pid, $this->dsid, $params);
     }
     else {
-      $this->item->add_datastream_from_string($xml, $this->dsid, 'Xacml Policy Stream', 'text/xml', 'X');
+      $xacml_datastream = $this->item->constructDatastream($this->dsid, 'X');
+      $xacml_datastream->label = 'XACML Policy Stream';
+      $xacml_datastream->mimetype = 'text/xml';
+      $xacml_datastream->setContentFromString($xml);
+      $this->item->ingestDatastream($xacml_datastream);
     }
 
     return TRUE;
@@ -67,13 +75,14 @@ class IslandoraXacml extends Xacml {
     $viewable_by_user = 'isViewableByUser';
     $viewable_by_role = 'isViewableByRole';
 
-    // remove all old policy related rels-ext statements
-    $this->item->purge_relationships($viewable_by_user, NULL, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
-    $this->item->purge_relationships($viewable_by_role, NULL, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
-    foreach (array_keys($this->item->datastreams) as $dsid) {
-      //XXX:  These use the RELS-EXT URI...
-      $this->item->purge_dsid_relationships($dsid, $viewable_by_user, NULL, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
-      $this->item->purge_dsid_relationships($dsid, $viewable_by_role, NULL, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+    $this->item->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
+    $this->item->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
+
+    $ds_array = $this->item->repository->api->a->listDatastreams($this->pid);
+
+    foreach ($ds_array as $dsid => $value) {
+      $this->item[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
+      $this->item[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
     }
 
     if ($this->viewingRule->isPopulated()) {
@@ -81,24 +90,30 @@ class IslandoraXacml extends Xacml {
       $view_users = $this->viewingRule->getUsers();
       $view_roles = $this->viewingRule->getRoles();
       if (count($view_users) > 0) {
-        $this->item->add_relationship($viewable_by_user, $view_users, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+        foreach ($view_users as $user) {
+          $this->item->relationships->add(ISLANDORA_RELS_EXT_URI, $viewable_by_user, $user, TRUE);
+        }
       }
       if (count($view_roles) > 0) {
-        $this->item->add_relationship($viewable_by_role, $view_roles, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+        foreach ($view_roles as $role) {
+          $this->item->relationships->add(ISLANDORA_RELS_EXT_URI, $viewable_by_role, $role, TRUE);
+        }
       }
     }
 
     if ($this->datastreamRule->isPopulated()) {
       foreach ($this->datastreamRule->getDsids() as $dsid) {
-        // recompute the new values from the policy
-        //XXX:  These use the RELS-EXT URI...
         $ds_users = $this->datastreamRule->getUsers();
         $ds_roles = $this->datastreamRule->getRoles();
         if (count($ds_users) > 0) {
-          $this->item->add_dsid_relationship($dsid, $viewable_by_user, $ds_users, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+          foreach ($ds_users as $user) {
+            $this->item[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
+          }
         }
         if (count($ds_roles) > 0) {
-          $this->item->add_dsid_relationship($dsid, $viewable_by_role, $ds_roles, ISLANDORA_RELS_EXT_URI, RELS_TYPE_PLAIN_LITERAL);
+          foreach ($ds_roles as $role) {
+            $this->item[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
+          }
         }
       }
     }

@@ -1,5 +1,5 @@
 name = Islandora Xacml Api
-dependencies[] = Islandora
+dependencies[] = islandora
 description = An API for editing XACML.
 package = Islandora
 version = 7.x-dev
