@@ -1,10 +1,14 @@
 <?php
 
 /**
- * Subclass Xacml to facilitate communication to Islandora/Fedora.
+ * @file Subclass Xacml to facilitate communication to Islandora/Fedora.
  *
  * Need to have Drupal bootstrapped, due to use of module_load_includes
  */
+
+
+module_load_include('inc', 'islandora_xacml_api', 'Xacml');
+
 class IslandoraXacml extends Xacml {
   /**
    * The idenitfy the datastream from which this policy was obtained (and to
@@ -74,7 +78,7 @@ class IslandoraXacml extends Xacml {
   protected function writeRelations() {
     $viewable_by_user = 'isViewableByUser';
     $viewable_by_role = 'isViewableByRole';
-    
+
     $this->item->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
     $this->item->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
 

@@ -10,3 +10,5 @@ files[] = XacmlConstants.inc
 files[] = XacmlException.inc
 files[] = XacmlParser.inc
 files[] = XacmlWriter.inc
+files[] = islandora_xacml_api.test
+testing_api = 2.x

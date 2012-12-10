@@ -3,7 +3,7 @@
 /**
  * @file
  * This file defines a set of object for manipulating XACML. Other files in the
- * XACML module provide a lower level access to creating XCAML these objects
+ * XACML module provide a lower level access to creating XACML these objects
  * work together to provide a nice high level view of a standard islandora
  * XACML object.
  */
@@ -763,6 +763,7 @@ class Xacml {
    *   The DomDocument associated with this Xacml rule.
    */
   function getDomDocument() {
+    module_load_include('inc', 'islandora_xacml_api', 'XacmlWriter');
     $this->updateRulesArray();
     return XacmlWriter::toDOM($this->xacml);
   }

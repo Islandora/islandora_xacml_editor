@@ -5,6 +5,8 @@
  * This file has functions for writing the XACML class datastructures out to XML.
  */
 
+include_once 'XacmlConstants.inc';
+
 /**
  * Class for writing XACML editor datastructures out to XML.
  */
@@ -43,7 +45,7 @@ class XacmlWriter {
    *   String containing the XACML as XML.
    */
   public static function toXML($xacml, $pretty_print = FALSE) {
-    $dom = XacmlWriter::toDom($xacml);
+    $dom = XacmlWriter::toDOM($xacml);
     $dom->formatOutput = $pretty_print;
 
     return $dom->saveXML();
