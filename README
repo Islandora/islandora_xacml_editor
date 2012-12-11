@@ -10,13 +10,12 @@ $FEDORA_HOME/data/fedora-xacml-policies/repository-policies/default/deny-policy-
 ---- Solr searching hook ----
 
 In order to comply with XACML restrictions placed on objects, a hook is used to filter results that do not conform to a searching user's roles and name.
-This hook will not function correctly if the Solr fields for 'ViewableByUser' and 'ViewableByRole' are not defined correctly. These values can be set through
-the admin page for the module.
+This hook will not function correctly if the Solr fields for 'ViewableByUser' and 'ViewableByRole' are not defined correctly as they are set in the XSLT.
+These values can be set through the admin page for the module.
 
----- Issues with autocomplete ----
 
-There are two known issues that exist within Drupal's autocomplete that can be fixed by patching Drupal.
+---- CHILD_SECURITY notes ----
 
-First issue is "."s appearing in the autocomplete field resulting in a 404 error (http://drupal.org/node/93854#comment-6164592).
-Second issue is when pressing the down arrow and focusing on another field "undefined" appears in the textfield (http://drupal.org/node/172755).
-
+Currently, it is not possible to implement datastream specific restrictions on children objects where the target datastream does not already exist.
+For target objects where the datastream does not exist the respective filter(s) for the non-existent datastreams will be ignored and not wrote
+in the RELS-INT

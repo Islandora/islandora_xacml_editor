@@ -465,12 +465,7 @@ function islandora_xacml_editor_retrieve_mimes($models) {
 function islandora_xacml_editor_settings() {
   drupal_add_css(drupal_get_path('module', 'islandora_xacml_editor') . '/css/islandora_xacml_editor.css');
   $form = array();
-  /*$form['islandora_xacml_editor_show_tabs'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Show Policy Tabs'),
-    '#description' => t("Show a tab for the XACML Policy Editor on each Fedora item's page. For normal items, this policy will only apply to the item itself; in the case of collection items (having the content model &lt;islandora:collectionCModel&gt;), this will be a child policy."),
-    '#default_value' => variable_get('islandora_xacml_editor_show_tabs', 1),
-  );*/
+
   $form['islandora_xacml_editor_show_dsidregex'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display the DSID regex textfield?'),
@@ -554,6 +549,8 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   module_load_include('inc', 'islandora_xacml_api', 'Xacml');
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
 
+  drupal_set_title(t('Islandora XACML Editor'));
+  
   // When we call in from top level collections in JS get get the
   // pid being undefined.
   if ($object_pid == 'undefined' || !$object_pid) {
