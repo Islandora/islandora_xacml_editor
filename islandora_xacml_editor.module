@@ -18,7 +18,6 @@ function islandora_xacml_editor_permission() {
 
 /**
  * Implements hook_menu().
- * @todo Decide on the correct menu paths.
  */
 function islandora_xacml_editor_menu() {
   $items = array();
@@ -56,6 +55,14 @@ function islandora_xacml_editor_menu() {
   return $items;
 }
 
+/**
+ * Determines the title for the XACML LOCAL_TASK
+ *
+ * @param FedoraObject $object
+ *
+ * @return String title
+ *   The title to be displayed in the LOCAL_TASK.
+ */
 function islandora_xacml_editor_retrieve_menu_title($object) {
   $item_is_collection = false;
   foreach ($object->models as $content_model) {
@@ -73,6 +80,15 @@ function islandora_xacml_editor_retrieve_menu_title($object) {
   return $title;
 }
 
+/**
+ * Retrieves the specified form based upon the whether the object is a
+ * collection or not.
+ *
+ * @param FedoraObject $object
+ *
+ * @return array
+ *   The XACML form.
+ */
 function islandora_xacml_editor_retrieve_form($object) {
   $item_is_collection = false;
   foreach ($object->models as $content_model) {
@@ -89,374 +105,6 @@ function islandora_xacml_editor_retrieve_form($object) {
   }
 
   return drupal_get_form('islandora_xacml_editor_form', $object->id, $dsid);
-}
-
-/**
- *
- * @param unknown_type $xacml_dsid
- */
-function islandora_xacml_editor_remove_selected($form, $form_state) {
-  $remove_row = array();
-  foreach ($form_state['values']['dsid_mime']['rules']['table'] as $checkbox => $value) {
-      if ($value !== 0) {
-        $remove_row[] = $checkbox;
-      }
-  }
-
-  if (count($remove_row) > 0) {
-    $remove_count = 0;
-
-    foreach ($remove_row as $row) {
-      $remove_vals = explode('---', $row);
-      $type = $remove_vals[0];
-      $filter = $remove_vals[1];
-
-      $remove_key = array_search($filter, $form_state['islandora_xacml']['dsid_mime'][$type]);
-
-      if ($type == 'dsid') {
-        $form_state['islandora_xacml']['remove_dsid'][] = $filter;
-      }
-      elseif ($type == 'mime') {
-        $form_state['islandora_xacml']['remove_mime'][] = $filter;
-      }
-      elseif ($type == 'mime_regexs') {
-        $form_state['islandora_xacml']['remove_mime_regex'][] = $filter;
-      }
-      elseif ($type == 'dsid_regexs') {
-        $form_state['islandora_xacml']['remove_dsid_regex'][] = $filter;
-      }
-      $remove_count++;
-    }
-    $remove_output = format_plural($remove_count, '!filter_count applied filter was removed.',
-            '!filter_count applied filters were removed.', array('!filter_count' => $remove_count));
-    drupal_set_message($remove_output);
-  }
-  else {
-    drupal_set_message(t('Please select the filters you wish to remove.'), 'error');
-  }
- return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
-}
-
-function islandora_xacml_editor_remove_all($form, $form_state) {
-  $remove_count = 0;
-  foreach ($form_state['islandora_xacml']['rows'] as $key => $value) {
-    $type = strtolower($value['Type']);
-    $filter = $value['Filter'];
-
-    $remove_key = array_search($filter, $form_state['islandora_xacml']['dsid_mime'][$type]);
-
-    if ($type == 'dsid') {
-        $form_state['islandora_xacml']['remove_dsid'][] = $filter;
-    }
-    elseif ($type == 'mime type') {
-      $form_state['islandora_xacml']['remove_mime'][] = $filter;
-    }
-    elseif ($type == 'mime type regex') {
-      $form_state['islandora_xacml']['remove_mime_regex'][] = $filter;
-    }
-    elseif ($type == 'dsid regex') {
-      $form_state['islandora_xacml']['remove_dsid_regex'][] = $filter;
-    }
-    $remove_count++;
-  }
-
-  $remove_output = format_plural($remove_count, '!filter_count applied filter was removed.',
-            '!filter_count applied filters were removed.', array('!filter_count' => $remove_count));
-  drupal_set_message($remove_output);
-
-  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
-}
-/**
- *
- * @param unknown_type $xacml_dsid
- * @param unknown_type $pid
- */
-function islandora_xacml_editor_add_dsid_regex_js($form, &$form_state) {
-
-  // Store and checks.
-  if (!isset($form_state['islandora_xacml']['dsid_regexs'])) {
-    $form_state['islandora_xacml']['dsid_regexs'] = array();
-  }
-  $add_text = trim($_POST['dsid_regex_add_textfield']);
-
-  // Check the additional dsids and the dsids from the XACML rules.
-  if (!empty($add_text) && !ctype_space($add_text)) {
-
-    if (isset($form_state['islandora_xacml']['dsid_regexs'])) {
-      $added = array_search($add_text, $form_state['islandora_xacml']['dsid_regexs']);
-    }
-
-    if (isset($form_state['islandora_xacml']['selected_dsid_regexs'])) {
-      $rules = array_search($add_text, $form_state['islandora_xacml']['selected_dsid_regexs']);
-    }
-
-    if (!is_numeric($added) && $rules != $add_text) {
-      $form_state['islandora_xacml']['dsid_regexs'][] = $add_text;
-    }
-    else {
-      drupal_set_message(t('The DSID regex !regex was not added as it already exists as a filter!',
-        array(
-          '!regex' => $add_text,
-        )
-      ), 'warning');
-    }
-  }
-  else {
-    drupal_set_message(t('No DSID regex value entered!'), 'error');
-  }
-
-  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
-}
-
-/**
- *
- * @param unknown_type $xacml_dsid
- * @param unknown_type $pid
- */
-function islandora_xacml_editor_add_dsid_js($form, $form_state) {
-  module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
-
-  $pid = $form_state['islandora_xacml']['object_pid'];
-  $object = islandora_object_load($pid);
-
-  $ds_array = $object->repository->api->a->listDatastreams($pid);
-
-  if (!isset($form_state['islandora_xacml']['add_dsid'])) {
-    $form_state['islandora_xacml']['add_dsid'] = array();
-  }
-
-  $add_text = trim($_POST['dsid_add_textfield']);
-
-  if (!empty($add_text) && !ctype_space($add_text)) {
-
-    // Check the additional dsids and the dsids from the XACML rules.
-    if (isset($form_state['islandora_xacml']['add_dsid'])) {
-      $added = array_search($add_text, $form_state['islandora_xacml']['add_dsid']);
-    }
-
-    if (isset($form_state['islandora_xacml']['selected_dsid'])) {
-      $rules = array_search($add_text, $form_state['islandora_xacml']['selected_dsid']);
-    }
-    $restricted_dsids = variable_get('islandora_xacml_editor_restricted_dsids', '');
-    $restricted_dsids = preg_split('/[\s,]+/', $restricted_dsids);
-
-    if (!is_numeric($added) && $rules != $add_text && !in_array($add_text, $restricted_dsids) && isset($ds_array[$add_text])) {
-      $form_state['islandora_xacml']['add_dsid'][] = $add_text;
-    }
-    elseif (in_array($add_text, $restricted_dsids)) {
-      drupal_set_message(t('The DSID !dsid was not added as it is restricted from the admin settings page!',
-        array(
-          '!dsid' => $add_text,
-        )
-      ), 'warning');
-    }
-    elseif (!isset($ds_array[$add_text])) {
-      drupal_set_message(t('The DSID !dsid was not added as it is not a current datastream of the object!',
-        array(
-          '!dsid' => $add_text,
-        )
-      ), 'warning');
-    }
-    else {
-      drupal_set_message(t('The DSID %dsid was not added as it already exists as a filter!',
-        array(
-          '!dsid' => $add_text,
-        )
-      ), 'warning');
-    }
-  }
-  else {
-    drupal_set_message(t('No DSID value entered!'), 'error');
-  }
-
-  if ($xacml_dsid == 'CHILD_SECURITY') {
-    $childvalue = $_POST['update_options'];
-  }
-
-  //$form_state['action'] = $form['#action'];
-  // Set what already existed before the AJAX <-- dont think we need to do in 7
-
-  $form_state['islandora_xacml']['dsid_mime']['#collapsed'] = FALSE;
-
-  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
-}
-
-/**
- *
- * @param unknown_type $xacml_dsid
- * @param unknown_type $pid
- */
-function islandora_xacml_editor_add_mime_regex_js($form, $form_state) {
-  // Store and checks.
-  if (!isset($form_state['islandora_xacml']['mime_regexs'])) {
-    $form_state['islandora_xacml']['mime_regexs'] = array();
-  }
-
-  $add_text = trim($_POST['mime_regex_add_textfield']);
-
-  if (!empty($add_text) && !ctype_space($add_text)) {
-    // Check the additional dsids and the dsids from the XACML rules.
-    if (isset($form_state['islandora_xacml']['mime_regexs'])) {
-      $added = array_search($add_text, $form_state['islandora_xacml']['mime_regexs']);
-    }
-
-    if (isset($form_state['islandora_xacml']['selected_mime_regexs'])) {
-      $rules = array_search($add_text, $form_state['islandora_xacml']['selected_mime_regexs']);
-    }
-
-    if (!is_numeric($added) && $rules != $add_text) {
-      $form_state['islandora_xacml']['mime_regexs'][] = $add_text;
-    }
-    else {
-      drupal_set_message(t('The MIME type regex !regex was not added as it already exists as a filter!',
-        array(
-          '!regex' => $addvalue,
-        )
-      ), 'warning');
-    }
-  }
-  else {
-    drupal_set_message(t('No MIME type regex value entered!'), 'error');
-  }
-  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
-}
-
-/**
- *
- * @param unknown_type $xacml_dsid
- * @param unknown_type $pid
- */
-function islandora_xacml_editor_add_mime_js($form, $form_state) {
-
-  if (!isset($form_state['islandora_xacml']['add_mime'])) {
-    $form_state['islandora_xacml']['add_mime'] = array();
-  }
-
-  $add_text = trim($_POST['mime_add_textfield']);
-  if (!empty($add_text) && !ctype_space($add_text)) {
-    if (isset($form_state['islandora_xacml']['add_mime'])) {
-      $added = array_search($add_text, $form_state['islandora_xacml']['add_mime']);
-    }
-
-    if (isset($form_state['islandora_xacml']['selected_mime'])) {
-      $rules = array_search($add_text, $form_state['islandora_xacml']['selected_mime']);
-    }
-
-    $restricted_mimes = variable_get('islandora_xacml_editor_restricted_mimes', '');
-    $restricted_mimes = preg_split('/[\s,]+/', $restricted_mimes);
-
-    if (!is_numeric($added) && $rules != $add_text && !in_array($add_text, $restricted_mimes)) {
-      $form_state['islandora_xacml']['add_mime'][] = $add_text;
-    }
-    elseif (in_array($add_text, $restricted_mimes)) {
-      drupal_set_message(t('The MIME type !mime was not added as it is restricted from the admin settings page!',
-        array(
-          '!mime' => $add_text,
-        )
-      ), 'warning');
-    }
-    else {
-      drupal_set_message(t('The MIME type !mime was not added as it already exists as a filter!',
-        array(
-          '!mime' => $add_text,
-        )
-      ), 'warning');
-    }
-  }
-  else {
-    drupal_set_message(t('No MIME type value entered!'), 'error');
-  }
-
-  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
-}
-
-/**
- *
- * @param unknown_type $pid
- * @param unknown_type $string
- */
-function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
-  module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
-
-  $object = islandora_object_load($pid);
-
-  $dslist = $object->repository->api->a->listDatastreams($pid);
-
-  $output = array();
-
-  foreach ($dslist as $key => $value) {
-    if ($string != '*') {
-      if (strpos(strtoupper($key), strtoupper($string)) !== FALSE) {
-        $output[$key] = check_plain($key);
-      }
-    }
-    else {
-      $output[$key] = check_plain($key);
-    }
-  }
-  $restricted_dsids = variable_get('islandora_xacml_editor_restricted_dsids', '');
-  $restricted_dsids = preg_split('/[\s,]+/', $restricted_dsids);
-
-  $output = array_diff($output, $restricted_dsids);
-
-  drupal_json_output($output);
-}
-
-/**
- *
- * @param unknown_type $xacml_dsid
- * @param unknown_type $pid
- * @param unknown_type $string
- */
-function islandora_xacml_editor_mime_autocomplete($xacml_dsid, $pid, $string) {
-  module_load_include('inc', 'islandora', 'includes/utilities');
-  module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
-
-  $output = array();
-  $object = islandora_object_load($pid);
-
-  if ($xacml_dsid == 'CHILD_SECURITY') {
-    $collection_policy = new CollectionPolicy($object['COLLECTION_POLICY']->content);
-    $collection_models = array_keys($collection_policy->getContentModels());
-    $mime = islandora_xacml_editor_retrieve_mimes($collection_models);
-  }
-  else {
-    $mime = islandora_xacml_editor_retrieve_mimes($object->models);
-  }
-  foreach ($mime as $key => $value) {
-    if ($string != "*") {
-      if (strpos(strtoupper($key), strtoupper($string)) !== FALSE) {
-        $output[$key] = check_plain($key);
-      }
-    }
-    else {
-      $output[$key] = check_plain($key);
-    }
-  }
-  $restricted_mimes = variable_get('islandora_xacml_editor_restricted_mimes', '');
-  $restricted_mimes = preg_split('/[\s,]+/', $restricted_mimes);
-
-  $output = array_diff($output, $restricted_mimes);
-
-  drupal_json_output($output);
-
-}
-
-
-function islandora_xacml_editor_retrieve_mimes($models) {
-  module_load_include('inc', 'islandora', 'includes/utilities');
-
-  $mimes = array();
-  $datastreams = islandora_get_datastreams_requirements_from_models($models);
-
-  foreach ($datastreams as $key => $value) {
-    foreach ($value['mime'] as $mime) {
-      if (!in_array($mime, $mimes)) {
-        $mimes[$mime] = $value['mime'];
-      }
-    }
-  }
-  return $mimes;
 }
 
 /**
@@ -550,7 +198,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
 
   drupal_set_title(t('Islandora XACML Editor'));
-  
+
   // When we call in from top level collections in JS get get the
   // pid being undefined.
   if ($object_pid == 'undefined' || !$object_pid) {
@@ -630,9 +278,6 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
     '#suffix' => '</div>',
   );
 
-  /*if (isset($form_state['action'])) {
-    $form['#action'] = $form_state['action'];
-  }*/
   $form['#tree'] = TRUE;
 
   $form['access'] = array(
@@ -701,12 +346,21 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
     '#suffix' => '</div>',
   );
 
+  $dsid_mime_collapsed = TRUE;
+
+  if ($xacml->datastreamRule->isPopulated()) {
+     $dsid_mime_collapsed = FALSE;
+  }
+  elseif (isset($form_state['islandora_xacml']['dsid_mime']['collapsed'])) {
+    if ($form_state['islandora_xacml']['dsid_mime']['collapsed'] == TRUE) {
+      $dsid_mime_collapsed = FALSE;
+    }
+  }
   $form['dsid_mime'] = array(
     '#type' => 'fieldset',
     '#title' => t('Datastreams and MIME types'),
     '#collapsible' => TRUE,
-    //'#collapsed' => !$xacml->datastreamRule->isPopulated(),
-    '#collapsed' => FALSE,
+    '#collapsed' => $dsid_mime_collapsed,
   );
 
   $form['dsid_mime']['enabled'] = array(
@@ -731,6 +385,10 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         'allgrandchildren' => t('All children of this collection and collections within this collection. (Existing and new).'),
       ),
     );
+
+    if (isset($form_state['islandora_xacml']['child_option'])) {
+      $form['update_options']['#value'] = $form_state['islandora_xacml']['child_option'];
+    }
   }
 
   $form['dsid_mime']['users'] = array(
@@ -955,7 +613,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   $selected_mime_regexs = $xacml->datastreamRule->getMimetypeRegexs();
   $selected_dsid_regexs = $xacml->datastreamRule->getDsidRegexs();
 
-  // We store these values for use in the AHAH callbacks.
+  // We store these values for use in the AJAX callbacks.
   $form_state['islandora_xacml']['dsid_mime']['dsid'] = $selected_dsid;
   $form_state['islandora_xacml']['dsid_mime']['mime'] = $selected_mime;
   $form_state['islandora_xacml']['dsid_mime']['dsid_regexs'] = $selected_dsid_regexs;
@@ -991,7 +649,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
 
   $rows = array();
   // Name the rows with a --- convention such that we can easily parse
-  // for the selected row to remove dow the road.
+  // for the selected row to remove down the road.
   if (!empty($selected_mime)) {
     foreach ($selected_mime as $mime) {
       $rows['mime---' . trim($mime)] = array(
@@ -1058,7 +716,6 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
     );
   }
 
-
   $form['dsid_mime']['new_dsid'] = array(
     '#type' => 'textfield',
     '#title' => t('DSID'),
@@ -1074,8 +731,10 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
       'method' => 'replace',
       'keypress' => TRUE,
     ),
+    '#value' => isset($form_state['islandora_xacml']['dsid_mime']['dsid_add_textfield']) ? $form_state['islandora_xacml']['dsid_mime']['dsid_add_textfield'] : '',
   );
   $form['dsid_mime']['new_dsid_add'] = array(
+    '#name' => 'dsid_add_button',
     '#type' => 'button',
     '#value' => t('Add'),
     '#suffix' => '</div>',
@@ -1102,8 +761,10 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         'method' => 'replace',
         'keypress' => TRUE,
       ),
+      '#value' => isset($form_state['islandora_xacml']['dsid_mime']['dsid_regex_add_textfield']) ? $form_state['islandora_xacml']['dsid_mime']['dsid_regex_add_textfield'] : ''
     );
     $form['dsid_mime']['dsid_regex_add'] = array(
+      '#name' => 'dsid_regex_add_button',
       '#type' => 'button',
       '#value' => t('Add'),
       '#suffix' => '</div>',
@@ -1130,8 +791,10 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         'method' => 'replace',
         'keypress' => TRUE,
     ),
+    '#value' => isset($form_state['islandora_xacml']['dsid_mime']['mime_add_textfield']) ? $form_state['islandora_xacml']['dsid_mime']['mime_add_textfield'] : ''
   );
   $form['dsid_mime']['new_mime_add'] = array(
+    '#name' => 'mime_add_button',
     '#type' => 'button',
     '#value' => t('Add'),
     '#suffix' => '</div>',
@@ -1157,9 +820,10 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         'method' => 'replace',
         'keypress' => TRUE,
       ),
+      '#value' => isset($form_state['islandora_xacml']['dsid_mime']['mime_regex_add_textfield']) ? $form_state['islandora_xacml']['dsid_mime']['mime_regex_add_textfield'] : ''
     );
     $form['dsid_mime']['mime_regex_add'] = array(
-      '#name' => 'mimeregexadd',
+      '#name' => 'mime_regex_add_button',
       '#type' => 'button',
       '#value' => t('Add'),
       '#suffix' => '</div>',
@@ -1180,10 +844,20 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
 }
 
 /**
+ * Function that retrieves the users selected in each 'Users' portion
+ * for datastream rules.
  *
- * @param unknown_type $xacml
- * @param unknown_type $new_xacml
- * @param unknown_type $rule
+ * @param Xacml $xacml
+ *   The XACML object.
+ *
+ * @param Boolean $new_xacml
+ *   Whether there already exists an XACML policy or not.
+ *
+ * @param String $rule
+ *   The rule which we are checking against.
+ *
+ * @return Array
+ *   An array of users that are selected for the specific rule.
  */
 function islandora_xacml_editor_retrieve_users($xacml, $new_xacml, $rule) {
   if ($new_xacml == FALSE) {
@@ -1206,10 +880,20 @@ function islandora_xacml_editor_retrieve_users($xacml, $new_xacml, $rule) {
 }
 
 /**
+ * Function that retrieves the roles selected in each 'Roles' portion
+ * for datastream rules.
  *
- * @param unknown_type $xacml
- * @param unknown_type $new_xacml
- * @param unknown_type $rule
+ * @param Xacml $xacml
+ *   The XACML object.
+ *
+ * @param Boolean $new_xacml
+ *   Whether there already exists an XACML policy or not.
+ *
+ * @param String $rule
+ *   The rule which we are checking against.
+ *
+ * @return Array
+ *   An array of roles that are selected for the specific rule.
  */
 function islandora_xacml_editor_retrieve_roles($xacml, $new_xacml, $rule) {
   if ($new_xacml == FALSE) {
@@ -1232,9 +916,16 @@ function islandora_xacml_editor_retrieve_roles($xacml, $new_xacml, $rule) {
 }
 
 /**
+ * Constructs the tableselect used in slandora_xacml_editor_form().
  *
- * @param array $selected
- * @param unknown_type $xacml_dsid
+ * @param array $passed_rows
+ *   The rows containing the data that need to be rendered.
+ *
+ * @param String $xacml_dsid
+ *   The XACML datastream id that we are rendering the table for.
+ *
+ * @return Array
+ *   An array that represents the tableselect to be rendered.
  */
 function islandora_xacml_editor_form_table(array $passed_rows, $xacml_dsid) {
   $headers = array(
@@ -1261,9 +952,7 @@ function islandora_xacml_editor_form_table(array $passed_rows, $xacml_dsid) {
 }
 
 /**
- *
- * @param unknown_type $form
- * @param unknown_type $form_state
+ * Implements hook_validate().
  */
 function islandora_xacml_editor_form_validate(&$form, &$form_state) {
   drupal_add_css(drupal_get_path('module', 'islandora_xacml_editor') . '/css/islandora_xacml_editor.css');
@@ -1380,9 +1069,439 @@ function islandora_xacml_editor_form_submit(&$form, &$form_state) {
   }
   else {
     unset($form_state['islandora_xacml']);
-    //Commented out for debug atm
-    //$form_state['redirect'] = array('islandora/object/' . $pid);
+    $form_state['redirect'] = array('islandora/object/' . $pid);
   }
+}
+
+/**
+ * Stores information from the form_state into 'storage' such that we do not
+ * lose user input across AJAX callbacks.
+ *
+ * @param array $form_state
+ *   The passed in form_state.
+ *
+ * @return array
+ *   The modified form_state containing our stored information.
+ */
+function islandora_xacml_editor_retain_state($form_state) {
+  // Grab all possible changed values and store them so we don't lose them after
+  // the AJAX callback
+  $form_state['islandora_xacml']['dsid_mime']['enabled'] = $form_state['values']['dsid_mime']['enabled'];
+  $form_state['islandora_xacml']['access']['enabled'] = $form_state['values']['access']['enabled'];
+  $form_state['islandora_xacml']['dsid_mime']['users'] = $form_state['values']['dsid_mime']['users'];
+  $form_state['islandora_xacml']['dsid_mime']['roles'] = $form_state['values']['dsid_mime']['roles'];
+  $form_state['islandora_xacml']['manage']['users'] = $form_state['values']['manage']['users'];
+  $form_state['islandora_xacml']['manage']['roles'] = $form_state['values']['manage']['roles'];
+  $form_state['islandora_xacml']['access']['users'] = $form_state['values']['access']['users'];
+  $form_state['islandora_xacml']['access']['roles'] = $form_state['values']['access']['roles'];
+
+  // Retain child setting
+  if ($form_state['islandora_xacml']['xacml_dsid'] === 'CHILD_SECURITY') {
+    $form_state['islandora_xacml']['child_option'] = $form_state['values']['update_options'];
+  }
+  // Finally collapse the fieldset
+  $form_state['islandora_xacml']['dsid_mime']['collapsed'] = TRUE;
+
+  return $form_state;
+}
+
+/**
+ * AJAX callback to remove the selected filters from the rules table.
+ */
+function islandora_xacml_editor_remove_selected($form, $form_state) {
+ $form_state = islandora_xacml_editor_retain_state($form_state);
+ $remove_row = array();
+  foreach ($form_state['values']['dsid_mime']['rules']['table'] as $checkbox => $value) {
+      if ($value !== 0) {
+        $remove_row[] = $checkbox;
+      }
+  }
+
+  if (count($remove_row) > 0) {
+    $remove_count = 0;
+
+    foreach ($remove_row as $row) {
+      $remove_vals = explode('---', $row);
+      $type = $remove_vals[0];
+      $filter = $remove_vals[1];
+
+      $remove_key = array_search($filter, $form_state['islandora_xacml']['dsid_mime'][$type]);
+
+      if ($type == 'dsid') {
+        $form_state['islandora_xacml']['remove_dsid'][] = $filter;
+      }
+      elseif ($type == 'mime') {
+        $form_state['islandora_xacml']['remove_mime'][] = $filter;
+      }
+      elseif ($type == 'mime_regexs') {
+        $form_state['islandora_xacml']['remove_mime_regex'][] = $filter;
+      }
+      elseif ($type == 'dsid_regexs') {
+        $form_state['islandora_xacml']['remove_dsid_regex'][] = $filter;
+      }
+      $remove_count++;
+    }
+    $remove_output = format_plural($remove_count, '!filter_count applied filter was removed.',
+            '!filter_count applied filters were removed.', array('!filter_count' => $remove_count));
+    drupal_set_message($remove_output);
+  }
+  else {
+    drupal_set_message(t('Please select the filters you wish to remove.'), 'error');
+  }
+ return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
+}
+
+/**
+ * AJAX callback to remove all filters from the rules table.
+ */
+function islandora_xacml_editor_remove_all($form, $form_state) {
+  $form_state = islandora_xacml_editor_retain_state($form_state);
+  $remove_count = 0;
+
+  foreach ($form_state['islandora_xacml']['rows'] as $key => $value) {
+    $type = strtolower($value['Type']);
+    $filter = $value['Filter'];
+
+    $remove_key = array_search($filter, $form_state['islandora_xacml']['dsid_mime'][$type]);
+
+    if ($type == 'dsid') {
+        $form_state['islandora_xacml']['remove_dsid'][] = $filter;
+    }
+    elseif ($type == 'mime type') {
+      $form_state['islandora_xacml']['remove_mime'][] = $filter;
+    }
+    elseif ($type == 'mime type regex') {
+      $form_state['islandora_xacml']['remove_mime_regex'][] = $filter;
+    }
+    elseif ($type == 'dsid regex') {
+      $form_state['islandora_xacml']['remove_dsid_regex'][] = $filter;
+    }
+    $remove_count++;
+  }
+
+  $remove_output = format_plural($remove_count, '!filter_count applied filter was removed.',
+            '!filter_count applied filters were removed.', array('!filter_count' => $remove_count));
+  drupal_set_message($remove_output);
+
+  // Grab textfield values to hold for storage
+  $form_state['islandora_xacml']['dsid_mime']['dsid_add_textfield'] = $_POST['dsid_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['dsid_regex_add_textfield'] = $_POST['dsid_regex_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['mime_regex_add_textfield'] = $_POST['mime_regex_add_textifled'];
+  $form_state['islandora_xacml']['dsid_mime']['mime_add_textfield'] = $_POST['mime_add_textfield'];
+
+  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
+}
+
+/*
+ * AJAX callback to add a DSID Regex to the rules table.
+ */
+function islandora_xacml_editor_add_dsid_regex_js($form, &$form_state) {
+  $form_state = islandora_xacml_editor_retain_state($form_state);
+
+  // Store and checks.
+  if (!isset($form_state['islandora_xacml']['dsid_regexs'])) {
+    $form_state['islandora_xacml']['dsid_regexs'] = array();
+  }
+  $add_text = trim($_POST['dsid_regex_add_textfield']);
+
+  // Check the additional dsids and the dsids from the XACML rules.
+  if (!empty($add_text) && !ctype_space($add_text)) {
+
+    if (isset($form_state['islandora_xacml']['dsid_regexs'])) {
+      $added = array_search($add_text, $form_state['islandora_xacml']['dsid_regexs']);
+    }
+
+    if (isset($form_state['islandora_xacml']['selected_dsid_regexs'])) {
+      $rules = array_search($add_text, $form_state['islandora_xacml']['selected_dsid_regexs']);
+    }
+
+    if (!is_numeric($added) && $rules != $add_text) {
+      $form_state['islandora_xacml']['dsid_regexs'][] = $add_text;
+    }
+    else {
+      drupal_set_message(t('The DSID regex !regex was not added as it already exists as a filter!',
+        array(
+          '!regex' => $add_text,
+        )
+      ), 'warning');
+    }
+  }
+  else {
+    drupal_set_message(t('No DSID regex value entered!'), 'error');
+  }
+
+  // Grab textfield values to hold for storage
+  $form_state['islandora_xacml']['dsid_mime']['dsid_regex_add_textfield'] = '';
+  $form_state['islandora_xacml']['dsid_mime']['dsid_add_textfield'] = $_POST['dsid_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['mime_regex_add_textfield'] = $_POST['mime_regex_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['mime_add_textfield'] = $_POST['mime_add_textfield'];
+
+  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
+}
+
+/**
+ * AJAX callback to add a DSID to the rules table.
+ */
+function islandora_xacml_editor_add_dsid_js($form, $form_state) {
+  module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
+
+  // Grab the updated form state that has stored entered values
+  $form_state = islandora_xacml_editor_retain_state($form_state);
+
+  $pid = $form_state['islandora_xacml']['object_pid'];
+  $object = islandora_object_load($pid);
+
+  $ds_array = $object->repository->api->a->listDatastreams($pid);
+
+  if (!isset($form_state['islandora_xacml']['add_dsid'])) {
+    $form_state['islandora_xacml']['add_dsid'] = array();
+  }
+
+  $add_text = trim($_POST['dsid_add_textfield']);
+
+  if (!empty($add_text) && !ctype_space($add_text)) {
+
+    // Check the additional dsids and the dsids from the XACML rules.
+    if (isset($form_state['islandora_xacml']['add_dsid'])) {
+      $added = array_search($add_text, $form_state['islandora_xacml']['add_dsid']);
+    }
+
+    if (isset($form_state['islandora_xacml']['selected_dsid'])) {
+      $rules = array_search($add_text, $form_state['islandora_xacml']['selected_dsid']);
+    }
+    $restricted_dsids = variable_get('islandora_xacml_editor_restricted_dsids', '');
+    $restricted_dsids = preg_split('/[\s,]+/', $restricted_dsids);
+
+    if (!is_numeric($added) && $rules != $add_text && !in_array($add_text, $restricted_dsids) && isset($ds_array[$add_text])) {
+      $form_state['islandora_xacml']['add_dsid'][] = $add_text;
+    }
+    elseif (in_array($add_text, $restricted_dsids)) {
+      drupal_set_message(t('The DSID !dsid was not added as it is restricted from the admin settings page!',
+        array(
+          '!dsid' => $add_text,
+        )
+      ), 'warning');
+    }
+    elseif (!isset($ds_array[$add_text])) {
+      drupal_set_message(t('The DSID !dsid was not added as it is not a current datastream of the object!',
+        array(
+          '!dsid' => $add_text,
+        )
+      ), 'warning');
+    }
+    else {
+      drupal_set_message(t('The DSID %dsid was not added as it already exists as a filter!',
+        array(
+          '!dsid' => $add_text,
+        )
+      ), 'warning');
+    }
+  }
+  else {
+    drupal_set_message(t('No DSID value entered!'), 'error');
+  }
+
+  // Grab textfield values to hold for storage
+  $form_state['islandora_xacml']['dsid_mime']['dsid_add_textfield'] = '';
+  $form_state['islandora_xacml']['dsid_mime']['dsid_regex_add_textfield'] = $_POST['dsid_regex_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['mime_regex_add_textfield'] = $_POST['mime_regex_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['mime_add_textfield'] = $_POST['mime_add_textfield'];
+
+  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
+}
+
+/**
+ * AJAX callback to add a MIME Regex to the rules table.
+ */
+function islandora_xacml_editor_add_mime_regex_js($form, $form_state) {
+  $form_state = islandora_xacml_editor_retain_state($form_state);
+
+// Store and checks.
+  if (!isset($form_state['islandora_xacml']['mime_regexs'])) {
+    $form_state['islandora_xacml']['mime_regexs'] = array();
+  }
+
+  $add_text = trim($_POST['mime_regex_add_textfield']);
+
+  if (!empty($add_text) && !ctype_space($add_text)) {
+    // Check the additional dsids and the dsids from the XACML rules.
+    if (isset($form_state['islandora_xacml']['mime_regexs'])) {
+      $added = array_search($add_text, $form_state['islandora_xacml']['mime_regexs']);
+    }
+
+    if (isset($form_state['islandora_xacml']['selected_mime_regexs'])) {
+      $rules = array_search($add_text, $form_state['islandora_xacml']['selected_mime_regexs']);
+    }
+
+    if (!is_numeric($added) && $rules != $add_text) {
+      $form_state['islandora_xacml']['mime_regexs'][] = $add_text;
+    }
+    else {
+      drupal_set_message(t('The MIME type regex !regex was not added as it already exists as a filter!',
+        array(
+          '!regex' => $addvalue,
+        )
+      ), 'warning');
+    }
+  }
+  else {
+    drupal_set_message(t('No MIME type regex value entered!'), 'error');
+  }
+
+  // Grab textfield values to hold for storage
+  $form_state['islandora_xacml']['dsid_mime']['mime_regex_add_textfield'] = '';
+  $form_state['islandora_xacml']['dsid_mime']['dsid_regex_add_textfield'] = $_POST['dsid_regex_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['dsid_add_textfield'] = $_POST['dsid_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['mime_add_textfield'] = $_POST['mime_add_textfield'];
+
+  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
+}
+
+/**
+ * AJAX callback to add a MIME Type to the rules table.
+ */
+function islandora_xacml_editor_add_mime_js($form, $form_state) {
+  $form_state = islandora_xacml_editor_retain_state($form_state);
+
+  if (!isset($form_state['islandora_xacml']['add_mime'])) {
+    $form_state['islandora_xacml']['add_mime'] = array();
+  }
+
+  $add_text = trim($_POST['mime_add_textfield']);
+  if (!empty($add_text) && !ctype_space($add_text)) {
+    if (isset($form_state['islandora_xacml']['add_mime'])) {
+      $added = array_search($add_text, $form_state['islandora_xacml']['add_mime']);
+    }
+
+    if (isset($form_state['islandora_xacml']['selected_mime'])) {
+      $rules = array_search($add_text, $form_state['islandora_xacml']['selected_mime']);
+    }
+
+    $restricted_mimes = variable_get('islandora_xacml_editor_restricted_mimes', '');
+    $restricted_mimes = preg_split('/[\s,]+/', $restricted_mimes);
+
+    if (!is_numeric($added) && $rules != $add_text && !in_array($add_text, $restricted_mimes)) {
+      $form_state['islandora_xacml']['add_mime'][] = $add_text;
+    }
+    elseif (in_array($add_text, $restricted_mimes)) {
+      drupal_set_message(t('The MIME type !mime was not added as it is restricted from the admin settings page!',
+        array(
+          '!mime' => $add_text,
+        )
+      ), 'warning');
+    }
+    else {
+      drupal_set_message(t('The MIME type !mime was not added as it already exists as a filter!',
+        array(
+          '!mime' => $add_text,
+        )
+      ), 'warning');
+    }
+  }
+  else {
+    drupal_set_message(t('No MIME type value entered!'), 'error');
+  }
+
+  // Grab textfield values to hold for storage
+  $form_state['islandora_xacml']['dsid_mime']['mime_add_textfield'] = '';
+  $form_state['islandora_xacml']['dsid_mime']['dsid_regex_add_textfield'] = $_POST['dsid_regex_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['mime_regex_add_textfield'] = $_POST['mime_regex_add_textfield'];
+  $form_state['islandora_xacml']['dsid_mime']['dsid_add_textfield'] = $_POST['dsid_add_textfield'];
+
+  return drupal_rebuild_form('islandora_xacml_editor_form', $form_state, $form);
+}
+
+/**
+ * Callback that performs autocomplete operations.
+ */
+function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
+  module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
+
+  $object = islandora_object_load($pid);
+
+  $dslist = $object->repository->api->a->listDatastreams($pid);
+
+  $output = array();
+
+  foreach ($dslist as $key => $value) {
+    if ($string != '*') {
+      if (strpos(strtoupper($key), strtoupper($string)) !== FALSE) {
+        $output[$key] = check_plain($key);
+      }
+    }
+    else {
+      $output[$key] = check_plain($key);
+    }
+  }
+  $restricted_dsids = variable_get('islandora_xacml_editor_restricted_dsids', '');
+  $restricted_dsids = preg_split('/[\s,]+/', $restricted_dsids);
+
+  $output = array_diff($output, $restricted_dsids);
+
+  drupal_json_output($output);
+}
+
+/**
+ * Callback that performs autocomplete operations.
+ */
+function islandora_xacml_editor_mime_autocomplete($xacml_dsid, $pid, $string) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
+  module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
+
+  $output = array();
+  $object = islandora_object_load($pid);
+
+  if ($xacml_dsid == 'CHILD_SECURITY') {
+    $collection_policy = new CollectionPolicy($object['COLLECTION_POLICY']->content);
+    $collection_models = array_keys($collection_policy->getContentModels());
+    $mime = islandora_xacml_editor_retrieve_mimes($collection_models);
+  }
+  else {
+    $mime = islandora_xacml_editor_retrieve_mimes($object->models);
+  }
+  foreach ($mime as $key => $value) {
+    if ($string != "*") {
+      if (strpos(strtoupper($key), strtoupper($string)) !== FALSE) {
+        $output[$key] = check_plain($key);
+      }
+    }
+    else {
+      $output[$key] = check_plain($key);
+    }
+  }
+  $restricted_mimes = variable_get('islandora_xacml_editor_restricted_mimes', '');
+  $restricted_mimes = preg_split('/[\s,]+/', $restricted_mimes);
+
+  $output = array_diff($output, $restricted_mimes);
+
+  drupal_json_output($output);
+
+}
+
+/**
+ * Retrieves the MIME Types associated to content models for use in
+ * autocomplete operations.
+ *
+ * @param array $models
+ *   An array of content models.
+ *
+ * @return array
+ *   An array of MIME types.
+ */
+function islandora_xacml_editor_retrieve_mimes($models) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
+
+  $mimes = array();
+  $datastreams = islandora_get_datastreams_requirements_from_models($models);
+
+  foreach ($datastreams as $key => $value) {
+    foreach ($value['mime'] as $mime) {
+      if (!in_array($mime, $mimes)) {
+        $mimes[$mime] = $value['mime'];
+      }
+    }
+  }
+  return $mimes;
 }
 
 /**
