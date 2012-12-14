@@ -1,7 +1,8 @@
 <?php
 
 /**
- *  @file Unit tests for XacmlRule, its child classes, and Xacml.
+ *  @file
+ *  Unit tests for XacmlRule, its child classes, and Xacml.
  */
 class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
 
@@ -19,11 +20,11 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testManagementRuleHasCorrectMethods() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
-  
+
     // pull the 'methods' array out of the rule
     $rule = $xacml->managementRule->getRuleArray();
     $methods = $rule['methods'];
@@ -53,11 +54,11 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
       'dsstate',
       'resolveDatastream',
       'reloadPolicies',
-    ); 
+    );
 
     // assert each of the expected methods is in the rule's 'methods' array
     foreach ($expected_methods as $method) {
-      $this->assertTrue(in_array($method, $methods), "Method $method is in the management rule.");  
+      $this->assertTrue(in_array($method, $methods), "Method $method is in the management rule.");
     }
   }
 
@@ -67,7 +68,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testViewingRuleHasCorrectMethods() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -85,7 +86,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
 
     // assert each of the expected methods is in the rule's 'methods' array
     foreach ($expected_methods as $method) {
-      $this->assertTrue(in_array($method, $methods), "Method $method is in the viewing rule.");  
+      $this->assertTrue(in_array($method, $methods), "Method $method is in the viewing rule.");
     }
   }
 
@@ -95,7 +96,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testDatastreamRuleHasCorrectMethods() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -111,7 +112,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
 
     // assert each of the expected methods is in the rule's 'methods' array
     foreach ($expected_methods as $method) {
-      $this->assertTrue(in_array($method, $methods), "Method $method is in the datastream rule.");  
+      $this->assertTrue(in_array($method, $methods), "Method $method is in the datastream rule.");
     }
   }
 
@@ -128,7 +129,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testNewRuleIsNotPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -138,11 +139,11 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
-   *  Asserts that after adding a user, the rule is populated.  
+   *  Asserts that after adding a user, the rule is populated.
    */
   public function testRuleWithUserIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -160,7 +161,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRuleWithRoleIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -178,7 +179,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRuleWithBothUserAndRoleIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -201,7 +202,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRuleWithUserAfterRemovingRolesIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -227,7 +228,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRuleWithRoleAfterRemovingUsersIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -246,14 +247,14 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // assert that rule is still populated
     $this->assertTrue($xacml->managementRule->isPopulated(), "Rule with role after removing users is populated");
   }
-  
+
   /**
    *  Asserts that a rule with users and no roles is not populated after
    *  removing all users.
    */
   public function testEmptyRuleAfterRemovingUsersIsNotPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -275,7 +276,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testEmptyRuleAfterRemovingRolesIsNotPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -297,7 +298,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testEmptyRuleAfterRemovingBothUsersAndRolesIsNotPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -312,7 +313,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
 
     // remove the user
     $xacml->managementRule->removeUser($user_name);
-    
+
     // remove the role
     $xacml->managementRule->removeRole($role_name);
 
@@ -325,7 +326,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedUserHasPermission() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -334,7 +335,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $user_name = 'foo';
     $xacml->managementRule->addUser($user_name);
 
-    // assert that the newly added user has permission 
+    // assert that the newly added user has permission
     $this->assertTrue($xacml->managementRule->hasPermission($user_name, array(), FALSE), "Added user has permission in the xacml rule");
   }
 
@@ -343,7 +344,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedRoleHasPermission() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -352,7 +353,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $role_name = 'foo';
     $xacml->managementRule->addRole($role_name);
 
-    // assert that the newly added role has permission 
+    // assert that the newly added role has permission
     $this->assertTrue($xacml->managementRule->hasPermission(NULL, array($role_name), FALSE), "Added role has permission in the xacml rule");
   }
 
@@ -361,7 +362,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRemovedUserDoesNotHavePermission() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -373,7 +374,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // remove the user
     $xacml->managementRule->removeUser($user_name);
 
-    // assert that the newly added user has permission 
+    // assert that the newly added user has permission
     $this->assertFalse($xacml->managementRule->hasPermission($user_name, array(), FALSE), "Removed user does not have permission in the xacml rule");
   }
 
@@ -382,7 +383,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRemovedRoleDoesNotHavePermission() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -394,15 +395,15 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // remove the role
     $xacml->managementRule->removeRole($role_name);
 
-    // assert that the newly added role has permission 
+    // assert that the newly added role has permission
     $this->assertFalse($xacml->managementRule->hasPermission(NULL, array($role_name), FALSE), "Removed role does not have permission in the xacml rule");
   }
 
   /**
-   *  Utility function that instantiates and returns a DOMXPath object for the 
+   *  Utility function that instantiates and returns a DOMXPath object for the
    *  supplied Xacml object.  Used in the unit tests that verify elements
    *  of an Xacml object's DOM that results from the getDomDocument() function.
-   *  
+   *
    *  @param Xacml $xacml
    *    The xacml object that the DOMXPath will search
    *
@@ -410,26 +411,26 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    *    The DOMXPath to search the supplied Xacml object
    */
   private function constructXPathForXacml($xacml) {
-    
+
     // XACML policy namespace
     $ns = 'urn:oasis:names:tc:xacml:1.0:policy';
-    
+
     // create the xpath
     $xpath = new DOMXPath($xacml->getDomDocument());
-    
-    // register the namespace   
+
+    // register the namespace
     $xpath->registerNamespace("ns", $ns);
 
     return $xpath;
   }
 
   /**
-   *  Asserts that when a user is added to an XacmlRule, the user appears in 
+   *  Asserts that when a user is added to an XacmlRule, the user appears in
    *  the XacmlRule's resultant DOM.
    */
   public function testAddedUserIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -446,17 +447,17 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $results = $xpath->query($query)->item(0);
 
     // assert
-    $this->assertNotNull($results, "The query for user $user_name return non-null results"); 
+    $this->assertNotNull($results, "The query for user $user_name return non-null results");
     $this->assertEqual($results->nodeValue, $user_name, "Search result's nodeValue is equal to '$user_name'");
   }
 
   /**
-   *  Asserts that when users are added to an XacmlRule using an array, that 
+   *  Asserts that when users are added to an XacmlRule using an array, that
    *  the users appear in the XacmlRule's resultant DOM.
    */
   public function testAddedUsersAreInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -473,19 +474,19 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     for ( $i = 0; $i < count($user_array); $i++ ) {
       $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$user_array[$i]}']";
       $results = $xpath->query($query)->item(0);
-     
-      $this->assertNotNull($results, "The query for user {$user_array[$i]} return non-null results"); 
+
+      $this->assertNotNull($results, "The query for user {$user_array[$i]} return non-null results");
       $this->assertEqual($results->nodeValue, $user_array[$i], "Search result's nodeValue is equal to '{$user_array[$i]}'");
     }
   }
 
   /**
-   *  Asserts that when a user is removed from an XacmlRule that the user no 
+   *  Asserts that when a user is removed from an XacmlRule that the user no
    *  longer appears in the XacmlRule's resultant DOM
    */
   public function testRemovedUserIsNotInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -504,16 +505,16 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // and ensure it is not present
     $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$user_name}']";
     $results = $xpath->query($query)->item(0);
-    $this->assertNull($results, "The query for user {$user_name} returns null results"); 
+    $this->assertNull($results, "The query for user {$user_name} returns null results");
   }
 
   /**
-   *  Asserts that when users are removed from an XacmlRule using an array 
+   *  Asserts that when users are removed from an XacmlRule using an array
    *  that they no longer appear in the XacmlRule's resultant DOM
    */
   public function testRemovedUsersAreNotInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -533,7 +534,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     for ($i = 0; $i < count($user_array); $i++) {
       $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$user_array[$i]}']";
       $results = $xpath->query($query)->item(0);
-      $this->assertNull($results, "The query for user {$user_array[$i]} returns null results"); 
+      $this->assertNull($results, "The query for user {$user_array[$i]} returns null results");
     }
   }
 
@@ -543,7 +544,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedRoleIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -560,7 +561,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $results = $xpath->query($query)->item(0);
 
     // assert
-    $this->assertNotNull($results, "The query for role $role_name return non-null results"); 
+    $this->assertNotNull($results, "The query for role $role_name return non-null results");
     $this->assertEqual($results->nodeValue, $role_name, "Search result's nodeValue is equal to '$role_name'");
   }
 
@@ -570,7 +571,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedRolesAreInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -587,19 +588,19 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     for ( $i = 0; $i < count($role_array); $i++ ) {
       $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$role_array[$i]}']";
       $results = $xpath->query($query)->item(0);
-     
-      $this->assertNotNull($results, "The query for role {$role_array[$i]} return non-null results"); 
+
+      $this->assertNotNull($results, "The query for role {$role_array[$i]} return non-null results");
       $this->assertEqual($results->nodeValue, $role_array[$i], "Search result's nodeValue is equal to '{$role_array[$i]}'");
     }
   }
 
   /**
-   *  Asserts that when a role is removed from an XacmlRule that the role no 
+   *  Asserts that when a role is removed from an XacmlRule that the role no
    *  longer appears in the XacmlRule's resultant DOM
    */
   public function testRemovedRoleIsNotInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -618,16 +619,16 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     // and ensure it is not present
     $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$role_name}']";
     $results = $xpath->query($query)->item(0);
-    $this->assertNull($results, "The query for role {$role_name} returns null results"); 
+    $this->assertNull($results, "The query for role {$role_name} returns null results");
   }
 
   /**
    *  Asserts that when roles are removed from an XacmlRule using an array that
    *  the roles no longer appear in the XacmlRule's resultant DOM
    */
-  public function testRemovedRolesAreNotInDOM() { 
+  public function testRemovedRolesAreNotInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -647,7 +648,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     for ($i = 0; $i < count($role_array); $i++) {
       $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='{$role_array[$i]}']";
       $results = $xpath->query($query)->item(0);
-      $this->assertNull($results, "The query for role {$role_array[$i]} returns null results"); 
+      $this->assertNull($results, "The query for role {$role_array[$i]} returns null results");
     }
   }
 
@@ -657,11 +658,11 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedDsidIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
-    
+
     // add a DSID to the datastream rule
     $dsid = 'foo';
     $xacml->datastreamRule->addDsid($dsid);
@@ -686,7 +687,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedDsidRegexIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -715,7 +716,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedMimetypeIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -744,7 +745,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedMimetypeRegexIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml'); 
+    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();

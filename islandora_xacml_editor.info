@@ -1,9 +1,8 @@
-; $Id$
-name = Islandora Xacml Editor
+name = Islandora XACML Editor
 dependencies[] = islandora
 dependencies[] = islandora_xacml_api
 description = Visually edit XACML policies for objects.
-configure = admin/config/islandora_xacml/editor
+configure = admin/islandora/xacml/editor
 package = Islandora
 version = 7.x-dev
 core = 7.x
