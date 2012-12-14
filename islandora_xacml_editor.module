@@ -1109,7 +1109,7 @@ function islandora_xacml_editor_page(&$form_state, $object_pid, $xacml_dsid) {
 
   $form['dsidmime']['enabled'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Enable XACML Restrictions on DSIDs and MIME types'),
+    '#title' => t('Enable XACML Restrictions on viewing DSIDs and MIME types'),
     '#default_value' => isset($form_state['storage']['dsidmime']['enabled']) ? $form_state['storage']['dsidmime']['enabled']['#value'] : $xacml->datastreamRule->isPopulated(),
   );
 
