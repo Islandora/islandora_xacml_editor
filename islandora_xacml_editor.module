@@ -1686,10 +1686,11 @@ function islandora_xacml_editor_page_validate(&$form, &$form_state) {
   // Test if the user is locking themselves or the admin out of the object.
   $admin_user = $form_state['storage']['admin_user'];
   $current_user = $form_state['storage']['current_user'];
+  $current_user_roles = user_load(array('name' => $current_user))->roles;
 
   // Management functions.
-  if (!array_key_exists($admin_user, $form_state['values']['manage']['users']) ||
-      !array_key_exists($current_user, $form_state['values']['manage']['users'])) {
+  if ((!array_key_exists($admin_user, $form_state['values']['manage']['users']) ||
+      !array_key_exists($current_user, $form_state['values']['manage']['users'])) && count(array_intersect($current_user_roles, $form_state['values']['manage']['roles'])) == 0) {
     if ($admin_user == $current_user) {
       form_set_error('manage][users', "Please make sure that $admin_user is selected in the manage
         section to prevent locking yourself out of the object.", FALSE);
@@ -1701,7 +1702,7 @@ function islandora_xacml_editor_page_validate(&$form, &$form_state) {
   }
 
   if ($form_state['values']['dsidmime']['enabled']) {
-    if (!array_key_exists($current_user, $form_state['values']['dsidmime']['users'])) {
+    if (!array_key_exists($current_user, $form_state['values']['dsidmime']['users']) && count(array_intersect($current_user_roles, $form_state['values']['manage']['roles'])) == 0) {
       form_set_error('dsidmime][users', "Please make sure that $current_user is selected in the datastream and MIME type section.", FALSE);
     }
 
