@@ -805,6 +805,7 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
         '#type' => 'tabpage',
         '#title' => $title,
         '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, $dsid),
+        '#weight' => 100,
       );
     }
   }
