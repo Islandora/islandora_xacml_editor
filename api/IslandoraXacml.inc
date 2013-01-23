@@ -5,7 +5,6 @@
  *
  *  Need to have Drupal bootstrapped, due to use of module_load_includes
  */
-
 module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
 /**
@@ -14,6 +13,7 @@ module_load_include('inc', 'islandora_xacml_api', 'Xacml');
  * Need to have Drupal bootstrapped, due to use of module_load_includes
  */
 class IslandoraXacml extends Xacml {
+
   /**
    * The idenitfy the datastream from which this policy was obtained (and to
    * which it should be written back to).
@@ -49,6 +49,11 @@ class IslandoraXacml extends Xacml {
     $this->pid = $pid;
     $this->dsid = $dsid;
     $this->item = $item;
+
+    $this->label = 'Xacml Policy';
+    if ($this->dsid == 'CHILD_SECURITY') {
+      $this->label = 'Child Security Xacml Policy';
+    }
   }
 
   /**
@@ -62,10 +67,10 @@ class IslandoraXacml extends Xacml {
 
     $xml = $this->getXmlString();
     if (array_key_exists($this->dsid, $this->item->datastreams)) {
-      $this->item->modify_datastream($xml, $this->dsid, 'Xacml Policy Stream', 'text/xml');
+      $this->item->modify_datastream($xml, $this->dsid, $this->label, 'text/xml');
     }
     else {
-      $this->item->add_datastream_from_string($xml, $this->dsid, 'Xacml Policy Stream', 'text/xml', 'X');
+      $this->item->add_datastream_from_string($xml, $this->dsid, $this->label, 'text/xml', 'X');
     }
 
     return TRUE;
@@ -111,5 +116,6 @@ class IslandoraXacml extends Xacml {
       }
     }
   }
+
 }
 
