@@ -8,11 +8,6 @@
  * XACML object.
  */
 
-define('MANAGEMENT_RULE', 'deny-management-functions');
-define('DATASTREAM_RULE', 'deny-dsid-mime');
-define('VIEWING_RULE', 'deny-access-functions');
-define('PERMIT_RULE', 'allow-everything-else');
-
 /**
  * This abstract class represents a general XACML Rule. The XACML object contains 4 standard
  * XACML rules, which are all extended from this base class.
@@ -763,7 +758,6 @@ class Xacml {
    *   The DomDocument associated with this Xacml rule.
    */
   function getDomDocument() {
-    module_load_include('inc', 'islandora_xacml_api', 'XacmlWriter');
     $this->updateRulesArray();
     return XacmlWriter::toDOM($this->xacml);
   }

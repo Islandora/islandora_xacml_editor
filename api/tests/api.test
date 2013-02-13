@@ -20,7 +20,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testManagementRuleHasCorrectMethods() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -68,7 +67,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testViewingRuleHasCorrectMethods() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -96,7 +94,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testDatastreamRuleHasCorrectMethods() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -129,7 +126,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testNewRuleIsNotPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -143,7 +139,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRuleWithUserIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -161,7 +156,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRuleWithRoleIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -179,7 +173,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRuleWithBothUserAndRoleIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -202,7 +195,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRuleWithUserAfterRemovingRolesIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -228,7 +220,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRuleWithRoleAfterRemovingUsersIsPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -254,7 +245,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testEmptyRuleAfterRemovingUsersIsNotPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -276,7 +266,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testEmptyRuleAfterRemovingRolesIsNotPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -298,7 +287,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testEmptyRuleAfterRemovingBothUsersAndRolesIsNotPopulated() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -326,7 +314,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedUserHasPermission() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -344,7 +331,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedRoleHasPermission() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -362,7 +348,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRemovedUserDoesNotHavePermission() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -383,7 +368,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRemovedRoleDoesNotHavePermission() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -430,7 +414,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedUserIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -457,7 +440,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedUsersAreInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -486,7 +468,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRemovedUserIsNotInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -514,7 +495,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRemovedUsersAreNotInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -544,7 +524,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedRoleIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -571,7 +550,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedRolesAreInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -600,7 +578,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRemovedRoleIsNotInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -628,7 +605,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testRemovedRolesAreNotInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -658,7 +634,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedDsidIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -687,7 +662,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedDsidRegexIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -716,7 +690,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedMimetypeIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
@@ -745,7 +718,6 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    */
   public function testAddedMimetypeRegexIsInDOM() {
     // for Xacml
-    module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
     // instantiate the xacml object
     $xacml = new Xacml();
