@@ -8,7 +8,6 @@
  */
 
 
-module_load_include('inc', 'islandora_xacml_api', 'Xacml');
 
 class IslandoraXacml extends Xacml {
   /**
@@ -35,7 +34,6 @@ class IslandoraXacml extends Xacml {
    *   PID and DSID.
    */
   function __construct($pid, $dsid = 'POLICY', $xacml = NULL) {
-    module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
 
     $item = islandora_object_load($pid);
 

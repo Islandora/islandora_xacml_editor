@@ -1,8 +1,14 @@
 <?php
+
 /**
  * @file
  *   Islandora Xacml module API functions.
  */
+
+define('MANAGEMENT_RULE', 'deny-management-functions');
+define('DATASTREAM_RULE', 'deny-dsid-mime');
+define('VIEWING_RULE', 'deny-access-functions');
+define('PERMIT_RULE', 'allow-everything-else');
 
 /**
  * Implements hook_menu().

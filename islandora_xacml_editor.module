@@ -194,7 +194,6 @@ function islandora_xacml_editor_settings() {
 function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_dsid) {
   drupal_add_css(drupal_get_path('module', 'islandora_xacml_editor') . '/css/islandora_xacml_editor.css');
   module_load_include('inc', 'islandora', 'includes/utilities');
-  module_load_include('inc', 'islandora_xacml_api', 'Xacml');
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
 
   drupal_set_title(t('Islandora XACML Editor'));
@@ -249,7 +248,6 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   $new_xacml = FALSE;
 
   if (array_key_exists($xacml_dsid, $datastreams)) {
-    module_load_include('inc', 'islandora_xacml_api', 'XacmlException');
 
     // Here we populate the form.
     $xml = $object->repository->api->a->getDatastreamDissemination($object_pid, $xacml_dsid);
@@ -1223,9 +1221,6 @@ function islandora_xacml_editor_form_validate(&$form, &$form_state) {
  * The submit function where all the XACML magic happens. Abracadabra.
  */
 function islandora_xacml_editor_form_submit(&$form, &$form_state) {
-  module_load_include('inc', 'islandora_xacml_api', 'IslandoraXacml');
-  module_load_include('inc', 'fedora_repository', 'api/fedora_item');
-
   $pid = $form_state['islandora_xacml']['object_pid'];
   $dsid = $form_state['islandora_xacml']['xacml_dsid'];
   $xacml = new IslandoraXacml($pid, $dsid);
@@ -1347,7 +1342,6 @@ function islandora_xacml_editor_add_mime_js($form, $form_state) {
  * Callback that performs autocomplete operations.
  */
 function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
-  module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
 
   $object = islandora_object_load($pid);
   $dslist = $object->repository->api->a->listDatastreams($pid);
@@ -1376,7 +1370,6 @@ function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
  */
 function islandora_xacml_editor_mime_autocomplete($xacml_dsid, $pid, $string) {
   module_load_include('inc', 'islandora', 'includes/utilities');
-  module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
 
   $output = array();
   $object = islandora_object_load($pid);
@@ -1442,10 +1435,6 @@ function islandora_xacml_editor_retrieve_mimes($models) {
  * @param unknown_type $context
  */
 function islandora_xacml_editor_batch_function($xml, $pid, $option, &$context) {
-  module_load_include('inc', 'fedora_repository', 'api/fedora_item');
-  module_load_include('inc', 'islandora_xacml_api', 'Xacml');
-  module_load_include('inc', 'islandora_xacml_api', 'XacmlException');
-
   if (empty($context['sandbox'])) {
     dd($pid . ' hurr');
     $query = new IslandoraXacmlEditorQuery($pid, $option);
@@ -1514,8 +1503,6 @@ class IslandoraUpdatePolicy {
    */
   function __construct($pid, $xml) {
     // Used at a couple different points...  Let's just load this here?
-    module_load_include('inc', 'islandora_xacml_api', 'IslandoraXacml');
-    module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
     $this->pid = $pid;
     $this->xml = $xml;
     $this->object = islandora_object_load($pid);
@@ -1570,7 +1557,6 @@ class IslandoraUpdatePolicy {
    *
    */
   private function addOrUpdateAllPolicies() {
-    module_load_include('inc', 'islandora_xacml_api', 'IslandoraXacml');
     $object_policy = new IslandoraXacml($this->pid, 'POLICY', $this->xml);
     $object_policy->writeBackToFedora();
 
@@ -1607,7 +1593,6 @@ class IslandoraXacmlEditorQuery {
    * @param unknown_type $query_string
    */
   static function query($query_string, $object_pid) {
-    module_load_include('inc', 'islandora', 'includes/IslandoraTuque');
     $object = islandora_object_load($object_pid);
     $content = $object->repository->ri->itqlQuery($query_string, 'unlimited', '0');
 

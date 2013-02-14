@@ -5,7 +5,7 @@
  * This file has functions for writing the XACML class datastructures out to XML.
  */
 
-include_once 'XacmlConstants.inc';
+include_once 'constants.inc';
 
 /**
  * Class for writing XACML editor datastructures out to XML.
