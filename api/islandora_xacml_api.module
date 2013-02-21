@@ -158,4 +158,5 @@ function islandora_xacml_api_islandora_basic_collection_query_alter(&$query_arra
   order by $title';
 
   $query_array['query'] = $query_string;
+  $query_array['type'] = 'itql';
 }
