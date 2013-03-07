@@ -5,5 +5,5 @@ dependencies[] = islandora_xacml_api
 dependencies[] = php_lib
 description = Visually edit XACML policies for objects.
 package = Fedora Repository
-version = 6.x-13.1-RC1
+version = 6.x-13.1
 core = 6.x
