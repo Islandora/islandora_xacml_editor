@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  *   Islandora Xacml module API functions.
@@ -167,19 +168,18 @@ function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user) {
         return $xacml->viewingRule->hasPermission($user->name, $user->roles);
       }
       elseif (in_array($op, array(
-        ObjectHelper::$EDIT_FEDORA_METADATA,
-        ObjectHelper::$PURGE_FEDORA_OBJECTSANDSTREAMS,
-        ObjectHelper::$ADD_FEDORA_STREAMS,
-        ObjectHelper::$INGEST_FEDORA_OBJECTS,
-        ObjectHelper::$EDIT_TAGS_DATASTREAM))) {
+            ObjectHelper::$EDIT_FEDORA_METADATA,
+            ObjectHelper::$PURGE_FEDORA_OBJECTSANDSTREAMS,
+            ObjectHelper::$ADD_FEDORA_STREAMS,
+            ObjectHelper::$INGEST_FEDORA_OBJECTS,
+          ))) {
         return $xacml->managementRule->hasPermission($user->name, $user->roles);
       }
       else {
         // Unknown operation; make no assertion.
         return NULL;
       }
-    }
-    catch (XacmlException $e) {
+    } catch (XacmlException $e) {
       // Likely an error parsing the POLICY stream...  Let's make no assertion.
       return NULL;
     }

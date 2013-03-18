@@ -806,7 +806,7 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
         '#title' => $title,
         '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, $dsid),
         '#weight' => 100,
-        '#selected' => TRUE,
+       
       );
     }
   }
@@ -814,7 +814,7 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
 }
 
 function islandora_xacml_editor_islandora_tabs_alter(&$args) {
- // $args['view_tab']['#selected'] = 1;
+
   if ($_SESSION['XACML_SELECTED']) {
     foreach ($args as $key => $values) {
       if ($key != '#type') {
