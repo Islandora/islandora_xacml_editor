@@ -57,7 +57,7 @@
 
   <target name="test">
     <exec executable="drush">
-      <arg line="test-run --xml=${basedir}/build/test islandora_xacml_editor ${basedir}/build/logs/clover.xml" />
+      <arg line="test-run --xml=${basedir}/build/test islandora_xacml_editor" />
     </exec>
   </target>
 
