@@ -2,7 +2,7 @@
 
 <project name="islandora_xacml_editor" default="build">
   <target name="build" depends="clean,prepare,lint,phploc,code_sniff,phpcpd,test" />
-  
+
   <target name="clean" description="Cleanup build artifacts">
     <delete dir="${basedir}/build" />
   </target>
