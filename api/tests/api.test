@@ -1,8 +1,11 @@
 <?php
-
 /**
  *  @file
- *  Unit tests for XacmlRule, its child classes, and Xacml.
+ *    Unit tests for XacmlRule, its child classes, and Xacml.
+ */
+
+/**
+ *  Tests for the XACML API.
  */
 class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
 
@@ -10,8 +13,17 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     return array(
       'name' => 'Islandora Xacml Api Unit Tests',
       'description' => 'Unit tests for the Islandora Xacml Api',
-      'group' => 'Xacml Editor',
+      'group' => 'Islandora Xacml Editor',
     );
+  }
+
+  /**
+   * Enables islandora_xacml_api
+   */
+  public function setUp() {
+    parent::setUp('islandora_xacml_api');
+    module_load_include('inc', 'islandora_xacml_api', '/includes/xacml');
+    module_load_include('inc', 'islandora_xacml_api', '/includes/writer');
   }
 
   /**
@@ -384,25 +396,25 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
   }
 
   /**
-   *  Utility function that instantiates and returns a DOMXPath object for the
-   *  supplied Xacml object.  Used in the unit tests that verify elements
-   *  of an Xacml object's DOM that results from the getDomDocument() function.
+   * Utility function that instantiates and returns a DOMXPath object for the
+   * supplied Xacml object.  Used in the unit tests that verify elements
+   * of an Xacml object's DOM that results from the getDomDocument() function.
    *
-   *  @param Xacml $xacml
-   *    The xacml object that the DOMXPath will search
+   * @param Xacml $xacml
+   *   The xacml object that the DOMXPath will search
    *
-   *  @return DOMXPath
-   *    The DOMXPath to search the supplied Xacml object
+   * @return DOMXPath
+   *   The DOMXPath to search the supplied Xacml object
    */
-  private function constructXPathForXacml($xacml) {
+  protected function constructXPathForXacml($xacml) {
 
-    // XACML policy namespace
+    // XACML policy namespace.
     $ns = 'urn:oasis:names:tc:xacml:1.0:policy';
 
-    // create the xpath
+    // Create the xpath.
     $xpath = new DOMXPath($xacml->getDomDocument());
 
-    // register the namespace
+    // Register the namespace.
     $xpath->registerNamespace("ns", $ns);
 
     return $xpath;
@@ -413,25 +425,25 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
    *  the XacmlRule's resultant DOM.
    */
   public function testAddedUserIsInDOM() {
-    // for Xacml
 
     // instantiate the xacml object
     $xacml = new Xacml();
 
-    // add a dummy user
+    // Add a dummy user.
     $user_name = 'foo';
     $xacml->managementRule->addUser($user_name);
 
-    // get an DOMXPath to search the Xacml
+    // Get an DOMXPath to search the XACML.
     $xpath = $this->constructXPathForXacml($xacml);
 
     // search the DOM for the dummy user in the management rule
     $query = "/ns:Policy/ns:Rule[@RuleId='deny-management-functions' and @Effect='Deny']/ns:Condition/ns:Apply/ns:Apply/ns:Apply/ns:AttributeValue[text()='$user_name']";
+
     $results = $xpath->query($query)->item(0);
 
-    // assert
     $this->assertNotNull($results, "The query for user $user_name return non-null results");
     $this->assertEqual($results->nodeValue, $user_name, "Search result's nodeValue is equal to '$user_name'");
+
   }
 
   /**
@@ -730,7 +742,7 @@ class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
     $user_name = 'bar';
     $xacml->datastreamRule->addUser($user_name);
 
-    // get an DOMXPath to search the Xacml
+    // Get an DOMXPath to search the XACML.
     $xpath = $this->constructXPathForXacml($xacml);
 
     // query the DOM and assert the existence of the mimetype regex
