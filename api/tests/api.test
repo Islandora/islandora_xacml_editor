@@ -1,17 +1,27 @@
 <?php
-
 /**
  *  @file
- *  Unit tests for XacmlRule, its child classes, and Xacml.
+ *    Unit tests for XacmlRule, its child classes, and Xacml.
  */
-class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
+
+/**
+ *  Tests for the XACML API.
+ */
+class IslandoraXacmlApiUnitTestCase extends DrupalWebTestCase {
 
   public static function getInfo() {
     return array(
       'name' => 'Islandora Xacml Api Unit Tests',
       'description' => 'Unit tests for the Islandora Xacml Api',
-      'group' => 'Xacml Editor',
+      'group' => 'Islandora Xacml Editor',
     );
+  }
+
+  /**
+   * Enables islandora_xacml_api
+   */
+  public function setUp() {
+    parent::setUp('islandora_xacml_api');
   }
 
   /**
