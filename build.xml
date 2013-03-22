@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="islandora_xacml_editor" default="build">
-  <target name="build" depends="clean,prepare,lint,phploc,code_sniff,phpcpd,test" />
+  <target name="build" depends="clean,prepare,lint,phploc,code_sniff,phpcpd,pdepend,doxygen,test" />
 
   <target name="clean" description="Cleanup build artifacts">
-    <delete dir="${basedir}/build" />
+      <delete dir="${basedir}/build/test" />
+      <delete dir="${basedir}/build/logs" />
+      <delete dir="${basedir}/build/pdepend" />
+      <delete dir="${basedir}/build/doc" />
+      <delete dir="${basedir}/build/code-browser" />
   </target>
 
   <target name="prepare" description="Prepares workspace for artifacts" >
-    <mkdir dir="${basedir}/build" />
     <mkdir dir="${basedir}/build/test" />
     <mkdir dir="${basedir}/build/logs" />
+    <mkdir dir="${basedir}/build/pdepend" />
+    <mkdir dir="${basedir}/build/doc" />
+    <mkdir dir="${basedir}/build/code-browser" />
   </target>
 
   <target name="lint" description="Perform syntax check of sourcecode files">
@@ -55,9 +61,33 @@
     </exec>
   </target>
 
+  <target name="pdepend" description="Calculate software metrics using PHP_Depend">
+    <exec executable="pdepend">
+      <arg line="--jdepend-xml=${basedir}/build/logs/jdepend.xml --jdepend-chart=${basedir}/build/pdepend/dependencies.svg --overview-pyramid=${basedir}/build/pdepend/overview-pyramid.svg ${basedir}"/>
+    </exec>
+  </target>
+
+  <target name="doxygen" description="Generate API documentation with doxygen" depends="prepare">
+    <exec executable="sed">
+      <arg line='-i "s|PROJECT_NUMBER         =|PROJECT_NUMBER         = ""`git log -1 --pretty=format:%h`""|" build/Doxyfile'/>
+    </exec>
+    <exec executable="doxygen">
+      <arg line="${basedir}/build/Doxyfile" />
+    </exec>
+    <exec executable="git">
+      <arg line="checkout ${basedir}/build/Doxyfile"/>
+    </exec>
+  </target>
+
+  <target name="phpcb" description="Aggregate tool output with PHP_CodeBrowser">
+    <exec executable="phpcb">
+        <arg line="--log ${basedir}/build/logs --source ${basedir} --output ${basedir}/build/code-browser"/>
+    </exec>
+  </target>
+
   <target name="test">
     <exec executable="drush">
-      <arg line="test-run --xml=${basedir}/build/test islandora_xacml_editor" />
+      <arg line="test-run --xml=${basedir}/build/test 'Islandora Xacml Editor'" />
     </exec>
   </target>
 
