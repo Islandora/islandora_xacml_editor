@@ -7,7 +7,7 @@
       <delete dir="${basedir}/build/test" />
       <delete dir="${basedir}/build/logs" />
       <delete dir="${basedir}/build/pdepend" />
-      <delete dir="${basedir}/build/doc" />
+      <delete dir="${basedir}/build/api" />
       <delete dir="${basedir}/build/code-browser" />
   </target>
 
@@ -15,7 +15,7 @@
     <mkdir dir="${basedir}/build/test" />
     <mkdir dir="${basedir}/build/logs" />
     <mkdir dir="${basedir}/build/pdepend" />
-    <mkdir dir="${basedir}/build/doc" />
+    <mkdir dir="${basedir}/build/api" />
     <mkdir dir="${basedir}/build/code-browser" />
   </target>
 
