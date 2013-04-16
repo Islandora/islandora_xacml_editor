@@ -1349,7 +1349,7 @@ function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
  *   An array containing all FedoraObjects we are applying the parent's POLICY
  *   to.
  */
-function islandora_xacml_editor_apply_policy($parent, $objects) {
+function islandora_xacml_editor_apply_policy(&$form_state, $parent, $objects) {
   $parent_object = islandora_object_load($parent);
   if ($parent_object['POLICY']) {
     foreach ($objects as $object) {
@@ -1365,9 +1365,9 @@ function islandora_xacml_editor_apply_policy($parent, $objects) {
  * @param array $objects
  *   An array containing FedoraObjects to parse through.
  */
-function islandora_xacml_editor_undo_policy($objects) {
+function islandora_xacml_editor_undo_policy(&$form_state, $objects) {
   foreach ($objects as $object) {
-    if ($object['POLICY']) {
+    if (isset($object['POLICY'])) {
       $viewable_by_user = 'isViewableByUser';
       $viewable_by_role = 'isViewableByRole';
       $object->purgeDatastream('POLICY');
@@ -1537,7 +1537,6 @@ function islandora_xacml_editor_batch_function($xml, $pid, $query_array, &$conte
     $context['results']['success'] = array();
     $context['results']['fail'] = array();
   }
-
   $targetpid = array_pop($context['sandbox']['pids']);
   $context['sandbox']['progress']++;
 
@@ -1692,9 +1691,8 @@ class IslandoraXacmlEditorQuery {
     $query_results = IslandoraXacmlEditorQuery::query($this->query, $this->pid);
 
     foreach ($query_results as $result) {
-      $pid = $result['object']['uri'];
-      $parts = explode('/', $pid);
-      $pids[] = $parts[1];
+      $pid = $result['obj']['value'];
+      $pids[] = $pid;
     }
     return $pids;
   }
