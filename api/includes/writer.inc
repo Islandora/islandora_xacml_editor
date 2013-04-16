@@ -2,7 +2,7 @@
 
 /**
  * @file
- * This file has functions for writing the XACML class datastructures out to XML.
+ * This file has functions for writing the XACML class datastructures as XML.
  */
 
 include_once 'constants.inc';
@@ -13,14 +13,13 @@ include_once 'constants.inc';
 class XacmlWriter {
 
   /**
-   * Function takes a $xacml datastructure as input and returns
-   * a DOMDocument containing the XACML xml.
+   * Takes a $xacml array and returns a DOMDocument containing the XACML xml.
    *
-   * @param $xacml
-   *   $xacml datastructure
+   * @param array $xacml
+   *   The XACML rules array to be populated by this function.
    *
-   * @return
-   *   DomDocument
+   * @return DomDocument
+   *   A DomDocument containing our constructed XACML policy.
    */
   public static function toDOM($xacml) {
     $dom = new DomDocument("1.0", "UTF-8");
@@ -33,15 +32,14 @@ class XacmlWriter {
   }
 
   /**
-   * Function takes a $xacml datastructure as input and returns
-   * an string containing the XACML xml.
+   * Takes a $xacml datastructure and returns a string containing the XACML xml.
    *
-   * @param $xacml
-   *   $xacml datastructure
-   * @param $pretty_print
-   *   Boolean. Determines if the output XML is formatted. Default: FALSE.
+   * @param array $xacml
+   *   An array representing an XACML datastructure.
+   * @param bool $pretty_print
+   *   Determines if the output XML is formatted. Default: FALSE.
    *
-   * @return
+   * @return XML
    *   String containing the XACML as XML.
    */
   public static function toXML($xacml, $pretty_print = FALSE) {
@@ -54,10 +52,8 @@ class XacmlWriter {
   /**
    * Creates the root tag for the base XACML document.
    */
-  private static function createRootElement(&$dom, $xacml) {
+  protected static function createRootElement(&$dom, $xacml) {
     $root = $dom->createElementNS(XacmlConstants::XACML, 'Policy');
-
-    //$root->setAttribute('islandora_xacml', '1.0');
     $root->setAttribute('PolicyId', 'islandora-xacml-editor-v1');
     $root->setAttribute('RuleCombiningAlgId', $xacml['RuleCombiningAlgId']);
     $root->setAttributeNS(XacmlConstants::XMLNS, 'xmlns', XacmlConstants::XACML);
@@ -67,9 +63,11 @@ class XacmlWriter {
   }
 
   /**
-   * Creates the empty skeleton document that every XACML document should have. This
-   * is the section that says this rule applies to everything. We do all the narrowing
-   * of the scope for rules within the rules themselves.
+   * Creates the empty skeleton document that every XACML document should have.
+   *
+   * @note
+   * This is the section that says this rule applies to everything.
+   * We do all the narrowing of the scope for rules within the rules themselves.
    *
    * @code
    *  <Target>
@@ -85,7 +83,7 @@ class XacmlWriter {
    *  </Target>
    * @endcode
    */
-  private static function createTarget(&$dom, $xacml) {
+  protected static function createTarget(&$dom, $xacml) {
     $target = $dom->createElementNS(XacmlConstants::XACML, 'Target');
 
     $subject = $dom->createElementNS(XacmlConstants::XACML, 'Subjects');
@@ -106,13 +104,16 @@ class XacmlWriter {
   /**
    * Create all of the <Rule> tags.
    */
-  private static function createRules(&$dom, $xacml) {
+  protected static function createRules(&$dom, $xacml) {
     foreach ($xacml['rules'] as $rule) {
       XacmlWriter::createRule($dom, $rule);
     }
   }
 
-  private static function createRule(&$dom, $rule) {
+  /**
+   * Creates each individual <Rule> tag.
+   */
+  protected static function createRule(&$dom, $rule) {
     $root = $dom->createElementNS(XacmlConstants::XACML, "Rule");
     $root->setAttribute('RuleId', $rule['ruleid']);
     $root->setAttribute('Effect', $rule['effect']);
@@ -123,7 +124,10 @@ class XacmlWriter {
     $dom->documentElement->appendChild($root);
   }
 
-  private static function createRuleTarget(&$dom, &$root, $rule) {
+  /**
+   * Creates the target for a <Rule> to apply to.
+   */
+  protected static function createRuleTarget(&$dom, &$root, $rule) {
     $target = $dom->createElementNS(XacmlConstants::XACML, "Target");
 
     XacmlWriter::createRuleTargetSubjects($dom, $target, $rule);
@@ -133,13 +137,19 @@ class XacmlWriter {
     $root->appendChild($target);
   }
 
-  private static function createRuleTargetSubjects(&$dom, &$target, $rule) {
+  /**
+   * Creates the target subject for a <Rule>.
+   */
+  protected static function createRuleTargetSubjects(&$dom, &$target, $rule) {
     $subjects = $dom->createElementNS(XacmlConstants::XACML, "Subjects");
     $subjects->appendChild($dom->createElementNS(XacmlConstants::XACML, "AnySubject"));
     $target->appendChild($subjects);
   }
 
-  private static function createRuleTargetActions(&$dom, &$target, $rule) {
+  /**
+   * Creates target actions for a <Rule>.
+   */
+  protected static function createRuleTargetActions(&$dom, &$target, $rule) {
     $actions = $dom->createElementNS(XacmlConstants::XACML, "Actions");
     if (!empty($rule['methods'])) {
       foreach ($rule['methods'] as $method) {
@@ -153,7 +163,10 @@ class XacmlWriter {
     $target->appendChild($actions);
   }
 
-  private static function createRuleTargetAction(&$dom, &$actions, $method) {
+  /**
+   * Creates an individual target action for a <Rule>.
+   */
+  protected static function createRuleTargetAction(&$dom, &$actions, $method) {
     $action = $dom->createElementNS(XacmlConstants::XACML, 'Action');
     $action_match = $dom->createElementNS(XacmlConstants::XACML, 'ActionMatch');
     $action_match->setAttribute('MatchId', XacmlConstants::STRINGEQUAL);
@@ -178,7 +191,10 @@ class XacmlWriter {
     $actions->appendChild($action);
   }
 
-  private static function createRuleTargetResources(&$dom, &$target, $rule) {
+  /**
+   * Creates target resources for a <Rule>.
+   */
+  protected static function createRuleTargetResources(&$dom, &$target, $rule) {
     $resources = $dom->createElementNS(XacmlConstants::XACML, "Resources");
 
     if (empty($rule['mimes']) && empty($rule['dsids']) && empty($rule['dsidregexs']) && empty($rule['mimeregexs'])) {
@@ -202,7 +218,10 @@ class XacmlWriter {
     $target->appendChild($resources);
   }
 
-  private static function createRuleTargetResource(&$dom, &$resources, $name, $type) {
+  /**
+   * Creates an individual target resource for a <Rule>.
+   */
+  protected static function createRuleTargetResource(&$dom, &$resources, $name, $type) {
     $resource = $dom->createElementNS(XacmlConstants::XACML, 'Resource');
     $resource_match = $dom->createElementNS(XacmlConstants::XACML, 'ResourceMatch');
 
@@ -241,7 +260,10 @@ class XacmlWriter {
     $resources->appendChild($resource);
   }
 
-  private static function createRuleCondition(&$dom, &$target, $rule) {
+  /**
+   * Creates a condition for a <Rule>.
+   */
+  protected static function createRuleCondition(&$dom, &$target, $rule) {
     $condition = $dom->createElementNS(XacmlConstants::XACML, "Condition");
     $condition->setAttribute("FunctionId", "urn:oasis:names:tc:xacml:1.0:function:not");
 
@@ -272,7 +294,10 @@ class XacmlWriter {
     $target->appendChild($condition);
   }
 
-  private static function createRuleConditionApply(&$dom, $attributes, $type) {
+  /**
+   * Applies a condition to a <Rule>.
+   */
+  protected static function createRuleConditionApply(&$dom, $attributes, $type) {
     $apply = $dom->createElementNS(XacmlConstants::XACML, 'Apply');
     $apply->setAttribute("FunctionId", "urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of");
 

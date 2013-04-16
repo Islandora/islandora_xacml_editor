@@ -1,21 +1,21 @@
 div.islandora_xacml_block > div.form-item {
-  min-width: 275px;
   display: inline-block;
   display: -moz-inline-block;
-  *display:inline; 
-  *zoom:1;
+  min-width: 275px;
+  *display: inline;
+  *zoom: 1;
   *vertical-align: 2%;
 }
 
-div.islandora_xacml_block_description .form-submit{
+div.islandora_xacml_block_description .form-submit {
   vertical-align: 135%;
-} 
+}
 
 div.islandora_xacml_selects {
   display: inline-block;
   display: -moz-inline-block;
-  *display:inline; 
-  *zoom:1;
+  *display: inline;
+  *zoom: 1;
   *vertical-align: 2%;
 }
 
@@ -28,7 +28,7 @@ div.islandora_xacml_block_description > div.form-item {
   min-width: 275px;
   display: inline-block;
   display: -moz-inline-block;
-  *display:inline; 
-  *zoom:1;
+  *display: inline;
+  *zoom: 1;
   *vertical-align: 2%;
 }
