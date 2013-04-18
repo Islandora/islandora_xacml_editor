@@ -686,11 +686,11 @@ class XacmlDatastreamRule extends XacmlRule {
  * object. The interaction with the rules takes place through member object of
  * this class. For instance to add roles that can manage the object:
  * @code
- *   xacml = new Xacml();
+ *   xacml = new Xacml()
  *   // allow userA to manage the object
- *   xacml->managementRule->addUser('userA');
+ *   xacml->managementRule->addUser('userA')
  *   // allow roleC and roleD to manage the object
- *   xacml->managementRule->addRole(array('roleC', 'roleD'));
+ *   xacml->managementRule->addRole(array('roleC', 'roleD'))
  * @endcode
  */
 class Xacml {

@@ -231,7 +231,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
       $xacml = new Xacml($xml);
     }
     catch (XacmlException $e) {
-      watchdog('islandora_xacml_editor', $e->getMessage(), array(), WATCHDOG_ERROR);
+      watchdog('islandora_xacml_editor', 'Exception in Islandora Xacml: @message', array('@message', $e->getMessage()), array(), WATCHDOG_ERROR);
       drupal_set_message($e->getMessage());
       drupal_set_message(t("Xacml Parser failed to parse @object_pid/@xacml_dsid. It is likely this POLICY wasn't written by the islandora XACML editor, it will have to be modified by hand.",
                           array("@object_pid" => $object_pid, "@xacml_dsid" => $xacml_dsid))
