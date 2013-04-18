@@ -178,7 +178,7 @@ abstract class XacmlRule {
    *   A string containing the user being tested.
    * @param array $roles
    *   An array of strings containing the roles being tested. Or NULL.
-   * @param boolean $default
+   * @param bool $default
    *   The default value to return.
    */
   protected function internalHasPermission($user, $roles = NULL, $default = TRUE) {

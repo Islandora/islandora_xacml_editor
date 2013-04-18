@@ -1480,17 +1480,16 @@ function islandora_xacml_editor_add_mime_js($form, $form_state) {
  */
 function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
   $object = islandora_object_load($pid);
-  $dslist = $object->repository->api->a->listDatastreams($pid);
   $output = array();
 
-  foreach ($dslist as $key => $value) {
+  foreach ($object as $datastream) {
     if ($string != '*') {
-      if (strpos(drupal_strtoupper($key), drupal_strtoupper($string)) !== FALSE) {
-        $output[$key] = check_plain($key);
+      if (strpos(drupal_strtoupper($datastream->id), drupal_strtoupper($string)) !== FALSE) {
+        $output[$datastream->id] = check_plain($datastream->id);
       }
     }
     else {
-      $output[$key] = check_plain($key);
+      $output[$datastream->id] = check_plain($datastream->id);
     }
   }
   $restricted_dsids = variable_get('islandora_xacml_editor_restricted_dsids', '');
