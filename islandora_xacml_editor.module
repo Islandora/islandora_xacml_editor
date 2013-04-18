@@ -20,7 +20,7 @@ function islandora_xacml_editor_permission() {
  */
 function islandora_xacml_editor_menu() {
   $items = array();
-  $items['islandora/object/%islandora_object/xacml/policy'] = array(
+  $items['islandora/object/%islandora_object/manage/xacml'] = array(
     'title' => 'Object Policy',
     'type' => MENU_LOCAL_TASK,
     'weight' => 0,
