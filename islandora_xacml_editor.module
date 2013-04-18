@@ -196,7 +196,6 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   }
 
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
-  $datastreams = $object->repository->api->a->listDatastreams($object_pid);
 
   // Get the user list.
   $users = array();
@@ -221,14 +220,10 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
 
   $new_xacml = FALSE;
 
-  if (array_key_exists($xacml_dsid, $datastreams)) {
-
-    // Here we populate the form.
-    $xml = $object->repository->api->a->getDatastreamDissemination($object_pid, $xacml_dsid);
-
+  if (isset($object[$xacml_dsid])) {
     // Some basic error handling.
     try {
-      $xacml = new Xacml($xml);
+      $xacml = new Xacml($object[$xacml_dsid]);
     }
     catch (XacmlException $e) {
       watchdog('islandora_xacml_editor', 'Exception in Islandora Xacml: @message', array('@message', $e->getMessage()), array(), WATCHDOG_ERROR);
@@ -399,8 +394,6 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
     if ($form_state['triggering_element']['#name'] == 'dsid_add_button' || $form_state['triggering_element']['#name'] == 'dsid_add_textfield') {
       $pid = $form_state['islandora_xacml']['object_pid'];
       $object = islandora_object_load($pid);
-
-      $ds_array = $object->repository->api->a->listDatastreams($pid);
 
       if (!isset($form_state['islandora_xacml']['add_dsid'])) {
         $form_state['islandora_xacml']['add_dsid'] = array();
