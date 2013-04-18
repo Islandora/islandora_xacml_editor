@@ -1,7 +1,8 @@
 <?php
 /**
  * @file
- * This file contains a class that specifies some constants that are used through the Islandora Xacml Module.
+ * This file contains a class that specifies some constants that are used
+ * through the Islandora Xacml Module.
  */
 
 /**

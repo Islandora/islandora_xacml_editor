@@ -1,8 +1,7 @@
 <?php
 /**
  * @file
- *
- * The main module file for the Islanora XACML Editor
+ * The main module file for the Islanora XACML Editor.
  */
 
 /**
@@ -21,13 +20,12 @@ function islandora_xacml_editor_permission() {
  */
 function islandora_xacml_editor_menu() {
   $items = array();
-  $items['islandora/object/%islandora_object/xacml'] = array(
-    'title' => 'XACML',
+  $items['islandora/object/%islandora_object/xacml/policy'] = array(
+    'title' => 'Object Policy',
     'type' => MENU_LOCAL_TASK,
-    'title callback' => 'islandora_xacml_editor_retrieve_menu_title',
-    'title arguments' => array(2),
-    'page callback' => 'islandora_xacml_editor_retrieve_form',
-    'page arguments' => array(2),
+    'weight' => 0,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_xacml_editor_form', 2, 'POLICY'),
     'access arguments' => array('administer islandora_xacml_editor'),
   );
   $items['admin/islandora/xacml/editor'] = array(
@@ -38,32 +36,36 @@ function islandora_xacml_editor_menu() {
     'access arguments' => array('administer islandora_xacml_editor'),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['islandora/xacml/dsidautocomplete/%/%'] = array(
+  // We use %menu_tail to get around some of the issues that can arise with
+  // users entering input for autocomplete. For example slashes would break.
+  // Relevant Drupal thread: http://drupal.org/node/93854#comment-6164592.
+  $items['islandora/xacml/dsidautocomplete/%/%menu_tail'] = array(
     'page callback' => 'islandora_xacml_editor_dsid_autocomplete',
     'page arguments' => array(3, 4),
-    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
     'access arguments' => array('administer islandora_xacml_editor'),
+    'load arguments' => array('%map', '%index'),
   );
-  $items['islandora/xacml/mimeautocomplete/%/%/%'] = array(
+  $items['islandora/xacml/mimeautocomplete/%/%menu_tail'] = array(
     'page callback' => 'islandora_xacml_editor_mime_autocomplete',
-    'page arguments' => array(3, 4, 5),
-    'access callback' => TRUE,
+    'page arguments' => array(3, 4),
     'type' => MENU_CALLBACK,
     'access arguments' => array('administer islandora_xacml_editor'),
+    'load arguments' => array('%map', '%index'),
   );
   return $items;
 }
 
 /**
- * Determines the title for the XACML LOCAL_TASK
+ * Access callback function to determining whether to display the CHILD task.
  *
  * @param FedoraObject $object
+ *   The object we are determining access for.
  *
- * @return String title
- *   The title to be displayed in the LOCAL_TASK.
+ * @return bool
+ *   Whether the user has access or not.
  */
-function islandora_xacml_editor_retrieve_menu_title($object) {
+function islandora_xacml_editor_collection_access(FedoraObject $object) {
   $item_is_collection = FALSE;
   foreach ($object->models as $content_model) {
     if ($content_model == 'islandora:collectionCModel') {
@@ -71,40 +73,12 @@ function islandora_xacml_editor_retrieve_menu_title($object) {
       break;
     }
   }
-  if ($item_is_collection) {
-    $title = t('Child Policy');
+  if ($item_is_collection && user_access('adminisiter islandora_xacml_editor')) {
+    return TRUE;
   }
   else {
-    $title = t('Item Policy');
+    return FALSE;
   }
-  return $title;
-}
-
-/**
- * Retrieves the specified form based upon the whether the object is a
- * collection or not.
- *
- * @param FedoraObject $object
- *
- * @return array
- *   The XACML form.
- */
-function islandora_xacml_editor_retrieve_form($object) {
-  $item_is_collection = FALSE;
-  foreach ($object->models as $content_model) {
-    if ($content_model == 'islandora:collectionCModel') {
-      $item_is_collection = TRUE;
-      break;
-    }
-  }
-  if ($item_is_collection) {
-    $dsid = 'CHILD_SECURITY';
-  }
-  else {
-    $dsid = 'POLICY';
-  }
-
-  return drupal_get_form('islandora_xacml_editor_form', $object->id, $dsid);
 }
 
 /**
@@ -136,7 +110,7 @@ function islandora_xacml_editor_settings() {
     '#title' => t('DSID'),
     '#default_value' => variable_get('islandora_xacml_editor_restricted_dsids', ''),
   );
-  $form ['islandora_xacml_editor_restrictions']['islandora_xacml_editor_restricted_mimes'] = array(
+  $form['islandora_xacml_editor_restrictions']['islandora_xacml_editor_restricted_mimes'] = array(
     '#type' => 'textarea',
     '#title' => t('MIME type'),
     '#default_value' => variable_get('islandora_xacml_editor_restricted_mimes', ''),
@@ -224,7 +198,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   drupal_set_breadcrumb(islandora_get_breadcrumbs($object));
   $datastreams = $object->repository->api->a->listDatastreams($object_pid);
 
-   // Get the user list.
+  // Get the user list.
   $users = array();
   $result = db_query('SELECT u.uid, u.name FROM {users} u');
   foreach ($result as $user) {
@@ -275,17 +249,23 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
     '#tree' => TRUE,
   );
 
+  $form['access_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable XACML Restrictions on Object Viewing'),
+    '#default_value' => $xacml->viewingRule->isPopulated(),
+  );
+
   $form['access'] = array(
     '#type' => 'fieldset',
     '#title' => t('Object Viewing'),
+    '#tree' => TRUE,
     '#collapsible' => TRUE,
-    '#collapsed' => !$xacml->viewingRule->isPopulated(),
-  );
-
-  $form['access']['enabled'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable XACML Restrictions on Object Viewing'),
-    '#default_value' => isset($form_state['islandora_xacml']['access']['enabled']) ? $form_state['islandora_xacml']['access']['enabled']['#value'] : $xacml->viewingRule->isPopulated(),
+    '#collapsed' => FALSE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="access_enabled"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $form['access']['users'] = array(
@@ -310,7 +290,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
 
   // Grab original value used in comparisons.
   if (!isset($form_state['islandora_xacml']['access']['enabled'])) {
-    $form_state['islandora_xacml']['access']['enabled'] = $form['access']['enabled']['#default_value'];
+    $form_state['islandora_xacml']['access']['enabled'] = $form['access_enabled']['#default_value'];
   }
 
   $form['manage'] = array(
@@ -341,34 +321,51 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
     '#suffix' => '</div>',
   );
 
-  $form['dsid_mime'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Datastreams and MIME types'),
-    '#collapsible' => TRUE,
-    '#collapsed' => !$xacml->datastreamRule->isPopulated(),
-  );
-
-  $form['dsid_mime']['enabled'] = array(
+  $form['dsid_mime_enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable XACML Restrictions on DSIDs and MIME types'),
     '#default_value' => $xacml->datastreamRule->isPopulated(),
   );
 
-   // Grab the original value to be used in comparisons.
+  $form['dsid_mime'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Datastreams and MIME types'),
+    '#collapsible' => TRUE,
+    '#tree' => TRUE,
+    '#collapsed' => FALSE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="dsid_mime_enabled"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  // Grab the original value to be used in comparisons.
   if (!isset($form_state['islandora_xacml']['dsid_mime']['enabled'])) {
-    $form_state['islandora_xacml']['dsid_mime']['enabled'] = $form['dsid_mime']['enabled']['#default_value'];
+    $form_state['islandora_xacml']['dsid_mime']['enabled'] = $form['dsid_mime_enabled']['#default_value'];
   }
 
-  if ($xacml_dsid == 'CHILD_SECURITY') {
+  // Call CModel oriented variants first.
+  $query_choices = array();
+  foreach (islandora_build_hook_list('islandora_xacml_editor_child_query', $object->models) as $hook) {
+    $temp = module_invoke_all($hook, $object);
+    if (!empty($temp)) {
+      $query_choices = array_merge_recursive($query_choices, $temp);
+    }
+  }
+
+  if (!empty($query_choices)) {
+    // The "newchildren" option is applied automatically through ingest steps.
+    $update_options = array('newchildren' => t('New children of this collection.'));
+    foreach ($query_choices as $key => $query) {
+      $form_state['islandora_xacml']['query_choices'][$key] = $query;
+      $update_options[$key] = $query['description'];
+    }
     $form['update_options'] = array(
       '#type' => 'select',
       '#title' => t('What items would you like to apply this policy to?'),
       '#default_value' => 'newchildren',
-      '#options' => array(
-        'newchildren' => t('New children of this collection.'),
-        'allchildren' => t('All children of this collection (Existing and new).'),
-        'allgrandchildren' => t('All children of this collection and collections within this collection. (Existing and new).'),
-      ),
+      '#options' => $update_options,
     );
 
     if (isset($form_state['islandora_xacml']['child_option'])) {
@@ -396,9 +393,9 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
     '#suffix' => '</div>',
   );
 
-  // AJAX callbacks processing
+  // AJAX callbacks processing.
   if (isset($form_state['triggering_element'])) {
-    // Add DSID
+    // Add DSID.
     if ($form_state['triggering_element']['#name'] == 'dsid_add_button' || $form_state['triggering_element']['#name'] == 'dsid_add_textfield') {
       $pid = $form_state['islandora_xacml']['object_pid'];
       $object = islandora_object_load($pid);
@@ -423,18 +420,11 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         $restricted_dsids = variable_get('islandora_xacml_editor_restricted_dsids', '');
         $restricted_dsids = preg_split('/[\s,]+/', $restricted_dsids);
 
-        if (!is_numeric($added) && $rules != $add_text && !in_array($add_text, $restricted_dsids) && isset($ds_array[$add_text])) {
+        if (!is_numeric($added) && $rules != $add_text && !in_array($add_text, $restricted_dsids)) {
           $form_state['islandora_xacml']['add_dsid'][] = $add_text;
         }
         elseif (in_array($add_text, $restricted_dsids)) {
           drupal_set_message(t('The DSID @dsid was not added as it is restricted from the admin settings page!',
-            array(
-              '@dsid' => $add_text,
-            )
-          ), 'warning');
-        }
-        elseif (!isset($ds_array[$add_text])) {
-          drupal_set_message(t('The DSID @dsid was not added as it is not a current datastream of the object!',
             array(
               '@dsid' => $add_text,
             )
@@ -447,12 +437,12 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
             )
           ), 'warning');
         }
+      }
+      else {
+        drupal_set_message(t('No DSID value entered!'), 'error');
+      }
     }
-    else {
-      drupal_set_message(t('No DSID value entered!'), 'error');
-    }
-  }
-   // ADD DSID Regex
+    // ADD DSID Regex.
     elseif ($form_state['triggering_element']['#name'] == 'dsid_regex_add_button' || $form_state['triggering_element']['#name'] == 'dsid_regex_add_textfield') {
       if (!isset($form_state['islandora_xacml']['dsid_regexs'])) {
         $form_state['islandora_xacml']['dsid_regexs'] = array();
@@ -485,7 +475,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         drupal_set_message(t('No DSID regex value entered!'), 'error');
       }
     }
-    // Add MIME Regex
+    // Add MIME Regex.
     elseif ($form_state['triggering_element']['#name'] == 'mime_regex_add_button' || $form_state['triggering_element']['#name'] == 'mime_regex_add_textfield') {
       // Store and checks.
       if (!isset($form_state['islandora_xacml']['mime_regexs'])) {
@@ -519,7 +509,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         drupal_set_message(t('No MIME type regex value entered!'), 'error');
       }
     }
-    // Add MIME type
+    // Add MIME type.
     elseif ($form_state['triggering_element']['#name'] == 'mime_add_button' || $form_state['triggering_element']['#name'] == 'mime_add_textfield') {
       if (!isset($form_state['islandora_xacml']['add_mime'])) {
         $form_state['islandora_xacml']['add_mime'] = array();
@@ -555,79 +545,78 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
             )
           ), 'warning');
         }
-    }
-    else {
-      drupal_set_message(t('No MIME type value entered!'), 'error');
-    }
-  }
-  elseif ($form_state['triggering_element']['#name'] == 'islandora_xacml_editor_remove_all') {
-    $remove_count = 0;
-
-    foreach ($form_state['islandora_xacml']['rows'] as $key => $value) {
-      $type = drupal_strtolower($value['Type']);
-      $filter = $value['Filter'];
-
-      $remove_key = array_search($filter, $form_state['islandora_xacml']['dsid_mime'][$type]);
-
-      if ($type == 'dsid') {
-        $form_state['islandora_xacml']['remove_dsid'][] = $filter;
       }
-      elseif ($type == 'mime type') {
-        $form_state['islandora_xacml']['remove_mime'][] = $filter;
-      }
-      elseif ($type == 'mime type regex') {
-        $form_state['islandora_xacml']['remove_mime_regex'][] = $filter;
-      }
-      elseif ($type == 'dsid regex') {
-        $form_state['islandora_xacml']['remove_dsid_regex'][] = $filter;
-      }
-      $remove_count++;
-    }
-
-    $remove_output = format_plural($remove_count, '!filter_count applied filter was removed.',
-              '!filter_count applied filters were removed.', array('!filter_count' => $remove_count));
-    drupal_set_message($remove_output);
-  }
-  elseif ($form_state['triggering_element']['#name'] == 'islandora_xacml_editor_remove_selected') {
-    $remove_row = array();
-    foreach ($form_state['values']['dsid_mime']['rules']['table'] as $checkbox => $value) {
-      if ($value !== 0) {
-        $remove_row[] = $checkbox;
+      else {
+        drupal_set_message(t('No MIME type value entered!'), 'error');
       }
     }
-
-    if (count($remove_row) > 0) {
+    elseif ($form_state['triggering_element']['#name'] == 'islandora_xacml_editor_remove_all') {
       $remove_count = 0;
 
-      foreach ($remove_row as $row) {
-        $remove_vals = explode('---', $row);
-        $type = $remove_vals[0];
-        $filter = $remove_vals[1];
+      foreach ($form_state['islandora_xacml']['rows'] as $key => $value) {
+        $type = drupal_strtolower($value['Type']);
+        $filter = $value['Filter'];
 
         $remove_key = array_search($filter, $form_state['islandora_xacml']['dsid_mime'][$type]);
 
         if ($type == 'dsid') {
           $form_state['islandora_xacml']['remove_dsid'][] = $filter;
         }
-        elseif ($type == 'mime') {
+        elseif ($type == 'mime type') {
           $form_state['islandora_xacml']['remove_mime'][] = $filter;
         }
-        elseif ($type == 'mime_regexs') {
+        elseif ($type == 'mime type regex') {
           $form_state['islandora_xacml']['remove_mime_regex'][] = $filter;
         }
-        elseif ($type == 'dsid_regexs') {
+        elseif ($type == 'dsid regex') {
           $form_state['islandora_xacml']['remove_dsid_regex'][] = $filter;
         }
         $remove_count++;
       }
+
       $remove_output = format_plural($remove_count, '!filter_count applied filter was removed.',
-            '!filter_count applied filters were removed.', array('!filter_count' => $remove_count));
+              '!filter_count applied filters were removed.', array('!filter_count' => $remove_count));
       drupal_set_message($remove_output);
     }
-    else {
-      drupal_set_message(t('Please select the filters you wish to remove.'), 'error');
+    elseif ($form_state['triggering_element']['#name'] == 'islandora_xacml_editor_remove_selected') {
+      $remove_row = array();
+      foreach ($form_state['values']['dsid_mime']['rules']['table'] as $checkbox => $value) {
+        if ($value !== 0) {
+          $remove_row[] = $checkbox;
+        }
+      }
+      if (count($remove_row) > 0) {
+        $remove_count = 0;
+
+        foreach ($remove_row as $row) {
+          $remove_vals = explode('---', $row);
+          $type = $remove_vals[0];
+          $filter = $remove_vals[1];
+
+          $remove_key = array_search($filter, $form_state['islandora_xacml']['dsid_mime'][$type]);
+
+          if ($type == 'dsid') {
+            $form_state['islandora_xacml']['remove_dsid'][] = $filter;
+          }
+          elseif ($type == 'mime') {
+            $form_state['islandora_xacml']['remove_mime'][] = $filter;
+          }
+          elseif ($type == 'mime_regexs') {
+            $form_state['islandora_xacml']['remove_mime_regex'][] = $filter;
+          }
+          elseif ($type == 'dsid_regexs') {
+            $form_state['islandora_xacml']['remove_dsid_regex'][] = $filter;
+          }
+          $remove_count++;
+        }
+        $remove_output = format_plural($remove_count, '!filter_count applied filter was removed.',
+              '!filter_count applied filters were removed.', array('!filter_count' => $remove_count));
+        drupal_set_message($remove_output);
+      }
+      else {
+        drupal_set_message(t('Please select the filters you wish to remove.'), 'error');
+      }
     }
-  }
   }
 
   // Grab these values to handle removal.
@@ -927,7 +916,6 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         'wrapper' => 'islandora_xacml_dsid_mime',
         'method' => 'replace',
       ),
-      '#limit_validation_errors' => array(),
     );
     $form['dsid_mime']['rules']['remove_all'] = array(
       '#type' => 'button',
@@ -937,9 +925,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         'event' => 'click',
         'callback' => 'islandora_xacml_editor_remove_all',
         'wrapper' => 'islandora_xacml_dsid_mime',
-        'method' => 'replace',
       ),
-      '#limit_validation_errors' => array(),
     );
   }
 
@@ -952,10 +938,9 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
     '#prefix' => '<div class="islandora_xacml_block_description">',
     '#name' => 'dsid_add_textfield',
     '#ajax' => array(
-      'event' => 'dblclick',
+      'event' => 'error',
       'callback' => 'islandora_xacml_editor_add_dsid_js',
       'wrapper' => 'islandora_xacml_dsid_mime',
-      'method' => 'replace',
       'keypress' => TRUE,
     ),
   );
@@ -968,9 +953,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
       'event' => 'click',
       'callback' => 'islandora_xacml_editor_add_dsid_js',
       'wrapper' => 'islandora_xacml_dsid_mime',
-      'method' => 'replace',
     ),
-    '#limit_validation_errors' => array(),
   );
 
   if (variable_get('islandora_xacml_editor_show_dsidregex', 1)) {
@@ -981,10 +964,9 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
       '#prefix' => '<div class="islandora_xacml_block">',
       '#name' => 'dsid_regex_add_textfield',
       '#ajax' => array(
-        'event' => 'dblclick',
+        'event' => 'error',
         'callback' => 'islandora_xacml_editor_add_dsid_regex_js',
         'wrapper' => 'islandora_xacml_dsid_mime',
-        'method' => 'replace',
         'keypress' => TRUE,
       ),
     );
@@ -997,25 +979,22 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         'event' => 'click',
         'callback' => 'islandora_xacml_editor_add_dsid_regex_js',
         'wrapper' => 'islandora_xacml_dsid_mime',
-        'method' => 'replace',
       ),
-      '#limit_validation_errors' => array(),
     );
   }
   $form['dsid_mime']['new_mime'] = array(
     '#type' => 'textfield',
     '#title' => t('MIME type'),
-    '#autocomplete_path' => 'islandora/xacml/mimeautocomplete/' . $xacml_dsid . '/' . $object_pid,
+    '#autocomplete_path' => 'islandora/xacml/mimeautocomplete/' . $object_pid,
     '#size' => 35,
     '#description' => t('Type "*" to list all MIME types.'),
     '#prefix' => '<div class="islandora_xacml_block_description">',
     '#name' => 'mime_add_textfield',
     '#ajax' => array(
-        'event' => 'dblclick',
-        'callback' => 'islandora_xacml_editor_add_mime_js',
-        'wrapper' => 'islandora_xacml_dsid_mime',
-        'method' => 'replace',
-        'keypress' => TRUE,
+      'event' => 'error',
+      'callback' => 'islandora_xacml_editor_add_mime_js',
+      'wrapper' => 'islandora_xacml_dsid_mime',
+      'keypress' => TRUE,
     ),
   );
   $form['dsid_mime']['new_mime_add'] = array(
@@ -1027,9 +1006,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
       'event' => 'click',
       'callback' => 'islandora_xacml_editor_add_mime_js',
       'wrapper' => 'islandora_xacml_dsid_mime',
-      'method' => 'replace',
     ),
-    '#limit_validation_errors' => array(),
   );
 
   if (variable_get('islandora_xacml_editor_show_mimeregex', 1)) {
@@ -1040,7 +1017,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
       '#prefix' => '<div class="islandora_xacml_block">',
       '#name' => 'mime_regex_add_textfield',
       '#ajax' => array(
-        'event' => 'dblclick',
+        'event' => 'error',
         'callback' => 'islandora_xacml_editor_add_mime_regex_js',
         'wrapper' => 'islandora_xacml_dsid_mime',
         'method' => 'replace',
@@ -1058,7 +1035,6 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
         'wrapper' => 'islandora_xacml_dsid_mime',
         'method' => 'replace',
       ),
-      '#limit_validation_errors' => array(),
     );
   }
   $form['submit'] = array(
@@ -1070,19 +1046,18 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
 }
 
 /**
- * Function that retrieves the users selected in each 'Users' portion
- * for datastream rules.
+ * Retrieves the users selected in each 'Users' portion for datastream rules.
  *
  * @param Xacml $xacml
  *   The XACML object.
  *
- * @param Boolean $new_xacml
+ * @param bool $new_xacml
  *   Whether there already exists an XACML policy or not.
  *
- * @param String $rule
+ * @param string $rule
  *   The rule which we are checking against.
  *
- * @return Array
+ * @return array
  *   An array of users that are selected for the specific rule.
  */
 function islandora_xacml_editor_retrieve_users($xacml, $new_xacml, $rule) {
@@ -1106,19 +1081,18 @@ function islandora_xacml_editor_retrieve_users($xacml, $new_xacml, $rule) {
 }
 
 /**
- * Function that retrieves the roles selected in each 'Roles' portion
- * for datastream rules.
+ * Retrieves the roles selected in each 'Roles' portion for datastream rules.
  *
  * @param Xacml $xacml
  *   The XACML object.
  *
- * @param Boolean $new_xacml
+ * @param bool $new_xacml
  *   Whether there already exists an XACML policy or not.
  *
- * @param String $rule
+ * @param string $rule
  *   The rule which we are checking against.
  *
- * @return Array
+ * @return array
  *   An array of roles that are selected for the specific rule.
  */
 function islandora_xacml_editor_retrieve_roles($xacml, $new_xacml, $rule) {
@@ -1155,8 +1129,8 @@ function islandora_xacml_editor_retrieve_roles($xacml, $new_xacml, $rule) {
  */
 function islandora_xacml_editor_form_table(array $passed_rows, $xacml_dsid) {
   $headers = array(
-      'filter' => t('Filter'),
-      'type' => t('Type'),
+    'filter' => t('Filter'),
+    'type' => t('Type'),
   );
 
   $rows = array();
@@ -1182,6 +1156,12 @@ function islandora_xacml_editor_form_table(array $passed_rows, $xacml_dsid) {
  */
 function islandora_xacml_editor_form_validate(&$form, &$form_state) {
   drupal_add_css(drupal_get_path('module', 'islandora_xacml_editor') . '/css/islandora_xacml_editor.css');
+  $button_trig = array(
+    'dsid_add_button',
+    'mime_add_button',
+    'dsid_regex_add_button',
+    'mime_regex_add_button',
+  );
   // Test if the user is locking themselves or the admin out of the object.
   $admin_user = $form_state['islandora_xacml']['admin_user'];
   $current_user = $form_state['islandora_xacml']['current_user'];
@@ -1199,7 +1179,7 @@ function islandora_xacml_editor_form_validate(&$form, &$form_state) {
     }
   }
 
-  if ($form_state['values']['dsid_mime']['enabled']) {
+  if ($form_state['values']['dsid_mime_enabled']) {
     if (!array_key_exists($current_user, $form_state['values']['dsid_mime']['users'])) {
       if ($admin_user == $current_user) {
         form_set_error('dsid_mime][users', "Please make sure that $admin_user is selected in the manage
@@ -1211,7 +1191,7 @@ function islandora_xacml_editor_form_validate(&$form, &$form_state) {
       }
     }
 
-    if (count($form_state['islandora_xacml']['rows']) == 0) {
+    if (count($form_state['islandora_xacml']['rows']) == 0 && (!in_array($form_state['triggering_element']['#name'], $button_trig))) {
       form_set_error('dsid_mime][rules', "There are no filters applied in the datastream and MIME type section.");
     }
   }
@@ -1223,12 +1203,13 @@ function islandora_xacml_editor_form_validate(&$form, &$form_state) {
 function islandora_xacml_editor_form_submit(&$form, &$form_state) {
   $pid = $form_state['islandora_xacml']['object_pid'];
   $dsid = $form_state['islandora_xacml']['xacml_dsid'];
-  $xacml = new IslandoraXacml($pid, $dsid);
+  $object = islandora_object_load($pid);
+  $xacml = new IslandoraXacml($object);
 
   // Check datastreams and mime.
   $values = $form_state['values']['dsid_mime'];
 
-  if ($values['enabled']) {
+  if ($form_state['values']['dsid_mime_enabled']) {
     $xacml->datastreamRule->clear();
 
     if (array_key_exists('selected_mime', $form_state['islandora_xacml'])) {
@@ -1251,7 +1232,7 @@ function islandora_xacml_editor_form_submit(&$form, &$form_state) {
     $xacml->datastreamRule->addRole($values['roles']);
   }
   // User selects to disable the datastream rule when it was previously enabled.
-  elseif ($values['enabled'] != $form_state['islandora_xacml']['dsid_mime']['enabled']) {
+  elseif ($form_state['values']['dsid_mime_enabled'] != $form_state['islandora_xacml']['dsid_mime']['enabled']) {
     $xacml->datastreamRule->clear();
   }
   // Check admin (always have this rule).
@@ -1262,37 +1243,200 @@ function islandora_xacml_editor_form_submit(&$form, &$form_state) {
 
   // Check access.
   $values = $form_state['values']['access'];
-  if ($values['enabled']) {
+  if ($form_state['values']['access_enabled']) {
     $xacml->viewingRule->clear();
     $xacml->viewingRule->addUser($values['users']);
     $xacml->viewingRule->addRole($values['roles']);
   }
   // User selects to disable the access rule when it was previously enabled.
-  elseif ($values['enabled'] != $form_state['islandora_xacml']['access']['enabled']) {
+  elseif ($form_state['values']['access_enabled'] != $form_state['islandora_xacml']['access']['enabled']) {
     $xacml->viewingRule->clear();
   }
 
   $xacml->writeBackToFedora();
 
-  if ($dsid == 'CHILD_SECURITY' && $form_state['values']['update_options'] != 'newchildren') {
-    $option = $form_state['values']['update_options'];
-    $xml = $xacml->getXmlString();
-    $batch = array(
-      'title' => t('Updating Policies'),
-      'progress_message' => t('Please wait if many objects are being updated this could take a few minutes.'),
-      'operations' => array(
-        array(
-          'islandora_xacml_editor_batch_function',
-          array($xml, $pid, $option),
+  if (isset($form_state['islandora_xacml']['query_choices'])) {
+    if ($form_state['values']['update_options'] != 'newchildren') {
+      $option = $form_state['values']['update_options'];
+      $query_array = $form_state['islandora_xacml']['query_choices'][$option];
+      $xml = $xacml->getXmlString();
+      $batch = array(
+        'title' => t('Updating Policies'),
+        'progress_message' => t('Please wait if many objects are being updated this could take a few minutes.'),
+        'operations' => array(
+          array(
+            'islandora_xacml_editor_batch_function',
+            array($xml, $pid, $query_array),
+          ),
         ),
-      ),
-      'finished' => 'islandora_xacml_editor_batch_finished',
-    );
-    batch_set($batch);
+        'finished' => 'islandora_xacml_editor_batch_finished',
+      );
+      batch_set($batch);
+    }
+    else {
+      unset($form_state['islandora_xacml']);
+      $form_state['redirect'] = array('islandora/object/' . $pid);
+    }
   }
   else {
     unset($form_state['islandora_xacml']);
     $form_state['redirect'] = array('islandora/object/' . $pid);
+  }
+}
+
+/**
+ * Implements hook_islandora_datastream_purged().
+ */
+function islandora_xacml_editor_islandora_datastream_purged(FedoraObject $object, $dsid) {
+  $viewable_by_user = 'isViewableByUser';
+  $viewable_by_role = 'isViewableByRole';
+  // The XACML POLICY is removed.
+  if ($dsid === 'POLICY') {
+    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
+    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
+    foreach ($object as $dsid => $value) {
+      $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
+      $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
+    }
+  }
+  else {
+    // An individual datastream is removed.
+    if (isset($object['POLICY'])) {
+      $xacml = new IslandoraXacml($object);
+      $ds_rule = $xacml->datastreamRule->getRuleArray();
+      if (array_search($dsid, $ds_rule['dsids']) !== FALSE) {
+        if (count($ds_rule['users']) > 0) {
+          $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
+        }
+        if (count($ds_rule['roles']) > 0) {
+          $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_islandora_datastream_ingested().
+ */
+function islandora_xacml_editor_islandora_datastream_ingested(FedoraObject $object, FedoraDatastream $datastream) {
+  if (isset($object['POLICY'])) {
+    $xacml = new IslandoraXacml($object);
+    $ds_rule = $xacml->datastreamRule->getRuleArray();
+    if (array_search($datastream->id, $ds_rule['dsids']) !== FALSE) {
+      $viewable_by_user = 'isViewableByUser';
+      $viewable_by_role = 'isViewableByRole';
+      if (count($ds_rule['users']) > 0) {
+        foreach ($ds_rule['users'] as $user) {
+          // The XACML API adds fedoraAdmin to the list of users as to prevent
+          // an object from being completely locked out. As this role is a
+          // Fedora role and has no interaction with Drupal we won't add it for
+          // cleanliness sake.
+          if ($user !== 'fedoraAdmin') {
+            $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
+          }
+        }
+      }
+      if (count($ds_rule['roles']) > 0) {
+        foreach ($ds_rule['roles'] as $role) {
+          $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implemenets hook_islandora_xacml_editor_child_query().
+ */
+function islandora_xacml_editor_islandora_collectionCModel_islandora_xacml_editor_child_query($object) {
+  $collection_query = 'select $object from <#ri> where
+        ($object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $object->id . '> or
+        $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $object->id . '>)
+        and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
+  $grandchild_query = 'select $object from <#ri> where (walk(
+        $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $object->id . '> and
+        $object <fedora-rels-ext:isMemberOfCollection> $parent) or walk(
+        $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $object->id . '> and
+        $object <fedora-rels-ext:isMemberOf> $parent))
+        and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
+  return array(
+    'collectionchildren' => array(
+      'type' => 'itql',
+      'query' => $collection_query,
+      'description' => t('All children of this collection (existing and new).'),
+    ),
+    'collectiongrandchildren' => array(
+      'type' => 'itql',
+      'query' => $grandchild_query,
+      'description' => t('All children of this collection and collections within this collection (existing and new).'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_islandora_ingest_steps().
+ */
+function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
+  // We check the parent passed through the form in the form state.
+  $parent = $form_state['islandora']['shared_storage']['parent'];
+  $objects = isset($form_state['islandora']['objects']) ? $form_state['islandora']['objects'] : array();
+  return array(
+    'islandora_xacml_policy' => array(
+      'type' => 'callback',
+      'weight' => 8,
+      'module' => 'islandora_xacml_editor',
+      'do_function' => array(
+        'function' => 'islandora_xacml_editor_apply_policy',
+        'args' => array($parent, $objects),
+      ),
+      'undo_function' => array(
+        'function' => 'islandora_xacml_editor_undo_policy',
+        'args' => array($objects),
+      ),
+    ),
+  );
+}
+
+/**
+ * Applies the parent's POLICY datastream to the child if it exists.
+ *
+ * @param string $parent
+ *   PID of the parent object.
+ * @param array $objects
+ *   An array containing all FedoraObjects we are applying the parent's POLICY
+ *   to.
+ */
+function islandora_xacml_editor_apply_policy(&$form_state, $parent, $objects) {
+  $parent_object = islandora_object_load($parent);
+  if ($parent_object['POLICY']) {
+    foreach ($objects as $object) {
+      $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
+      $xacml->writeBackToFedora();
+    }
+  }
+}
+
+/**
+ * Deletes the POLICY datastream and relationships added through the apply.
+ *
+ * @param array $objects
+ *   An array containing FedoraObjects to parse through.
+ */
+function islandora_xacml_editor_undo_policy(&$form_state, $objects) {
+  foreach ($objects as $object) {
+    if (isset($object['POLICY'])) {
+      $viewable_by_user = 'isViewableByUser';
+      $viewable_by_role = 'isViewableByRole';
+      $object->purgeDatastream('POLICY');
+      $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
+      $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
+
+      foreach ($object as $dsid => $value) {
+        $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
+        $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
+      }
+    }
   }
 }
 
@@ -1310,7 +1454,7 @@ function islandora_xacml_editor_remove_all($form, $form_state) {
   return $form['dsid_mime']['rules'];
 }
 
-/*
+/**
  * AJAX callback to add a DSID Regex to the rules table.
  */
 function islandora_xacml_editor_add_dsid_regex_js($form, $form_state) {
@@ -1342,7 +1486,6 @@ function islandora_xacml_editor_add_mime_js($form, $form_state) {
  * Callback that performs autocomplete operations.
  */
 function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
-
   $object = islandora_object_load($pid);
   $dslist = $object->repository->api->a->listDatastreams($pid);
   $output = array();
@@ -1368,13 +1511,13 @@ function islandora_xacml_editor_dsid_autocomplete($pid, $string) {
 /**
  * Callback that performs autocomplete operations.
  */
-function islandora_xacml_editor_mime_autocomplete($xacml_dsid, $pid, $string) {
+function islandora_xacml_editor_mime_autocomplete($pid, $string) {
   module_load_include('inc', 'islandora', 'includes/utilities');
 
   $output = array();
   $object = islandora_object_load($pid);
 
-  if ($xacml_dsid == 'CHILD_SECURITY') {
+  if ($object['COLLECTION_POLICY']) {
     $collection_policy = new CollectionPolicy($object['COLLECTION_POLICY']->content);
     $collection_models = array_keys($collection_policy->getContentModels());
     $mime = islandora_xacml_editor_retrieve_mimes($collection_models);
@@ -1402,8 +1545,7 @@ function islandora_xacml_editor_mime_autocomplete($xacml_dsid, $pid, $string) {
 }
 
 /**
- * Retrieves the MIME Types associated to content models for use in
- * autocomplete operations.
+ * Retrieves the MIME Types from the DS-COMPOSITE for use in autocomplete.
  *
  * @param array $models
  *   An array of content models.
@@ -1428,16 +1570,23 @@ function islandora_xacml_editor_retrieve_mimes($models) {
 }
 
 /**
+ * Batch callback function which updates the POLICY for a target pid.
  *
- * @param unknown_type $xml
- * @param unknown_type $pid
- * @param unknown_type $option
- * @param unknown_type $context
+ * @param XML $xml
+ *   The XML content defining an XACML policy.
+ * @param string $pid
+ *   The PID of the object we are going to update.
+ * @param array $query_array
+ *   An associative array where the key is the unique ID and contains:
+ *   -type: The type of query, either sparql or itql.
+ *   -query: The defined query string.
+ *   -description: The human-readable description of the query.
+ * @param array $context
+ *   Context array used in the batch.
  */
-function islandora_xacml_editor_batch_function($xml, $pid, $option, &$context) {
+function islandora_xacml_editor_batch_function($xml, $pid, $query_array, &$context) {
   if (empty($context['sandbox'])) {
-    dd($pid . ' hurr');
-    $query = new IslandoraXacmlEditorQuery($pid, $option);
+    $query = new IslandoraXacmlEditorQuery($pid, $query_array);
     $context['sandbox'] = array();
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['pids'] = $query->getPids();
@@ -1446,7 +1595,6 @@ function islandora_xacml_editor_batch_function($xml, $pid, $option, &$context) {
     $context['results']['success'] = array();
     $context['results']['fail'] = array();
   }
-
   $targetpid = array_pop($context['sandbox']['pids']);
   $context['sandbox']['progress']++;
 
@@ -1465,10 +1613,14 @@ function islandora_xacml_editor_batch_function($xml, $pid, $option, &$context) {
 }
 
 /**
+ * Finished function for the update policy batch.
  *
- * @param unknown_type $success
- * @param unknown_type $results
- * @param unknown_type $operations
+ * @param bool $success
+ *   Whether the batch was successful or not.
+ * @param array $results
+ *   An array containing the results of the batch operations.
+ * @param array $operations
+ *   The operations array that was used in the batch.
  */
 function islandora_xacml_editor_batch_finished($success, $results, $operations) {
   if ($success) {
@@ -1490,18 +1642,20 @@ function islandora_xacml_editor_batch_finished($success, $results, $operations) 
 }
 
 /**
- *
- *
- *
+ * Class used in the batch updating of POLICY datastreams on objects.
  */
 class IslandoraUpdatePolicy {
   protected $pid;
+
   /**
+   * Constructorsaurusrex.
    *
-   * @param unknown_type $pid
-   * @param unknown_type $xml
+   * @param string $pid
+   *   The pid of the object we are batching.
+   * @param XML $xml
+   *   The XACML XML.
    */
-  function __construct($pid, $xml) {
+  public function __construct($pid, $xml) {
     // Used at a couple different points...  Let's just load this here?
     $this->pid = $pid;
     $this->xml = $xml;
@@ -1509,40 +1663,17 @@ class IslandoraUpdatePolicy {
   }
 
   /**
+   * Updates the POLICY datastream of the object.
    *
-   * @return boolean
+   * @return bool
+   *   The success of the operation.
    */
-  function isCollection() {
-    $query = 'select $parent_model from <#ri> where (
-      <info:fedora/' . $this->pid . '> <fedora-model:hasModel> $model
-      and $model <fedora-model:hasModel> $parent_model
-      and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
-      )
-      minus $parent_model <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
-      minus $parent_model <mulgara:is> <info:fedora/fedora-system:ContentModel-3.0>';
-    $query_results = IslandoraXacmlEditorQuery::query($query, $this->pid);
-
-    $collection = FALSE;
-    foreach ($query_results as $result) {
-      $pid = $result->parent_model['uri'];
-      $pid = explode('/', $pid);
-      $pid = $pid[1];
-      if ($pid == 'islandora:collectionCModel') {
-        $collection = TRUE;
-      }
-    }
-    return $collection;
-  }
-  /**
-   *
-   * @return boolean
-   */
-  function updatePolicy() {
+  public function updatePolicy() {
     global $user;
     $success = FALSE;
     if (isset($this->object)) {
       try {
-        $xacml = new IslandoraXacml($this->pid, 'POLICY');
+        $xacml = new IslandoraXacml($this->object);
         if ($xacml->managementRule->hasPermission($user->name, $user->roles)) {
           $success = $this->addOrUpdateAllPolicies();
         }
@@ -1554,103 +1685,73 @@ class IslandoraUpdatePolicy {
   }
 
   /**
-   *
+   * Updates or adds the new POLICY datastream back to the object.
    */
-  private function addOrUpdateAllPolicies() {
-    $object_policy = new IslandoraXacml($this->pid, 'POLICY', $this->xml);
+  protected function addOrUpdateAllPolicies() {
+    $object_policy = new IslandoraXacml($this->object, $this->xml);
     $object_policy->writeBackToFedora();
-
-    if ($this->isCollection()) {
-      $child_policy = new IslandoraXacml($this->pid, 'CHILD_SECURIRY', $this->xml);
-      $child_policy->writeBackToFedora();
-    }
-
     return TRUE;
   }
 }
 
 /**
- *
- *
- *
+ * Class used in executing queries to Fedora.
  */
 class IslandoraXacmlEditorQuery {
   protected $pid;
-  protected $option;
+  protected $query;
 
   /**
+   * Constructorsaurusrex.
    *
-   * @param unknown_type $pid
-   * @param unknown_type $option
+   * @param string $pid
+   *   The PID of the object using as a base for queries.
+   * @param array $query_array
+   *   An associative array where the key is the unique ID and contains:
+   *   -type: The type of query, either sparql or itql.
+   *   -query: The defined query string.
+   *   -description: The human-readable description of the query.
    */
-  function __construct($pid, $option) {
+  public function __construct($pid, $query_array) {
     $this->pid = $pid;
-    $this->option = $option;
+    $this->query = $query_array;
   }
 
   /**
+   * Executes a defined query.
    *
-   * @param unknown_type $query_string
+   * @param array $query_array
+   *   An associative array where the key is the unique ID and contains:
+   *   -type: The type of query, either sparql or itql.
+   *   -query: The defined query string.
+   *   -description: The human-readable description of the query.
+   * @param string $object_pid
+   *   The pid of the object we are using as a base for queries.
    */
-  static function query($query_string, $object_pid) {
+  public static function query($query_array, $object_pid) {
     $object = islandora_object_load($object_pid);
-    $content = $object->repository->ri->itqlQuery($query_string, 'unlimited', '0');
-
+    if ($query_array['type'] == 'itql') {
+      $content = $object->repository->ri->itqlQuery($query_array['query'], 'unlimited', '0');
+    }
+    else {
+      $content = $object->repository->ri->sparqlQuery($query_array['query'], 'unlimited', '0');
+    }
     return $content;
   }
 
   /**
-   *
+   * Helper function that retrieves all results of our query.
+   * @return array
+   *   An array of the PIDs returned from the defiend query.
    */
-  function getCount() {
-    $query_results = IslandoraXacmlEditorQuery::query($this->getCountQuery(), $this->pid);
-
-    return count($query_results);
-  }
-
-  /**
-   *
-   */
-  function getPids() {
+  public function getPids() {
     $pids = array();
-    $query_results = IslandoraXacmlEditorQuery::query($this->getQuery(), $this->pid);
+    $query_results = IslandoraXacmlEditorQuery::query($this->query, $this->pid);
 
     foreach ($query_results as $result) {
-      $pid = $result['object']['uri'];
-      $parts = explode('/', $pid);
-      $pids[] = $parts[1];
+      $pid = $result['obj']['value'];
+      $pids[] = $pid;
     }
     return $pids;
-  }
-
-  /**
-   *
-   */
-  private function getCountQuery() {
-    $query = $this->getQuery();
-    $query = 'select count( ' . $query;
-    $query = $query . ' ) from <#ri> where $s $p $o';
-    return $query;
-  }
-
-  /**
-   *
-   */
-  private function getQuery() {
-    if ($this->option == 'allgrandchildren') {
-      $query = 'select $object from <#ri> where (walk(
-        $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $this->pid . '> and
-        $object <fedora-rels-ext:isMemberOfCollection> $parent) or walk(
-        $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $this->pid . '> and
-        $object <fedora-rels-ext:isMemberOf> $parent))
-        and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
-    }
-    elseif ($this->option == 'allchildren') {
-      $query = 'select $object from <#ri> where
-        ($object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $this->pid . '> or
-        $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $this->pid . '>)
-        and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
-    }
-    return $query;
   }
 }
