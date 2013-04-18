@@ -223,7 +223,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   if (isset($object[$xacml_dsid])) {
     // Some basic error handling.
     try {
-      $xacml = new Xacml($object[$xacml_dsid]);
+      $xacml = new Xacml($object[$xacml_dsid]->content);
     }
     catch (XacmlException $e) {
       watchdog('islandora_xacml_editor', 'Exception in Islandora Xacml: @message', array('@message', $e->getMessage()), array(), WATCHDOG_ERROR);
