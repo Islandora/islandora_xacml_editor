@@ -48,10 +48,7 @@ class IslandoraXacml extends Xacml {
 
     $xml = $this->getXmlString();
     if (isset($this->object['POLICY'])) {
-      $params = array(
-        'dsString' => $xml,
-      );
-      $this->object->repository->api->m->modifyDatastream($this->pid, 'POLICY', $params);
+      $this->object['POLICY']->content = $xml;
     }
     else {
       $xacml_datastream = $this->object->constructDatastream('POLICY', 'X');

@@ -36,6 +36,9 @@ function islandora_xacml_editor_menu() {
     'access arguments' => array('administer islandora_xacml_editor'),
     'type' => MENU_LOCAL_TASK,
   );
+  // We use %menu_tail to get around some of the issues that can arise with
+  // users entering input for autocomplete. For example slashes would break.
+  // Relevant Drupal thread: http://drupal.org/node/93854#comment-6164592.
   $items['islandora/xacml/dsidautocomplete/%/%menu_tail'] = array(
     'page callback' => 'islandora_xacml_editor_dsid_autocomplete',
     'page arguments' => array(3, 4),
