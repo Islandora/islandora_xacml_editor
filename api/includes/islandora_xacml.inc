@@ -70,7 +70,6 @@ class IslandoraXacml extends Xacml {
   protected function writeRelations() {
     $viewable_by_user = 'isViewableByUser';
     $viewable_by_role = 'isViewableByRole';
-    
     $this->object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
     $this->object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
 
