@@ -25,7 +25,7 @@ function islandora_xacml_editor_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 0,
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('islandora_xacml_editor_form', 2, 'POLICY'),
+    'page arguments' => array('islandora_xacml_editor_form', 2),
     'access arguments' => array('administer islandora_xacml_editor'),
   );
   $items['admin/islandora/xacml/editor'] = array(
@@ -165,31 +165,23 @@ function islandora_xacml_editor_settings() {
 /**
  * The XACML editing form.
  */
-function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_dsid) {
+function islandora_xacml_editor_form($form, &$form_state, $object) {
   drupal_add_css(drupal_get_path('module', 'islandora_xacml_editor') . '/css/islandora_xacml_editor.css');
   module_load_include('inc', 'islandora', 'includes/utilities');
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
 
   drupal_set_title(t('Islandora XACML Editor'));
 
-  // When we call in from top level collections in JS get get the
-  // pid being undefined.
-  if ($object_pid == 'undefined' || !$object_pid) {
-    $object_pid = variable_get('fedora_repository_pid', 'islandora:top');
-  }
-
   if (!isset($form_state['islandora_xacml'])) {
     $form_state['islandora_xacml'] = array();
-    $form_state['islandora_xacml']['object_pid'] = $object_pid;
-    $form_state['islandora_xacml']['xacml_dsid'] = $xacml_dsid;
+    $form_state['islandora_xacml']['object'] = $object;
   }
 
-  if (!islandora_is_valid_pid($object_pid) || !islandora_is_valid_dsid($xacml_dsid)) {
+  if (!islandora_is_valid_pid($object->id)) {
     drupal_not_found();
     exit();
   }
 
-  $object = islandora_object_load($object_pid);
   if (!$object) {
     drupal_not_found();
     exit();
@@ -220,10 +212,10 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
 
   $new_xacml = FALSE;
 
-  if (isset($object[$xacml_dsid])) {
+  if (isset($object['POLICY'])) {
     // Some basic error handling.
     try {
-      $xacml = new Xacml($object[$xacml_dsid]->content);
+      $xacml = new Xacml($object['POLICY']->content);
     }
     catch (XacmlException $e) {
       watchdog('islandora_xacml_editor', 'Exception in Islandora Xacml: @message', array('@message', $e->getMessage()), array(), WATCHDOG_ERROR);
@@ -392,8 +384,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   if (isset($form_state['triggering_element'])) {
     // Add DSID.
     if ($form_state['triggering_element']['#name'] == 'dsid_add_button' || $form_state['triggering_element']['#name'] == 'dsid_add_textfield') {
-      $pid = $form_state['islandora_xacml']['object_pid'];
-      $object = islandora_object_load($pid);
+      $object = $form_state['islandora_xacml']['object'];
 
       if (!isset($form_state['islandora_xacml']['add_dsid'])) {
         $form_state['islandora_xacml']['add_dsid'] = array();
@@ -897,7 +888,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
     '#markup' => (count($rows) > 0) ? '<strong>Applied Rules:</strong>' : '<strong>No rules applied!</strong>',
   );
   if (count($rows) > 0) {
-    $form['dsid_mime']['rules']['table'] = islandora_xacml_editor_form_table($rows, $xacml_dsid);
+    $form['dsid_mime']['rules']['table'] = islandora_xacml_editor_form_table($rows);
 
     $form['dsid_mime']['rules']['remove_selected'] = array(
       '#type' => 'button',
@@ -925,7 +916,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   $form['dsid_mime']['new_dsid'] = array(
     '#type' => 'textfield',
     '#title' => t('DSID'),
-    '#autocomplete_path' => 'islandora/xacml/dsidautocomplete/' . $object_pid,
+    '#autocomplete_path' => 'islandora/xacml/dsidautocomplete/' . $object->id,
     '#size' => 35,
     '#description' => t('Type "*" to list all DSIDs.'),
     '#prefix' => '<div class="islandora_xacml_block_description">',
@@ -978,7 +969,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object_pid, $xacml_ds
   $form['dsid_mime']['new_mime'] = array(
     '#type' => 'textfield',
     '#title' => t('MIME type'),
-    '#autocomplete_path' => 'islandora/xacml/mimeautocomplete/' . $object_pid,
+    '#autocomplete_path' => 'islandora/xacml/mimeautocomplete/' . $object->id,
     '#size' => 35,
     '#description' => t('Type "*" to list all MIME types.'),
     '#prefix' => '<div class="islandora_xacml_block_description">',
@@ -1114,13 +1105,10 @@ function islandora_xacml_editor_retrieve_roles($xacml, $new_xacml, $rule) {
  * @param array $passed_rows
  *   The rows containing the data that need to be rendered.
  *
- * @param String $xacml_dsid
- *   The XACML datastream id that we are rendering the table for.
- *
- * @return Array
+ * @return array
  *   An array that represents the tableselect to be rendered.
  */
-function islandora_xacml_editor_form_table(array $passed_rows, $xacml_dsid) {
+function islandora_xacml_editor_form_table(array $passed_rows) {
   $headers = array(
     'filter' => t('Filter'),
     'type' => t('Type'),
@@ -1194,9 +1182,8 @@ function islandora_xacml_editor_form_validate(&$form, &$form_state) {
  * The submit function where all the XACML magic happens. Abracadabra.
  */
 function islandora_xacml_editor_form_submit(&$form, &$form_state) {
-  $pid = $form_state['islandora_xacml']['object_pid'];
-  $dsid = $form_state['islandora_xacml']['xacml_dsid'];
-  $object = islandora_object_load($pid);
+  $object = $form_state['islandora_xacml']['object'];
+  $pid = $object->id;
   $xacml = new IslandoraXacml($object);
 
   // Check datastreams and mime.
@@ -1741,7 +1728,7 @@ class IslandoraXacmlEditorQuery {
     $query_results = IslandoraXacmlEditorQuery::query($this->query, $this->pid);
 
     foreach ($query_results as $result) {
-      $pid = $result['obj']['value'];
+      $pid = $result['object']['value'];
       $pids[] = $pid;
     }
     return $pids;
