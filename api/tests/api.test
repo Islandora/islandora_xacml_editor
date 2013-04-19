@@ -7,7 +7,7 @@
 /**
  * Tests for the XACML API.
  */
-class IslandoraXacmlApiUnitTestCase extends DrupalUnitTestCase {
+class IslandoraXacmlApiUnitTestCase extends DrupalWebTestCase {
 
   /**
    * Provides info about the tests.
