@@ -178,8 +178,10 @@ abstract class XacmlRule {
    *   A string containing the user being tested.
    * @param array $roles
    *   An array of strings containing the roles being tested. Or NULL.
+   * @param bool $default
+   *   The default value to return.
    */
-  public function hasPermission($user, $roles = NULL, $default = TRUE) {
+  protected function internalHasPermission($user, $roles = NULL, $default = TRUE) {
     // We always allow the administrator role.
     if (in_array('administrator', $roles)) {
       return TRUE;
@@ -340,7 +342,7 @@ class XacmlManagementRule extends XacmlRule {
   public function hasPermission($user, $roles = NULL) {
     // We pass FALSE because we want to deny management if there is no XACML
     // policy.
-    return parent::hasPermission($user, $roles, FALSE);
+    return parent::internalHasPermission($user, $roles, FALSE);
   }
 }
 
@@ -396,6 +398,18 @@ class XacmlViewingRule extends XacmlRule {
     }
     return $rule;
   }
+
+  /**
+   * Check if the user with the specified username and roles has permission.
+   *
+   * @param string $user
+   *   A string containing the user being tested.
+   * @param mixed $roles
+   *   An array of strings containing the roles being tested. Or NULL.
+   */
+  public function hasPermission($user, $roles = NULL) {
+    return parent::internalHasPermission($user, $roles);
+  }
 }
 
 /**
@@ -429,6 +443,20 @@ class XacmlPermitEverythingRule extends XacmlRule {
   public function getRuleArray() {
     // Make sure fedoraAdmin can see everything.
     return $this->rule;
+  }
+
+  /**
+   * Check if the user with the specified username and roles has permission.
+   *
+   * @param string $user
+   *   A string containing the user being tested.
+   * @param mixed $roles
+   *   An array of strings containing the roles being tested. Or NULL.
+   */
+  public function hasPermission($user, $roles = NULL) {
+    // We pass FALSE because we want to deny management if there is no XACML
+    // policy.
+    return parent::internalHasPermission($user, $roles);
   }
 }
 
@@ -635,7 +663,7 @@ class XacmlDatastreamRule extends XacmlRule {
     if (!$this->isPopulated()) {
       return TRUE;
     }
-    if (!parent::hasPermission($user, $roles)) {
+    if (!parent::internalHasPermission($user, $roles)) {
       $boolean_mime = $mime ? in_array($mime, $this->getMimetypes()) : FALSE;
       $boolean_dsid = $dsid ? in_array($dsid, $this->getDsids()) : FALSE;
       $boolean_mimeregex = FALSE;
@@ -686,11 +714,11 @@ class XacmlDatastreamRule extends XacmlRule {
  * object. The interaction with the rules takes place through member object of
  * this class. For instance to add roles that can manage the object:
  * @code
- *   xacml = new Xacml();
+ *   xacml = new Xacml()
  *   // allow userA to manage the object
- *   xacml->managementRule->addUser('userA');
+ *   xacml->managementRule->addUser('userA')
  *   // allow roleC and roleD to manage the object
- *   xacml->managementRule->addRole(array('roleC', 'roleD'));
+ *   xacml->managementRule->addRole(array('roleC', 'roleD'))
  * @endcode
  */
 class Xacml {
