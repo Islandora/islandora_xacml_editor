@@ -68,17 +68,16 @@ function islandora_xacml_editor_menu() {
  */
 function islandora_xacml_editor_access($object) {
   global $user;
-  if (!user_access('administer islandora_xacml_editor')) {
+  if (!user_access('administer islandora_xacml_editor') || !is_object($object)) {
     return FALSE;
   }
+
+  if (isset($object['POLICY'])) {
+    $xacml = new IslandoraXacml($object);
+    return $xacml->managementRule->hasPermission($user->name, $user->roles);
+  }
   else {
-    if (isset($object['POLICY'])) {
-      $xacml = new IslandoraXacml($object);
-      return $xacml->managementRule->hasPermission($user->name, $user->roles);
-    }
-    else {
-      return TRUE;
-    }
+    return TRUE;
   }
 }
 
