@@ -26,7 +26,8 @@ function islandora_xacml_editor_menu() {
     'weight' => 0,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_xacml_editor_form', 2),
-    'access arguments' => array('administer islandora_xacml_editor'),
+    'access callback' => array('islandora_xacml_editor_access'),
+    'access arguments' => array(2),
   );
   $items['admin/islandora/xacml/editor'] = array(
     'title' => 'Islandora XACML Editor',
@@ -57,24 +58,44 @@ function islandora_xacml_editor_menu() {
 }
 
 /**
- * Access callback function to determining whether to display the CHILD task.
+ * Access callback function as to whether display the editor or not.
  *
  * @param FedoraObject $object
- *   The object we are determining access for.
- *
  * @return bool
- *   Whether the user has access or not.
+ *   TRUE if to show the tab, FALSE otherwise.
  */
-function islandora_xacml_editor_collection_access(FedoraObject $object) {
-  $item_is_collection = FALSE;
-  foreach ($object->models as $content_model) {
-    if ($content_model == 'islandora:collectionCModel') {
-      $item_is_collection = TRUE;
-      break;
+function islandora_xacml_editor_access($object) {
+  global $user;
+  if (user_access('administer islandora_xacml_editor')) {
+    if (isset($object['POLICY'])) {
+      $user_or_role = FALSE;
+      $xacml = new IslandoraXacml($object);
+
+      $xacml_users = $xacml->managementRule->getUsers();
+      $xacml_roles = $xacml->managementRule->getRoles();
+
+      if ($user->uid == 0) {
+        $user_name = 'anonymous';
+      }
+      else {
+        $user_name = $user->name;
+      }
+
+      if (in_array($user_name, $xacml_users)) {
+        $user_or_role = TRUE;
+      }
+
+      foreach ($user->roles as $role) {
+        if (in_array($user->roles, $xacml_roles) && !$user_or_role) {
+          $user_or_role = TRUE;
+          break;
+        }
+      }
+      return $user_or_role;
     }
-  }
-  if ($item_is_collection && user_access('adminisiter islandora_xacml_editor')) {
-    return TRUE;
+    else {
+      return TRUE;
+    }
   }
   else {
     return FALSE;
