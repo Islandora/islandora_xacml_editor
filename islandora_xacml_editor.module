@@ -243,8 +243,8 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
     catch (XacmlException $e) {
       watchdog('islandora_xacml_editor', 'Exception in Islandora Xacml: @message', array('@message', $e->getMessage()), array(), WATCHDOG_ERROR);
       drupal_set_message($e->getMessage());
-      drupal_set_message(t("Xacml Parser failed to parse @object_pid/@xacml_dsid. It is likely this POLICY wasn't written by the islandora XACML editor, it will have to be modified by hand.",
-                          array("@object_pid" => $object_pid, "@xacml_dsid" => $xacml_dsid))
+      drupal_set_message(t("Xacml Parser failed to parse @object_pid. It is likely this POLICY wasn't written by the islandora XACML editor, it will have to be modified by hand.",
+                          array("@object_pid" => $object->id))
                         );
       drupal_not_found();
       exit();
@@ -507,7 +507,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
         else {
           drupal_set_message(t('The MIME type regex @regex was not added as it already exists as a filter!',
             array(
-              '@regex' => $addvalue,
+              '@regex' => $add_text,
             )
           ), 'warning');
         }
@@ -775,7 +775,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
         $xacml->datastreamRule->addMimetype($value);
 
         if (isset($form_state['islandora_xacml']['hidden_mimes'])) {
-          $removemime = array_search($value, $form_state['islandora_xacml']['hidden_mimes']);
+          $remove_mime = array_search($value, $form_state['islandora_xacml']['hidden_mimes']);
 
           if (is_numeric($remove_mime)) {
             unset($form_state['islandora_xacml']['hidden_mimes'][$remove_mime]);
@@ -1404,6 +1404,8 @@ function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
 /**
  * Applies the parent's POLICY datastream to the child if it exists.
  *
+ * @param array $form_state
+ *   The passed through form_state from hook_islandora_ingest_steps().
  * @param string $parent
  *   PID of the parent object.
  * @param array $objects
@@ -1423,6 +1425,8 @@ function islandora_xacml_editor_apply_policy(&$form_state, $parent, $objects) {
 /**
  * Deletes the POLICY datastream and relationships added through the apply.
  *
+ * @param array $form_state
+ *   The passed through form_state from hook_islandora_ingest_steps().
  * @param array $objects
  *   An array containing FedoraObjects to parse through.
  */
@@ -1729,6 +1733,9 @@ class IslandoraXacmlEditorQuery {
    *   -description: The human-readable description of the query.
    * @param string $object_pid
    *   The pid of the object we are using as a base for queries.
+   *
+   * @return array
+   *   An array containing the results of our query.
    */
   public static function query($query_array, $object_pid) {
     $object = islandora_object_load($object_pid);
