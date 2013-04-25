@@ -26,7 +26,7 @@ function islandora_xacml_editor_menu() {
     'weight' => 0,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_xacml_editor_form', 2),
-    'access callback' => array('islandora_xacml_editor_access'),
+    'access callback' => 'islandora_xacml_editor_access',
     'access arguments' => array(2),
   );
   $items['admin/islandora/xacml/editor'] = array(
@@ -61,6 +61,8 @@ function islandora_xacml_editor_menu() {
  * Access callback function as to whether display the editor or not.
  *
  * @param FedoraObject $object
+ *   A FedoraObject.
+ *
  * @return bool
  *   TRUE if to show the tab, FALSE otherwise.
  */
