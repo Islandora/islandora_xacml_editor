@@ -68,39 +68,17 @@ function islandora_xacml_editor_menu() {
  */
 function islandora_xacml_editor_access($object) {
   global $user;
-  if (user_access('administer islandora_xacml_editor')) {
+  if (!user_access('administer islandora_xacml_editor')) {
+    return FALSE;
+  }
+  else {
     if (isset($object['POLICY'])) {
-      $user_or_role = FALSE;
       $xacml = new IslandoraXacml($object);
-
-      $xacml_users = $xacml->managementRule->getUsers();
-      $xacml_roles = $xacml->managementRule->getRoles();
-
-      if ($user->uid == 0) {
-        $user_name = 'anonymous';
-      }
-      else {
-        $user_name = $user->name;
-      }
-
-      if (in_array($user_name, $xacml_users)) {
-        $user_or_role = TRUE;
-      }
-
-      foreach ($user->roles as $role) {
-        if (in_array($user->roles, $xacml_roles) && !$user_or_role) {
-          $user_or_role = TRUE;
-          break;
-        }
-      }
-      return $user_or_role;
+      return $xacml->managementRule->hasPermission($user->name, $user->roles);
     }
     else {
       return TRUE;
     }
-  }
-  else {
-    return FALSE;
   }
 }
 
