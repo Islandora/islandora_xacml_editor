@@ -16,7 +16,8 @@
  *   Each entry in the array is an associate array itself with the following
  *   structure:
  *   - type: The type of query to be executed either itql or sparql.
- *   - query: The defined query string.
+ *   - query: The defined query string. The field we expect returned is that of
+ *     "object". I.e select ?object.
  *   - description: Human-readable description used in populating the options
  *   dropdown.
  */
