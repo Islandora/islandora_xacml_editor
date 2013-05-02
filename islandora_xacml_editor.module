@@ -60,8 +60,8 @@ function islandora_xacml_editor_menu() {
 /**
  * Access callback function as to whether display the editor or not.
  *
- * @param FedoraObject $object
- *   A FedoraObject.
+ * @param AbstractObject $object
+ *   A AbstractObject.
  *
  * @return bool
  *   TRUE if to show the tab, FALSE otherwise.
@@ -1267,7 +1267,7 @@ function islandora_xacml_editor_form_submit(&$form, &$form_state) {
 /**
  * Implements hook_islandora_datastream_purged().
  */
-function islandora_xacml_editor_islandora_datastream_purged(FedoraObject $object, $dsid) {
+function islandora_xacml_editor_islandora_datastream_purged(AbstractObject $object, $dsid) {
   $viewable_by_user = 'isViewableByUser';
   $viewable_by_role = 'isViewableByRole';
   // The XACML POLICY is removed.
@@ -1299,7 +1299,7 @@ function islandora_xacml_editor_islandora_datastream_purged(FedoraObject $object
 /**
  * Implements hook_islandora_datastream_ingested().
  */
-function islandora_xacml_editor_islandora_datastream_ingested(FedoraObject $object, FedoraDatastream $datastream) {
+function islandora_xacml_editor_islandora_datastream_ingested(AbstractObject $object, AbstractDatastream $datastream) {
   if (isset($object['POLICY'])) {
     $xacml = new IslandoraXacml($object);
     $ds_rule = $xacml->datastreamRule->getRuleArray();
@@ -1386,7 +1386,7 @@ function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
  * @param string $parent
  *   PID of the parent object.
  * @param array $objects
- *   An array containing all FedoraObjects we are applying the parent's POLICY
+ *   An array containing all AbstractObjects we are applying the parent's POLICY
  *   to.
  */
 function islandora_xacml_editor_apply_policy(&$form_state, $parent, $objects) {
@@ -1405,7 +1405,7 @@ function islandora_xacml_editor_apply_policy(&$form_state, $parent, $objects) {
  * @param array $form_state
  *   The passed through form_state from hook_islandora_ingest_steps().
  * @param array $objects
- *   An array containing FedoraObjects to parse through.
+ *   An array containing AbstractObjects to parse through.
  */
 function islandora_xacml_editor_undo_policy(&$form_state, $objects) {
   foreach ($objects as $object) {
