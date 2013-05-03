@@ -1360,7 +1360,6 @@ function islandora_xacml_editor_islandora_collectionCModel_islandora_xacml_edito
 function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
   // We check the parent passed through the form in the form state.
   $parent = $form_state['islandora']['shared_storage']['parent'];
-  $objects = isset($form_state['islandora']['objects']) ? $form_state['islandora']['objects'] : array();
   return array(
     'islandora_xacml_policy' => array(
       'type' => 'callback',
@@ -1368,11 +1367,11 @@ function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
       'module' => 'islandora_xacml_editor',
       'do_function' => array(
         'function' => 'islandora_xacml_editor_apply_policy',
-        'args' => array($parent, $objects),
+        'args' => array($parent),
       ),
       'undo_function' => array(
         'function' => 'islandora_xacml_editor_undo_policy',
-        'args' => array($objects),
+        'args' => array(),
       ),
     ),
   );
@@ -1385,14 +1384,11 @@ function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
  *   The passed through form_state from hook_islandora_ingest_steps().
  * @param string $parent
  *   PID of the parent object.
- * @param array $objects
- *   An array containing all FedoraObjects we are applying the parent's POLICY
- *   to.
  */
-function islandora_xacml_editor_apply_policy(&$form_state, $parent, $objects) {
+function islandora_xacml_editor_apply_policy(&$form_state, $parent) {
   $parent_object = islandora_object_load($parent);
   if ($parent_object['POLICY']) {
-    foreach ($objects as $object) {
+    foreach ($form_state['islandora']['objects'] as $object) {
       $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
       $xacml->writeBackToFedora();
     }
@@ -1404,11 +1400,9 @@ function islandora_xacml_editor_apply_policy(&$form_state, $parent, $objects) {
  *
  * @param array $form_state
  *   The passed through form_state from hook_islandora_ingest_steps().
- * @param array $objects
- *   An array containing FedoraObjects to parse through.
  */
-function islandora_xacml_editor_undo_policy(&$form_state, $objects) {
-  foreach ($objects as $object) {
+function islandora_xacml_editor_undo_policy(&$form_state) {
+  foreach ($form_state['islandora']['objects'] as $object) {
     if (isset($object['POLICY'])) {
       $viewable_by_user = 'isViewableByUser';
       $viewable_by_role = 'isViewableByRole';
