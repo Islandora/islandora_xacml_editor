@@ -8,8 +8,8 @@
 /**
  * Define custom queries to be used when batching through "children" of objects.
  *
- * @param FedoraObject $object
- *   A FedoraObject.
+ * @param AbstractObject $object
+ *   A AbstractObject.
  *
  * @return array
  *   An array of queries to be returned to the islandora_xacml_editor module.
