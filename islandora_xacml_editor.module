@@ -1358,8 +1358,11 @@ function islandora_xacml_editor_islandora_collectionCModel_islandora_xacml_edito
  * Implements hook_islandora_ingest_steps().
  */
 function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
-  // We check the parent passed through the form in the form state.
-  $parent = $form_state['islandora']['shared_storage']['parent'];
+  $shared_storage = islandora_ingest_form_get_shared_storage($form_state);
+  if (empty($shared_storage['parent'])) {
+    return;
+  }
+  $parent = $shared_storage['parent'];
   return array(
     'islandora_xacml_policy' => array(
       'type' => 'callback',
