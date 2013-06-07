@@ -157,7 +157,6 @@ EOQ;
   }
   $filter_string .= " || (!bound(?usr) || (bound(?usr) && sameTerm(?usr, '$user_name'))))\n}";
   $query .= $filter_string;
-  dsm($query);
   $query_array['query'] = $query;
   $query_array['type'] = 'sparql';
 }
