@@ -111,50 +111,47 @@ function islandora_xacml_api_islandora_solr_query($islandora_solr_query) {
  *   The query_array passed through after modified.
  */
 function islandora_xacml_api_islandora_basic_collection_query_alter(&$query_array) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
   global $user;
-
-  $query_string = 'select $object $title $content from <#ri> where
-  (
-   (
-     $object <fedora-model:label> $title
-     and $object <fedora-model:hasModel> $content
-     and
-      (
-        $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $query_array['pid'] . '>
-        or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $query_array['pid'] . '>
-      )
-     and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
-     minus $object <http://islandora.ca/ontology/relsext#isViewableByRole> $role
-     minus $object <http://islandora.ca/ontology/relsext#isViewableByUser> $user
-   ) or
-   (
-    $object <fedora-model:label> $title
-    and $object <fedora-model:hasModel> $content
-    and
-      (
-        $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $query_array['pid'] . '>
-        or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $query_array['pid'] . '>
-      )
-    and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
-    and
-     (
-     ';
-  foreach ($user->roles as $role) {
-    $query_string .= '$object <http://islandora.ca/ontology/relsext#isViewableByRole> ' . "'$role' or ";
+  $pid = $query_array['pid'];
+  $query = <<<EOQ
+  SELECT ?object ?title ?content
+     FROM <#ri>
+     WHERE {
+            ?object ?collection_predicate <info:fedora/$pid> ;
+                   <fedora-model:label> ?title ;
+                   <fedora-model:hasModel> ?content ;
+                   <fedora-model:state> <fedora-model:Active> .
+            FILTER(sameTerm(?collection_predicate, <fedora-rels-ext:isMemberOfCollection>) || sameTerm(?collection_predicate, <fedora-rels-ext:isMemberOf>))
+            FILTER (!sameTerm(?content, <info:fedora/fedora-system:FedoraObject-3.0>))
+EOQ;
+  $enforced = variable_get('islandora_namespace_restriction_enforced', FALSE);
+  if ($enforced) {
+    $namespace_array = islandora_get_allowed_namespaces();
+    $namespace_sparql = implode('|', $namespace_array);
+    $query .= 'FILTER(regex(str(?object), "info:fedora/(' . $namespace_sparql . '):"))';
   }
-
+  // Construct the FILTER string for users and roles.
+  $filter_string = '';
+  $role_count = 0;
+  foreach ($user->roles as $role) {
+    if ($role_count === 0) {
+      $filter_string .= "FILTER(!bound(?role) || (bound(?role) && (sameTerm(?role, '$role')";
+    }
+    else {
+      $filter_string .= " || sameTerm(?role, '$role')";
+    }
+    $role_count++;
+  }
+  $filter_string .= "))";
   if ($user->uid != 0) {
     $user_name = $user->name;
   }
   else {
     $user_name = 'anonymous';
   }
-  $query_string .= '$object <http://islandora.ca/ontology/relsext#isViewableByUser> ' . "'$user_name'" . ')';
-  $query_string .= ')
-  )
-  minus $content <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
-  order by $title';
-
-  $query_array['query'] = $query_string;
-  $query_array['type'] = 'itql';
+  $filter_string .= " || (!bound(?usr) || (bound(?usr) && sameTerm(?usr, '$user_name'))))\n}";
+  $query .= $filter_string;
+  $query_array['query'] = $query;
+  $query_array['type'] = 'sparql';
 }
