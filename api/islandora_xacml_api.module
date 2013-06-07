@@ -115,6 +115,7 @@ function islandora_xacml_api_islandora_basic_collection_query_alter(&$query_arra
   global $user;
   $pid = $query_array['pid'];
   $query = <<<EOQ
+  PREFIX is: <http://islandora.ca/ontology/relsext#>
   SELECT ?object ?title ?content
      FROM <#ri>
      WHERE {
@@ -122,6 +123,10 @@ function islandora_xacml_api_islandora_basic_collection_query_alter(&$query_arra
                    <fedora-model:label> ?title ;
                    <fedora-model:hasModel> ?content ;
                    <fedora-model:state> <fedora-model:Active> .
+      OPTIONAL {
+        ?object is:isViewableByUser ?usr .
+        ?object is:isViewableByRole ?role .
+      }
             FILTER(sameTerm(?collection_predicate, <fedora-rels-ext:isMemberOfCollection>) || sameTerm(?collection_predicate, <fedora-rels-ext:isMemberOf>))
             FILTER (!sameTerm(?content, <info:fedora/fedora-system:FedoraObject-3.0>))
 EOQ;
@@ -152,6 +157,7 @@ EOQ;
   }
   $filter_string .= " || (!bound(?usr) || (bound(?usr) && sameTerm(?usr, '$user_name'))))\n}";
   $query .= $filter_string;
+  dsm($query);
   $query_array['query'] = $query;
   $query_array['type'] = 'sparql';
 }
