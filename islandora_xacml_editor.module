@@ -70,6 +70,9 @@ function islandora_xacml_editor_access($object) {
   return islandora_object_access('administer islandora_xacml_editor', $object);
 }
 
+/**
+ * Implements hook_islandora_object_access().
+ */
 function islandora_xacml_editor_islandora_object_access($op, $object, $user) {
   if ($op == 'administer islandora_xacml_editor') {
     if (isset($object['POLICY'])) {
