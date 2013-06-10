@@ -67,18 +67,20 @@ function islandora_xacml_editor_menu() {
  *   TRUE if to show the tab, FALSE otherwise.
  */
 function islandora_xacml_editor_access($object) {
-  global $user;
-  if (!user_access('administer islandora_xacml_editor') || !is_object($object)) {
-    return FALSE;
+  return islandora_object_access('administer islandora_xacml_editor', $object);
+}
+
+function islandora_xacml_editor_islandora_object_access($op, $object, $user) {
+  if ($op == 'administer islandora_xacml_editor') {
+    if (isset($object['POLICY'])) {
+      return islandora_datastream_access(FEDORA_METADATA_EDIT, $object['POLICY']);
+    }
+    else {
+      return islandora_object_access(FEDORA_ADD_DS, $object);
+    }
   }
 
-  if (isset($object['POLICY'])) {
-    $xacml = new IslandoraXacml($object);
-    return $xacml->managementRule->hasPermission($user->name, $user->roles);
-  }
-  else {
-    return TRUE;
-  }
+  return NULL;
 }
 
 /**
