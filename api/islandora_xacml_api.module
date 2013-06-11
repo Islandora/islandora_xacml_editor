@@ -171,7 +171,10 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
     FEDORA_INGEST,
   );
 
-  if (isset($object['POLICY']) && islandora_datastream_access(FEDORA_VIEW_OBJECTS, $object['POLICY'])) {
+  // XXX: Is it necessary to address the case when POLICY is not readable?...
+  // ... really, we should never get to this point if the POLICY isn't
+  // readable...
+  if (isset($object['POLICY'])) {
     $xacml = new IslandoraXacml($object);
 
     if (FEDORA_VIEW_OBJECTS == $op) {
