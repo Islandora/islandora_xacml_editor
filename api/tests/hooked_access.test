@@ -73,11 +73,11 @@ class IslandoraXacmlHookedAccessTestCase extends IslandoraWebTestCase {
     foreach ($this->objects as $object_id) {
       $object = $this->repository->constructObject($object_id);
       $object->label = $object_id;
+      $object->models = 'a-fake:model';
 
       $datastream = $object->constructDatastream($this->dsid, 'M');
       $datastream->label = 'fdsa';
       $datastream->mimetype = 'text/plain';
-      $datastream->models = 'a-fake:model';
       $datastream->content = 'Some kinda awesome content stuffs...';
 
       $object->ingestDatastream($datastream);
