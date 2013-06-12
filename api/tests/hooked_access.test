@@ -64,6 +64,9 @@ class IslandoraXacmlHookedAccessTestCase extends IslandoraWebTestCase {
     parent::tearDown();
   }
 
+  /**
+   * Create test object(s).
+   */
   public function createTestObjects() {
     // Privileged accoding to Drupal, will deny via XACML.
     $this->user_deny = $user_deny = $this->drupalCreateUser($this->access_ops + $this->management_ops);
