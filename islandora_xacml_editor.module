@@ -76,10 +76,10 @@ function islandora_xacml_editor_access($object) {
 function islandora_xacml_editor_islandora_object_access($op, $object, $user) {
   if ($op == 'administer islandora_xacml_editor') {
     if (isset($object['POLICY'])) {
-      return islandora_datastream_access(FEDORA_METADATA_EDIT, $object['POLICY']);
+      return islandora_datastream_access(FEDORA_METADATA_EDIT, $object['POLICY'], $user);
     }
     else {
-      return islandora_object_access(FEDORA_ADD_DS, $object);
+      return islandora_object_access(FEDORA_ADD_DS, $object, $user);
     }
   }
 
