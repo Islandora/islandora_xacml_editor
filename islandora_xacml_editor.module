@@ -170,7 +170,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
   module_load_include('inc', 'islandora', 'includes/utilities');
   module_load_include('inc', 'islandora', 'includes/breadcrumb');
 
-  drupal_set_title(t('Islandora XACML Editor'));
+  drupal_set_title(t($object->label));
 
   if (!isset($form_state['islandora_xacml'])) {
     $form_state['islandora_xacml'] = array();
