@@ -93,7 +93,6 @@ class IslandoraXacmlEditorHookedAccessTestCase extends IslandoraWebTestCase {
    * Test all operations on object.
    */
   public function testAllAccess() {
-    variable_set('islandora_strict_user_access_enforcement', FALSE);
     $op = $this->op;
 
     $this->assertFalse(islandora_object_access($op, $this->object, $this->drupalCreateUser(array(

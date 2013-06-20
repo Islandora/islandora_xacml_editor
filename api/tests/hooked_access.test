@@ -68,10 +68,12 @@ class IslandoraXacmlHookedAccessTestCase extends IslandoraWebTestCase {
    * Create test object(s).
    */
   public function createTestObjects() {
+    $all_perms = array_merge($this->access_ops, $this->management_ops);
+
     // Privileged accoding to Drupal, will deny via XACML.
-    $this->user_deny = $user_deny = $this->drupalCreateUser($this->access_ops + $this->management_ops);
+    $this->user_deny = $user_deny = $this->drupalCreateUser($all_perms);
     // Unprivileged according to Drupal, will allow via XACML.
-    $this->user_allow = $user_allow = $this->drupalCreateUser();
+    $this->user_allow = $user_allow = $this->drupalCreateUser($all_perms);
 
     foreach ($this->objects as $object_id) {
       $object = $this->repository->constructObject($object_id);
@@ -117,8 +119,6 @@ class IslandoraXacmlHookedAccessTestCase extends IslandoraWebTestCase {
   public function testAllXacmlAccess() {
     $user_allow = $this->user_allow;
     $user_deny = $this->user_deny;
-
-    variable_set('islandora_strict_user_access_enforcement', FALSE);
 
     foreach ($this->access_ops as $op) {
       $this->assertTrue(islandora_object_access($op, $this->object, $user_allow), "Allow object access: $op");
