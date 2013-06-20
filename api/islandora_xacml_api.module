@@ -126,3 +126,46 @@ function islandora_xacml_api_islandora_basic_collection_get_query_filters() {
 
   return "(!bound(?role) && !bound(?user)) || (bound(?user) && ?user='{$user_name}') || (bound(?role) && ($role_matcher))";
 }
+
+/**
+ * Implements hook_islandora_object_access().
+ */
+function islandora_xacml_api_islandora_object_access($op, $object, $user) {
+  $management_operations = array(
+    FEDORA_MANAGE_PROPERTIES,
+    FEDORA_METADATA_EDIT,
+    FEDORA_ADD_DS,
+    FEDORA_PURGE,
+    FEDORA_INGEST,
+  );
+
+  // XXX: Is it necessary to address the case when POLICY is not readable?...
+  // ... really, we should never get to this point if the POLICY isn't
+  // readable...
+  if (isset($object['POLICY'])) {
+    $xacml = new IslandoraXacml($object);
+
+    if (FEDORA_VIEW_OBJECTS == $op) {
+      return $xacml->viewingRule->hasPermission($user->name, $user->roles);
+    }
+    elseif (in_array($op, $management_operations)) {
+      return $xacml->managementRule->hasPermission($user->name, $user->roles);
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Implements hook_islandora_datastream_access().
+ */
+function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user) {
+  if (isset($datastream->parent['POLICY'])) {
+    $xacml = new IslandoraXacml($datastream->parent);
+
+    if (FEDORA_VIEW_OBJECTS == $op) {
+      return $xacml->datastreamRule->hasPermission($user->name, $user->roles, $datastream->mimetype, $datastream->id);
+    }
+  }
+  return NULL;
+}
