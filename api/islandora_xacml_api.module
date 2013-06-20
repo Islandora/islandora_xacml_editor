@@ -97,68 +97,34 @@ function islandora_xacml_api_islandora_solr_query($islandora_solr_query) {
 }
 
 /**
- * Hook to update the collection query when XACML is enabled.
- *
- * @note
- *   By default the collection query does not respect XACML rules,
- *   now when the XACML editor module is enabled the
- *   query will be modified to use XACML rules.
- *
- * @param array $query_array
- *   Query array containing pid, type, page_number and page_size
- *
- * @return array
- *   The query_array passed through after modified.
+ * Implements hook_islandora_basic_collection_query_get_query_statements().
  */
-function islandora_xacml_api_islandora_basic_collection_query_alter(&$query_array) {
-  module_load_include('inc', 'islandora', 'includes/utilities');
+function islandora_xacml_api_islandora_basic_collection_get_query_statements() {
+  return array(
+    'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByRole> ?role . }',
+    'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user . }',
+  );
+}
+
+/**
+ * Implements hook_islandora_basic_collection_query_get_query_filters().
+ */
+function islandora_xacml_api_islandora_basic_collection_get_query_filters() {
   global $user;
-  $pid = $query_array['pid'];
-  $query = <<<EOQ
-  PREFIX is: <http://islandora.ca/ontology/relsext#>
-  SELECT ?object ?title ?content
-     FROM <#ri>
-     WHERE {
-            ?object ?collection_predicate <info:fedora/$pid> ;
-                   <fedora-model:label> ?title ;
-                   <fedora-model:hasModel> ?content ;
-                   <fedora-model:state> <fedora-model:Active> .
-      OPTIONAL {
-        ?object is:isViewableByUser ?usr .
-        ?object is:isViewableByRole ?role .
-      }
-            FILTER(sameTerm(?collection_predicate, <fedora-rels-ext:isMemberOfCollection>) || sameTerm(?collection_predicate, <fedora-rels-ext:isMemberOf>))
-            FILTER (!sameTerm(?content, <info:fedora/fedora-system:FedoraObject-3.0>))
-EOQ;
-  $enforced = variable_get('islandora_namespace_restriction_enforced', FALSE);
-  if ($enforced) {
-    $namespace_array = islandora_get_allowed_namespaces();
-    $namespace_sparql = implode('|', $namespace_array);
-    $query .= 'FILTER(regex(str(?object), "info:fedora/(' . $namespace_sparql . '):"))';
-  }
-  // Construct the FILTER string for users and roles.
-  $filter_string = '';
-  $role_count = 0;
-  foreach ($user->roles as $role) {
-    if ($role_count === 0) {
-      $filter_string .= "FILTER(!bound(?role) || (bound(?role) && (sameTerm(?role, '$role')";
-    }
-    else {
-      $filter_string .= " || sameTerm(?role, '$role')";
-    }
-    $role_count++;
-  }
-  $filter_string .= "))";
-  if ($user->uid != 0) {
-    $user_name = $user->name;
-  }
-  else {
+  if ($user->uid === 0) {
     $user_name = 'anonymous';
   }
-  $filter_string .= " || (!bound(?usr) || (bound(?usr) && sameTerm(?usr, '$user_name'))))\n}";
-  $query .= $filter_string;
-  $query_array['query'] = $query;
-  $query_array['type'] = 'sparql';
+  else {
+    $user_name = $user->name;
+  }
+
+  $role_matches = array();
+  foreach ($user->roles as $role) {
+    $role_matches[] = "?role='{$role}'";
+  }
+  $role_matcher = implode(' || ', $role_matches);
+
+  return "(!bound(?role) && !bound(?user)) || (bound(?user) && ?user='{$user_name}') || (bound(?role) && ($role_matcher))";
 }
 
 /**
@@ -177,6 +143,10 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
   // ... really, we should never get to this point if the POLICY isn't
   // readable...
   if (isset($object['POLICY'])) {
+    if ($user->uid === 0) {
+      $user->name = 'anonymous';
+    }
+
     $xacml = new IslandoraXacml($object);
 
     if (FEDORA_VIEW_OBJECTS == $op) {
@@ -195,6 +165,10 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
  */
 function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user) {
   if (isset($datastream->parent['POLICY'])) {
+    if ($user->uid === 0) {
+      $user->name = 'anonymous';
+    }
+
     $xacml = new IslandoraXacml($datastream->parent);
 
     if (FEDORA_VIEW_OBJECTS == $op) {
