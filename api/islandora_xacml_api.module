@@ -97,64 +97,32 @@ function islandora_xacml_api_islandora_solr_query($islandora_solr_query) {
 }
 
 /**
- * Hook to update the collection query when XACML is enabled.
- *
- * @note
- *   By default the collection query does not respect XACML rules,
- *   now when the XACML editor module is enabled the
- *   query will be modified to use XACML rules.
- *
- * @param array $query_array
- *   Query array containing pid, type, page_number and page_size
- *
- * @return array
- *   The query_array passed through after modified.
+ * Implements hook_islandora_basic_collection_query_get_query_statements().
  */
-function islandora_xacml_api_islandora_basic_collection_query_alter(&$query_array) {
+function islandora_xacml_api_islandora_basic_collection_get_query_statements() {
+  return array(
+    'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByRole> ?role . }',
+    'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user . }',
+  );
+}
+
+/**
+ * Implements hook_islandora_basic_collection_query_get_query_filters().
+ */
+function islandora_xacml_api_islandora_basic_collection_get_query_filters() {
   global $user;
-
-  $query_string = 'select $object $title $content from <#ri> where
-  (
-   (
-     $object <fedora-model:label> $title
-     and $object <fedora-model:hasModel> $content
-     and
-      (
-        $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $query_array['pid'] . '>
-        or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $query_array['pid'] . '>
-      )
-     and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
-     minus $object <http://islandora.ca/ontology/relsext#isViewableByRole> $role
-     minus $object <http://islandora.ca/ontology/relsext#isViewableByUser> $user
-   ) or
-   (
-    $object <fedora-model:label> $title
-    and $object <fedora-model:hasModel> $content
-    and
-      (
-        $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $query_array['pid'] . '>
-        or $object <fedora-rels-ext:isMemberOf> <info:fedora/' . $query_array['pid'] . '>
-      )
-    and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
-    and
-     (
-     ';
-  foreach ($user->roles as $role) {
-    $query_string .= '$object <http://islandora.ca/ontology/relsext#isViewableByRole> ' . "'$role' or ";
-  }
-
-  if ($user->uid != 0) {
-    $user_name = $user->name;
-  }
-  else {
+  if ($user->uid === 0) {
     $user_name = 'anonymous';
   }
-  $query_string .= '$object <http://islandora.ca/ontology/relsext#isViewableByUser> ' . "'$user_name'" . ')';
-  $query_string .= ')
-  )
-  minus $content <mulgara:is> <info:fedora/fedora-system:FedoraObject-3.0>
-  order by $title';
+  else {
+    $user_name = $user->name;
+  }
 
-  $query_array['query'] = $query_string;
-  $query_array['type'] = 'itql';
+  $role_matches = array();
+  foreach ($user->roles as $role) {
+    $role_matches[] = "?role='{$role}'";
+  }
+  $role_matcher = implode(' || ', $role_matches);
+
+  return "(!bound(?role) && !bound(?user)) || (bound(?user) && ?user='{$user_name}') || (bound(?role) && ($role_matcher))";
 }
