@@ -143,6 +143,10 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
   // ... really, we should never get to this point if the POLICY isn't
   // readable...
   if (isset($object['POLICY'])) {
+    if ($user->uid === 0) {
+      $user->name = 'anonymous';
+    }
+
     $xacml = new IslandoraXacml($object);
 
     if (FEDORA_VIEW_OBJECTS == $op) {
@@ -161,6 +165,10 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
  */
 function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user) {
   if (isset($datastream->parent['POLICY'])) {
+    if ($user->uid === 0) {
+      $user->name = 'anonymous';
+    }
+
     $xacml = new IslandoraXacml($datastream->parent);
 
     if (FEDORA_VIEW_OBJECTS == $op) {
