@@ -179,7 +179,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
 
   if (!isset($form_state['islandora_xacml'])) {
     $form_state['islandora_xacml'] = array();
-    $form_state['islandora_xacml']['object'] = $object;
+    $form_state['islandora_xacml']['pid'] = $object->id;
   }
 
   if (!islandora_is_valid_pid($object->id)) {
@@ -389,7 +389,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
   if (isset($form_state['triggering_element'])) {
     // Add DSID.
     if ($form_state['triggering_element']['#name'] == 'dsid_add_button' || $form_state['triggering_element']['#name'] == 'dsid_add_textfield') {
-      $object = $form_state['islandora_xacml']['object'];
+      $object = islandora_object_load($form_state['islandora_xacml']['pid']);
 
       if (!isset($form_state['islandora_xacml']['add_dsid'])) {
         $form_state['islandora_xacml']['add_dsid'] = array();
@@ -1187,7 +1187,7 @@ function islandora_xacml_editor_form_validate(&$form, &$form_state) {
  * The submit function where all the XACML magic happens. Abracadabra.
  */
 function islandora_xacml_editor_form_submit(&$form, &$form_state) {
-  $object = $form_state['islandora_xacml']['object'];
+  $object = islandora_object_load($form_state['islandora_xacml']['pid']);
   $pid = $object->id;
   $xacml = new IslandoraXacml($object);
 
