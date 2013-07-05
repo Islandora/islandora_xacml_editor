@@ -58,6 +58,7 @@ abstract class XacmlRule {
     $rule['methods'] = array();
     $rule['users'] = array();
     $rule['roles'] = array();
+
     return $rule;
   }
 
@@ -180,9 +181,8 @@ abstract class XacmlRule {
    *   An array of strings containing the roles being tested. Or NULL.
    */
   function hasPermission($user, $roles = NULL, $default = TRUE) {
-    $role = ($this->xacml->admin_role ? $this->xacml->admin_role : 'administrator');
     // We always allow the administrator role.
-    if (in_array($role, $roles)) {
+    if (in_array('administrator', $roles)) {
       return TRUE;
     }
 
@@ -685,12 +685,6 @@ class Xacml {
    * @var XacmlViewingRule
    */
   public $viewingRule;
-
-  /**
-   * The name of the admin role
-   *
-   */
-  public $admin_role;
 
   /**
    * Initializes the $xacml datastructure that can be parsed with XacmlWriter.

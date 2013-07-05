@@ -49,7 +49,6 @@ class IslandoraXacml extends Xacml {
     $this->pid = $pid;
     $this->dsid = $dsid;
     $this->item = $item;
-    $this->admin_role = variable_get('islandora_xacml_api_admin_role', 'administrator');
 
     $this->label = 'Xacml Policy';
     if ($this->dsid == 'CHILD_SECURITY') {
