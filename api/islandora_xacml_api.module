@@ -60,21 +60,6 @@ function islandora_xacml_api_settings() {
     '#description' => t('Causes relationships to be written to the REL-INT/EXT when the policy is saved. (required to make use of the Solr field values above)'),
     '#default_value' => variable_get('islandora_xacml_api_save_relationships', TRUE),
   );
-  $roles = array();
-  $roles[NULL] = t('Select a role...');
-  $result = db_query('SELECT r.rid, r.name FROM {role} r');
-  while ($role = db_fetch_object($result)) {
-    if ($role->name != 'anonymous user') {
-      $roles[$role->name] = $role->name;
-    }
-  }
-
-  $form['islandora_xacml_api_admin_role'] = array(
-    '#type' => 'select',
-    '#title' => t('The administrator role'),
-    '#options' => $roles,
-    '#default_value' => variable_get('islandora_xacml_api_admin_role', ''),
-  );
 
   return system_settings_form($form);
 }
