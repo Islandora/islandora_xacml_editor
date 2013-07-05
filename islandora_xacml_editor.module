@@ -787,19 +787,19 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
         }
       }
       if ($item_is_collection) {
-        $title = t('Child Policy');
-        $dsid = 'CHILD_SECURITY';
+        $tabs['xacml_policy_collection'] = array(
+          '#type' => 'tabpage',
+          '#title' => t('Child Policy'),
+          '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, 'CHILD_SECURITY'),
+          '#weight' => 101,
+        );
       }
-      else {
-        $title = t('Item Policy');
-        $dsid = 'POLICY';
-      }
+
       $tabs['xacml_policy'] = array(
         '#type' => 'tabpage',
-        '#title' => $title,
-        '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, $dsid),
+        '#title' => t('Item Policy'),
+        '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, 'POLICY'),
         '#weight' => 100,
-
       );
     }
   }
