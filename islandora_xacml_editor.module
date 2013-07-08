@@ -39,14 +39,12 @@ function islandora_xacml_editor_menu() {
   $items['xacml/dsidautocomplete/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_dsid_autocomplete',
     'page arguments' => array(2, 3),
-    'access callback' => TRUE,
     'access arguments' => array('Edit XACML Policies'),
     'type' => MENU_CALLBACK,
   );
   $items['xacml/mimeautocomplete/%/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_mime_autocomplete',
     'page arguments' => array(2, 3, 4),
-    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
     'access arguments' => array('Edit XACML Policies'),
   );
@@ -54,35 +52,30 @@ function islandora_xacml_editor_menu() {
     'page callback' => 'islandora_xacml_editor_remove_js',
     'page arguments' => array(2),
     'access arguments' => array('Edit XACML Policies'),
-    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   $items['xacml/ahah/add/dsid/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_add_dsid_js',
     'page arguments' => array(4, 5),
     'access arguments' => array('Edit XACML Policies'),
-    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   $items['xacml/ahah/add/dsidregex/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_add_dsid_regex_js',
     'page arguments' => array(4, 5),
     'access arguments' => array('Edit XACML Policies'),
-    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   $items['xacml/ahah/add/mime/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_add_mime_js',
     'page arguments' => array(4, 5),
     'access arguments' => array('Edit XACML Policies'),
-    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   $items['xacml/ahah/add/mimeregex/%/%'] = array(
     'page callback' => 'islandora_xacml_editor_add_mime_regex_js',
     'page arguments' => array(4, 5),
     'access arguments' => array('Edit XACML Policies'),
-    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   return $items;
@@ -806,7 +799,7 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
         '#title' => $title,
         '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, $dsid),
         '#weight' => 100,
-       
+
       );
     }
   }
