@@ -787,19 +787,19 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
         }
       }
       if ($item_is_collection) {
-        $title = t('Child Policy');
-        $dsid = 'CHILD_SECURITY';
+        $tabs['xacml_policy_collection'] = array(
+          '#type' => 'tabpage',
+          '#title' => t('Child Policy'),
+          '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, 'CHILD_SECURITY'),
+          '#weight' => 101,
+        );
       }
-      else {
-        $title = t('Item Policy');
-        $dsid = 'POLICY';
-      }
+
       $tabs['xacml_policy'] = array(
         '#type' => 'tabpage',
-        '#title' => $title,
-        '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, $dsid),
+        '#title' => t('Item Policy'),
+        '#content' => drupal_get_form('islandora_xacml_editor_page', $pid, 'POLICY'),
         '#weight' => 100,
-
       );
     }
   }
@@ -807,8 +807,8 @@ function islandora_xacml_editor_islandora_tabs($content_models, $pid) {
 }
 
 function islandora_xacml_editor_islandora_tabs_alter(&$args) {
-
   if ($_SESSION['XACML_SELECTED']) {
+    unset($_SESSION['XACML_SELECTED']);
     foreach ($args as $key => $values) {
       if ($key != '#type') {
         $values['#selected'] = 0;
@@ -1934,7 +1934,7 @@ class IslandoraUpdatePolicy {
     if ($this->object->exists()) {
       try {
         $xacml = new IslandoraXacml($this->pid, 'POLICY');
-        if ($xacml->managementRule->hasPermission($user->name, $user->roles)) {
+        if (($xacml->managementRule->hasPermission($user->name, $user->roles) && isset($this->object->datastreams['POLICY'])) || !isset($this->object->datastreams['POLICY'])) {
           $success = $this->addOrUpdateAllPolicies();
         }
       } catch (XacmlException $e) {
