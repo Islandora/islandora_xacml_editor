@@ -1240,32 +1240,29 @@ function islandora_xacml_editor_form_submit(&$form, &$form_state) {
 
   $xacml->writeBackToFedora();
 
-  if (isset($form_state['islandora_xacml']['query_choices'])) {
-    if ($form_state['values']['update_options'] != 'newchildren') {
-      $option = $form_state['values']['update_options'];
-      $query_array = $form_state['islandora_xacml']['query_choices'][$option];
-      $xml = $xacml->getXmlString();
-      $batch = array(
-        'title' => t('Updating Policies'),
-        'progress_message' => t('Please wait if many objects are being updated this could take a few minutes.'),
-        'operations' => array(
-          array(
-            'islandora_xacml_editor_batch_function',
-            array($xml, $pid, $query_array),
-          ),
+  if (isset($form_state['islandora_xacml']['query_choices']) && $form_state['values']['update_options'] != 'newchildren') {
+    $option = $form_state['values']['update_options'];
+    $query_array = $form_state['islandora_xacml']['query_choices'][$option];
+    $xml = $xacml->getXmlString();
+    $batch = array(
+      'title' => t('Updating Policies'),
+      'progress_message' => t('Please wait if many objects are being updated this could take a few minutes.'),
+      'operations' => array(
+        array(
+          'islandora_xacml_editor_batch_function',
+          array($xml, $pid, $query_array),
         ),
-        'finished' => 'islandora_xacml_editor_batch_finished',
-      );
-      batch_set($batch);
-    }
-    else {
-      unset($form_state['islandora_xacml']);
-      $form_state['redirect'] = array('islandora/object/' . $pid);
-    }
+      ),
+      'finished' => 'islandora_xacml_editor_batch_finished',
+    );
+    batch_set($batch);
   }
   else {
     unset($form_state['islandora_xacml']);
     $form_state['redirect'] = array('islandora/object/' . $pid);
+    drupal_set_message(t('The configured POLICY datastream has been applied to @pid!', array(
+      '@pid' => $pid,
+    )));
   }
 }
 
