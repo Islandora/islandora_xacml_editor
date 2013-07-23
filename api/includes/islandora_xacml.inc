@@ -65,50 +65,64 @@ class IslandoraXacml extends Xacml {
    * Writes our relations to Fedora.
    */
   protected function writeRelations() {
-    $viewable_by_user = 'isViewableByUser';
-    $viewable_by_role = 'isViewableByRole';
-    $this->object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
-    $this->object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
+    $view_relationships = array(
+      'isViewableByUser',
+      'isViewableByRole',
+    );
+    list($viewable_by_user, $viewable_by_role) = $view_relationships;
 
-    foreach ($this->object as $dsid => $value) {
-      $this->object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
-      $this->object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
+    $manage_relationships = array(
+      'isManageableByUser',
+      'isManageableByRole',
+    );
+    list($manageable_by_user, $manageable_by_role) = $manage_relationships;
+
+    $all_relationships = array_merge($view_relationships, $manage_relationships);
+    // Remove all existing relationships.
+    foreach ($all_relationships as $relationship) {
+      $this->object->relationships->remove(ISLANDORA_RELS_EXT_URI, $relationship);
+      foreach ($this->object as $dsid => $value) {
+        $this->object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $relationship);
+      }
     }
 
+    // Add Object Viewing Relationships.
     if ($this->viewingRule->isPopulated()) {
       // Recompute the new values from the policy.
-      $view_users = $this->viewingRule->getUsers();
-      $view_roles = $this->viewingRule->getRoles();
-      if (count($view_users) > 0) {
-        foreach ($view_users as $user) {
-          $this->object->relationships->add(ISLANDORA_RELS_EXT_URI, $viewable_by_user, $user, TRUE);
-        }
+      foreach ($this->viewingRule->getUsers() as $user) {
+        $this->object->relationships->add(ISLANDORA_RELS_EXT_URI, $viewable_by_user, $user, TRUE);
       }
-      if (count($view_roles) > 0) {
-        foreach ($view_roles as $role) {
-          $this->object->relationships->add(ISLANDORA_RELS_EXT_URI, $viewable_by_role, $role, TRUE);
+
+      foreach ($this->viewingRule->getRoles() as $role) {
+        $this->object->relationships->add(ISLANDORA_RELS_EXT_URI, $viewable_by_role, $role, TRUE);
+      }
+    }
+
+    // Add Datastream Viewing Relationships.
+    if ($this->datastreamRule->isPopulated()) {
+      foreach ($this->datastreamRule->getDsids() as $dsid) {
+        // Recompute the new values from the policy.
+        foreach ($this->datastreamRule->getUsers() as $user) {
+          if (isset($this->object[$dsid])) {
+            $this->object[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
+          }
+        }
+        foreach ($this->datastreamRule->getRoles() as $role) {
+          if (isset($this->object[$dsid])) {
+            $this->object[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
+          }
         }
       }
     }
 
-    if ($this->datastreamRule->isPopulated()) {
-      foreach ($this->datastreamRule->getDsids() as $dsid) {
-        $ds_users = $this->datastreamRule->getUsers();
-        $ds_roles = $this->datastreamRule->getRoles();
-        if (count($ds_users) > 0) {
-          foreach ($ds_users as $user) {
-            if (isset($this->object[$dsid])) {
-              $this->object[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
-            }
-          }
-        }
-        if (count($ds_roles) > 0) {
-          foreach ($ds_roles as $role) {
-            if (isset($this->object[$dsid])) {
-              $this->object[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
-            }
-          }
-        }
+    // Add Object Management Relationships.
+    if ($this->managementRule->isPopulated()) {
+      // Recompute the new values from the policy.
+      foreach ($this->managementRule->getUsers() as $user) {
+        $this->object->relationships->add(ISLANDORA_RELS_EXT_URI, $manageable_by_user, $user, TRUE);
+      }
+      foreach ($this->managementRule->getRoles() as $role) {
+        $this->object->relationships->add(ISLANDORA_RELS_EXT_URI, $manageable_by_role, $role, TRUE);
       }
     }
   }
