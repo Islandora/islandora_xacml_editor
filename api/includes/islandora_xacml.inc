@@ -95,18 +95,20 @@ class IslandoraXacml extends Xacml {
       foreach ($this->datastreamRule->getDsids() as $dsid) {
         $ds_users = $this->datastreamRule->getUsers();
         $ds_roles = $this->datastreamRule->getRoles();
+        if (!isset($this->object[$dsid])) {
+          $xacml_ds = $this->object->constructDatastream($dsid);
+        }
+        else {
+          $xacml_ds = $this->object[$dsid];
+        }
         if (count($ds_users) > 0) {
           foreach ($ds_users as $user) {
-            if (isset($this->object[$dsid])) {
-              $this->object[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
-            }
+            $xacml_ds->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
           }
         }
         if (count($ds_roles) > 0) {
           foreach ($ds_roles as $role) {
-            if (isset($this->object[$dsid])) {
-              $this->object[$dsid]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
-            }
+            $xacml_ds->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
           }
         }
       }
