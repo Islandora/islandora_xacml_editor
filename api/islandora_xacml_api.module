@@ -99,11 +99,21 @@ function islandora_xacml_api_islandora_solr_query($islandora_solr_query) {
 /**
  * Implements hook_islandora_basic_collection_query_get_query_statements().
  */
-function islandora_xacml_api_islandora_basic_collection_get_query_statements() {
-  return array(
-    'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByRole> ?role . }',
-    'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user . }',
-  );
+function islandora_xacml_api_islandora_basic_collection_get_query_statements($type) {
+  switch ($type) {
+    case 'manage':
+      return array(
+        'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isManageableByRole> ?role . }',
+        'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isManageableByUser> ?user . }',
+      );
+
+    case 'view':
+    default:
+      return array(
+        'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByRole> ?role . }',
+        'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user . }',
+      );
+  }
 }
 
 /**
