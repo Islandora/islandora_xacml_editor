@@ -123,36 +123,6 @@ function islandora_xacml_editor_islandora_datastream_purged(AbstractObject $obje
 }
 
 /**
- * Implements hook_islandora_datastream_ingested().
- */
-function islandora_xacml_editor_islandora_datastream_ingested(AbstractObject $object, AbstractDatastream $datastream) {
-  if (isset($object['POLICY'])) {
-    $xacml = new IslandoraXacml($object);
-    $ds_rule = $xacml->datastreamRule->getRuleArray();
-    if (array_search($datastream->id, $ds_rule['dsids']) !== FALSE) {
-      $viewable_by_user = 'isViewableByUser';
-      $viewable_by_role = 'isViewableByRole';
-      if (count($ds_rule['users']) > 0) {
-        foreach ($ds_rule['users'] as $user) {
-          // The XACML API adds fedoraAdmin to the list of users as to prevent
-          // an object from being completely locked out. As this role is a
-          // Fedora role and has no interaction with Drupal we won't add it for
-          // cleanliness sake.
-          if ($user !== 'fedoraAdmin') {
-            $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
-          }
-        }
-      }
-      if (count($ds_rule['roles']) > 0) {
-        foreach ($ds_rule['roles'] as $role) {
-          $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
-        }
-      }
-    }
-  }
-}
-
-/**
  * Implemenets hook_islandora_xacml_editor_child_query().
  */
 function islandora_xacml_editor_islandora_collectionCModel_islandora_xacml_editor_child_query($object) {
