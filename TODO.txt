@@ -1,19 +1,12 @@
 TODO:
 =====
 
-Highest priority
-----------------
-
-- Change the query_alter hook so we don't blow away the previous query. This will be an issue when we are applying namespace restrictions. This will require a refactor to how we build queries, a query builder (a tech task that needs to be done).
-
 High priority
 -------------
 
 - Child query hook implementation for newspaper and book. Implications that fall under implementing these as well.
 
 - POLICY addition to children on batching.
-
-- Refactor the big module file into smaller separate files.
 
 - Update DS-COMPOSITE-MODELS of content models so that MIME Type completion is more accurate.
 
