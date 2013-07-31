@@ -21,4 +21,4 @@ script:
   - $ISLANDORA_DIR/tests/scripts/line_endings.sh sites/all/modules/islandora_xacml_editor
   - drush coder-review --reviews=production,security,style,i18n,potx,sniffer islandora_xacml_editor
   - phpcpd --names *.module,*.inc,*.test sites/all/modules/islandora_xacml_editor
-  - drush test-run --uri=http://localhost:8081 "Islandora Xacml Editor"
+  - drush test-run --uri=http://localhost:8081 "Islandora XACML Editor"

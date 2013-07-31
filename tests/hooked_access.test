@@ -22,7 +22,7 @@ class IslandoraXacmlEditorHookedAccessTestCase extends IslandoraWebTestCase {
     return array(
       'name' => 'Islandora XACML Editor Hooked Access Hook Implementation',
       'description' => 'Ensure that the hooked access callback returns appropriate results.',
-      'group' => 'Islandora',
+      'group' => 'Islandora XACML Editor',
     );
   }
 
@@ -69,7 +69,6 @@ class IslandoraXacmlEditorHookedAccessTestCase extends IslandoraWebTestCase {
       $datastream->content = 'Some kinda awesome content stuffs...';
 
       $object->ingestDatastream($datastream);
-
       $object = $this->repository->ingestObject($object);
     }
   }
