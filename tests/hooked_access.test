@@ -68,9 +68,11 @@ class IslandoraXacmlEditorHookedAccessTestCase extends IslandoraWebTestCase {
       $datastream->mimetype = 'text/plain';
       $datastream->content = 'Some kinda awesome content stuffs...';
 
-
       $object->ingestDatastream($datastream);
-
+      // @TODO: Currently Tuque blows up when attempting to modify relationships
+      // on an object that has no model. Until this is fixed we'll set a fake
+      // one such that the test passes.
+      $object->models = 'fake:model';
       $object = $this->repository->ingestObject($object);
     }
   }
