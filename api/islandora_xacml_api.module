@@ -182,7 +182,18 @@ function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user
     $xacml = new IslandoraXacml($datastream->parent);
 
     if (FEDORA_VIEW_OBJECTS == $op) {
-      return $xacml->datastreamRule->hasPermission($user->name, $user->roles, $datastream->mimetype, $datastream->id);
+      $object_results = islandora_xacml_api_islandora_object_access(
+        $op,
+        $datastream->parent,
+        $user
+      );
+      $datastream_reslts = $xacml->datastreamRule->hasPermission(
+        $user->name,
+        $user->roles,
+        $datastream->mimetype,
+        $datastream->id
+      );
+      return $object_results && $datastream_reslts;
     }
   }
   return NULL;

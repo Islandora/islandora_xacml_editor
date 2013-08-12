@@ -90,8 +90,6 @@ class IslandoraXacmlHookedAccessTestCase extends IslandoraWebTestCase {
       $xacml = new IslandoraXacml($object);
       $xacml->viewingRule->addUser($user_allow->name);
       $xacml->managementRule->addUser($user_allow->name);
-      $xacml->datastreamRule->addDsid($datastream->id);
-      $xacml->datastreamRule->addUser($user_allow->name);
       $xacml->writeBackToFedora();
 
       $object = $this->repository->ingestObject($object);
