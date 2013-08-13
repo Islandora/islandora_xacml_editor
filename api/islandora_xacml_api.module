@@ -5,10 +5,18 @@
  * Islandora Xacml module API functions.
  */
 
-define('MANAGEMENT_RULE', 'deny-management-functions');
-define('DATASTREAM_RULE', 'deny-dsid-mime');
-define('VIEWING_RULE', 'deny-access-functions');
-define('PERMIT_RULE', 'allow-everything-else');
+define('ISLANDORA_XACML_API_MANAGEMENT_RULE', 'deny-management-functions');
+define('ISLANDORA_XACML_API_DATASTREAM_RULE', 'deny-dsid-mime');
+define('ISLANDORA_XACML_API_VIEWING_RULE', 'deny-access-functions');
+define('ISLANDORA_XACML_API_PERMIT_RULE', 'allow-everything-else');
+
+// @codingStandardsIgnoreStart
+// XXX: Remove this at some point in the future.
+define('MANAGEMENT_RULE', ISLANDORA_XACML_API_MANAGEMENT_RULE);
+define('DATASTREAM_RULE', ISLANDORA_XACML_API_DATASTREAM_RULE);
+define('VIEWING_RULE', ISLANDORA_XACML_API_VIEWING_RULE);
+define('PERMIT_RULE', ISLANDORA_XACML_API_PERMIT_RULE);
+// @codingStandardsIgnoreEnd
 
 /**
  * Implements hook_menu().
