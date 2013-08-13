@@ -295,7 +295,8 @@ class XacmlManagementRule extends XacmlRule {
    *  If $arg1 is NULL instantiates the rule as a new blank rule.
    *
    * @param mixed $arg1
-   *   Existing Rule datastructure with ID ISLANDORA_XACML_API_MANAGEMENT_RULE or NULL
+   *   Existing Rule datastructure with ID ISLANDORA_XACML_API_MANAGEMENT_RULE
+   *   or NULL.
    * @param Xacml $xacml
    *   Reference to the parent XACML object.
    */
@@ -358,7 +359,8 @@ class XacmlViewingRule extends XacmlRule {
    *   If $arg1 is NULL instantiates the rule as a new blank rule.
    *
    * @param mixed $arg1
-   *   Existing Rule datastructure with ID ISLANDORA_XACML_API_VIEWING_RULE or NULL
+   *   Existing Rule datastructure with ID ISLANDORA_XACML_API_VIEWING_RULE or
+   *   NULL.
    * @param Xacml $xacml
    *   Reference to the parent XACML object.
    */
@@ -469,7 +471,8 @@ class XacmlDatastreamRule extends XacmlRule {
    * Initialized the rule.
    *
    * @param mixed $arg1
-   *   NULL or an esiting $rule array with ID ISLANDORA_XACML_API_DATASTREAM_RULE
+   *   NULL or an existing $rule array with ID
+   *   ISLANDORA_XACML_API_DATASTREAM_RULE.
    * @param Xacml $xacml
    *   Reference to parent Xacml object.
    */

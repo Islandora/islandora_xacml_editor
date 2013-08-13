@@ -110,17 +110,20 @@ function islandora_xacml_api_islandora_solr_query($islandora_solr_query) {
 function islandora_xacml_api_islandora_basic_collection_get_query_statements($type) {
   switch ($type) {
     case 'manage':
-      return array(
+      $to_return = array(
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isManageableByRole> ?role . }',
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isManageableByUser> ?user . }',
       );
+      return $to_return;
 
     case 'view':
     default:
-      return array(
+      $to_return = array(
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByRole> ?role . }',
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user . }',
       );
+      return $to_return;
+
   }
 }
 
