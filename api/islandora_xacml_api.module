@@ -142,11 +142,11 @@ function islandora_xacml_api_islandora_basic_collection_get_query_filters() {
  */
 function islandora_xacml_api_islandora_object_access($op, $object, $user) {
   $management_operations = array(
-    FEDORA_MANAGE_PROPERTIES,
-    FEDORA_METADATA_EDIT,
-    FEDORA_ADD_DS,
-    FEDORA_PURGE,
-    FEDORA_INGEST,
+    ISLANDORA_MANAGE_PROPERTIES,
+    ISLANDORA_METADATA_EDIT,
+    ISLANDORA_ADD_DS,
+    ISLANDORA_PURGE,
+    ISLANDORA_INGEST,
   );
 
   // XXX: Is it necessary to address the case when POLICY is not readable?...
@@ -159,7 +159,7 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
 
     $xacml = new IslandoraXacml($object);
 
-    if (FEDORA_VIEW_OBJECTS == $op) {
+    if (ISLANDORA_VIEW_OBJECTS == $op) {
       return $xacml->viewingRule->hasPermission($user->name, $user->roles);
     }
     elseif (in_array($op, $management_operations)) {
@@ -181,7 +181,7 @@ function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user
 
     $xacml = new IslandoraXacml($datastream->parent);
 
-    if (FEDORA_VIEW_OBJECTS == $op) {
+    if (ISLANDORA_VIEW_OBJECTS == $op) {
       $object_results = islandora_xacml_api_islandora_object_access(
         $op,
         $datastream->parent,
