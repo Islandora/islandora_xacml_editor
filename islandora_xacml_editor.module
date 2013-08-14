@@ -235,13 +235,19 @@ function islandora_xacml_editor_undo_policy(&$form_state) {
     if (isset($object['POLICY'])) {
       $viewable_by_user = 'isViewableByUser';
       $viewable_by_role = 'isViewableByRole';
+      $manageable_by_user = 'isManageableByUser';
+      $manageable_by_role = 'isManageableByRole';
       $object->purgeDatastream('POLICY');
       $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
       $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
+      $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_user);
+      $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_role);
 
       foreach ($object as $dsid => $value) {
         $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
         $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
+        $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_user);
+        $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
       }
     }
   }
