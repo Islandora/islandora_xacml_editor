@@ -162,7 +162,7 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
     if (FEDORA_VIEW_OBJECTS == $op) {
       return $xacml->viewingRule->hasPermission($user->name, $user->roles);
     }
-    elseif (in_array($op, $management_operations)) {
+    elseif (in_array($op, $management_operations) && $xacml->managementRule->isPopulated()) {
       return $xacml->managementRule->hasPermission($user->name, $user->roles);
     }
   }
