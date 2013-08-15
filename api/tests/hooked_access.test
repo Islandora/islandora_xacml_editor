@@ -38,14 +38,14 @@ class IslandoraXacmlHookedAccessTestCase extends IslandoraWebTestCase {
       'test:testAccessHook',
     );
     $this->access_ops = array(
-      FEDORA_VIEW_OBJECTS,
+      ISLANDORA_VIEW_OBJECTS,
     );
     $this->management_ops = array(
-      FEDORA_MANAGE_PROPERTIES,
-      FEDORA_METADATA_EDIT,
-      FEDORA_ADD_DS,
-      FEDORA_PURGE,
-      FEDORA_INGEST,
+      ISLANDORA_MANAGE_PROPERTIES,
+      ISLANDORA_METADATA_EDIT,
+      ISLANDORA_ADD_DS,
+      ISLANDORA_PURGE,
+      ISLANDORA_INGEST,
     );
     $this->purgeTestObjects();
     $this->dsid = 'asdf';

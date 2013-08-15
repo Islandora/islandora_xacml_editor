@@ -295,14 +295,15 @@ class XacmlManagementRule extends XacmlRule {
    *  If $arg1 is NULL instantiates the rule as a new blank rule.
    *
    * @param mixed $arg1
-   *   Existing Rule datastructure with ID MANAGEMENT_RULE or NULL
+   *   Existing Rule datastructure with ID ISLANDORA_XACML_API_MANAGEMENT_RULE
+   *   or NULL.
    * @param Xacml $xacml
    *   Reference to the parent XACML object.
    */
   public function __construct($arg1, $xacml) {
     parent::__construct($arg1, $xacml);
     if ($arg1 == NULL) {
-      $this->rule = $this->initializeRule(MANAGEMENT_RULE, 'Deny');
+      $this->rule = $this->initializeRule(ISLANDORA_XACML_API_MANAGEMENT_RULE, 'Deny');
       $this->rule['methods'] = array(
         'addDatastream',
         'addDisseminator',
@@ -358,14 +359,15 @@ class XacmlViewingRule extends XacmlRule {
    *   If $arg1 is NULL instantiates the rule as a new blank rule.
    *
    * @param mixed $arg1
-   *   Existing Rule datastructure with ID VIEWING_RULE or NULL
+   *   Existing Rule datastructure with ID ISLANDORA_XACML_API_VIEWING_RULE or
+   *   NULL.
    * @param Xacml $xacml
    *   Reference to the parent XACML object.
    */
   public function __construct($arg1, $xacml) {
     parent::__construct($arg1, $xacml);
     if ($arg1 == NULL) {
-      $this->rule = $this->initializeRule(VIEWING_RULE, 'Deny');
+      $this->rule = $this->initializeRule(ISLANDORA_XACML_API_VIEWING_RULE, 'Deny');
       $this->rule['methods'] = array(
         'api-a',
         'getDatastreamHistory',
@@ -431,7 +433,7 @@ class XacmlPermitEverythingRule extends XacmlRule {
    */
   public function __construct($xacml) {
     parent::__construct(NULL, $xacml);
-    $this->rule = $this->initializeRule(PERMIT_RULE, 'Permit');
+    $this->rule = $this->initializeRule(ISLANDORA_XACML_API_PERMIT_RULE, 'Permit');
   }
 
   /**
@@ -469,14 +471,15 @@ class XacmlDatastreamRule extends XacmlRule {
    * Initialized the rule.
    *
    * @param mixed $arg1
-   *   NULL or an esiting $rule array with ID DATASTREAM_RULE
+   *   NULL or an existing $rule array with ID
+   *   ISLANDORA_XACML_API_DATASTREAM_RULE.
    * @param Xacml $xacml
    *   Reference to parent Xacml object.
    */
   public function __construct($arg1, $xacml) {
     parent::__construct($arg1, $xacml);
     if ($arg1 == NULL) {
-      $this->rule = $this->initializeRule(DATASTREAM_RULE, 'Deny');
+      $this->rule = $this->initializeRule(ISLANDORA_XACML_API_DATASTREAM_RULE, 'Deny');
       $this->rule['methods'][] = 'getDatastreamDissemination';
     }
   }
@@ -785,13 +788,13 @@ class Xacml {
 
       // Decide what is enabled.
       foreach ($this->xacml['rules'] as $rule) {
-        if ($rule['ruleid'] == MANAGEMENT_RULE) {
+        if ($rule['ruleid'] == ISLANDORA_XACML_API_MANAGEMENT_RULE) {
           $management_rule = $rule;
         }
-        elseif ($rule['ruleid'] == DATASTREAM_RULE) {
+        elseif ($rule['ruleid'] == ISLANDORA_XACML_API_DATASTREAM_RULE) {
           $datastream_rule = $rule;
         }
-        elseif ($rule['ruleid'] == VIEWING_RULE) {
+        elseif ($rule['ruleid'] == ISLANDORA_XACML_API_VIEWING_RULE) {
           $viewing_rule = $rule;
         }
       }

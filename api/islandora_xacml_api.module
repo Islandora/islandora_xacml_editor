@@ -5,10 +5,18 @@
  * Islandora Xacml module API functions.
  */
 
-define('MANAGEMENT_RULE', 'deny-management-functions');
-define('DATASTREAM_RULE', 'deny-dsid-mime');
-define('VIEWING_RULE', 'deny-access-functions');
-define('PERMIT_RULE', 'allow-everything-else');
+define('ISLANDORA_XACML_API_MANAGEMENT_RULE', 'deny-management-functions');
+define('ISLANDORA_XACML_API_DATASTREAM_RULE', 'deny-dsid-mime');
+define('ISLANDORA_XACML_API_VIEWING_RULE', 'deny-access-functions');
+define('ISLANDORA_XACML_API_PERMIT_RULE', 'allow-everything-else');
+
+// @codingStandardsIgnoreStart
+// XXX: Remove this at some point in the future.
+define('MANAGEMENT_RULE', ISLANDORA_XACML_API_MANAGEMENT_RULE);
+define('DATASTREAM_RULE', ISLANDORA_XACML_API_DATASTREAM_RULE);
+define('VIEWING_RULE', ISLANDORA_XACML_API_VIEWING_RULE);
+define('PERMIT_RULE', ISLANDORA_XACML_API_PERMIT_RULE);
+// @codingStandardsIgnoreEnd
 
 /**
  * Implements hook_menu().
@@ -102,17 +110,20 @@ function islandora_xacml_api_islandora_solr_query($islandora_solr_query) {
 function islandora_xacml_api_islandora_basic_collection_get_query_statements($type) {
   switch ($type) {
     case 'manage':
-      return array(
+      $to_return = array(
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isManageableByRole> ?role . }',
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isManageableByUser> ?user . }',
       );
+      return $to_return;
 
     case 'view':
     default:
-      return array(
+      $to_return = array(
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByRole> ?role . }',
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user . }',
       );
+      return $to_return;
+
   }
 }
 
@@ -142,11 +153,11 @@ function islandora_xacml_api_islandora_basic_collection_get_query_filters() {
  */
 function islandora_xacml_api_islandora_object_access($op, $object, $user) {
   $management_operations = array(
-    FEDORA_MANAGE_PROPERTIES,
-    FEDORA_METADATA_EDIT,
-    FEDORA_ADD_DS,
-    FEDORA_PURGE,
-    FEDORA_INGEST,
+    ISLANDORA_MANAGE_PROPERTIES,
+    ISLANDORA_METADATA_EDIT,
+    ISLANDORA_ADD_DS,
+    ISLANDORA_PURGE,
+    ISLANDORA_INGEST,
   );
 
   // XXX: Is it necessary to address the case when POLICY is not readable?...
@@ -159,7 +170,7 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
 
     $xacml = new IslandoraXacml($object);
 
-    if (FEDORA_VIEW_OBJECTS == $op) {
+    if (ISLANDORA_VIEW_OBJECTS == $op) {
       return $xacml->viewingRule->hasPermission($user->name, $user->roles);
     }
     elseif (in_array($op, $management_operations) && $xacml->managementRule->isPopulated()) {
@@ -181,7 +192,7 @@ function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user
 
     $xacml = new IslandoraXacml($datastream->parent);
 
-    if (FEDORA_VIEW_OBJECTS == $op) {
+    if (ISLANDORA_VIEW_OBJECTS == $op) {
       $object_results = islandora_xacml_api_islandora_object_access(
         $op,
         $datastream->parent,
