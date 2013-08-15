@@ -96,19 +96,19 @@ class IslandoraXacmlEditorHookedAccessTestCase extends IslandoraWebTestCase {
 
     $this->assertFalse(islandora_object_access($op, $this->object, $this->drupalCreateUser(array(
       $op,
-    ))), "Deny '$op' without existing POLICY or FEDORA_ADD_DS.");
+    ))), "Deny '$op' without existing POLICY or ISLANDORA_ADD_DS.");
     $this->assertTrue(islandora_object_access($op, $this->object, $this->drupalCreateUser(array(
       $op,
-      FEDORA_ADD_DS,
-    ))), "Allow '$op' with FEDORA_ADD_DS and without existing POLICY.");
+      ISLANDORA_ADD_DS,
+    ))), "Allow '$op' with ISLANDORA_ADD_DS and without existing POLICY.");
 
     $user_allow = $this->drupalCreateUser(array(
       $op,
-      FEDORA_METADATA_EDIT,
+      ISLANDORA_METADATA_EDIT,
     ));
     $users_deny = array(
       'edit permission' => $this->drupalCreateUser(array($op)),
-      'admin permission' => $this->drupalCreateUser(array(FEDORA_METADATA_EDIT)),
+      'admin permission' => $this->drupalCreateUser(array(ISLANDORA_METADATA_EDIT)),
       'all required permissions' => $this->drupalCreateUser(),
     );
 
