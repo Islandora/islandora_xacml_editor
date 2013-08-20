@@ -173,7 +173,7 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
     if (ISLANDORA_VIEW_OBJECTS == $op) {
       return $xacml->viewingRule->hasPermission($user->name, $user->roles);
     }
-    elseif (in_array($op, $management_operations)) {
+    elseif (in_array($op, $management_operations) && $xacml->managementRule->isPopulated()) {
       return $xacml->managementRule->hasPermission($user->name, $user->roles);
     }
   }
@@ -192,19 +192,27 @@ function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user
 
     $xacml = new IslandoraXacml($datastream->parent);
 
-    if (ISLANDORA_VIEW_OBJECTS == $op) {
+    $check_ops = array(
+      ISLANDORA_VIEW_OBJECTS,
+      ISLANDORA_METADATA_EDIT,
+      ISLANDORA_PURGE,
+    );
+    if (in_array($op, $check_ops)) {
       $object_results = islandora_xacml_api_islandora_object_access(
         $op,
         $datastream->parent,
         $user
       );
-      $datastream_reslts = $xacml->datastreamRule->hasPermission(
+      $datastream_results = $xacml->datastreamRule->hasPermission(
         $user->name,
         $user->roles,
         $datastream->mimetype,
         $datastream->id
       );
-      return $object_results && $datastream_reslts;
+
+      $results = (array) $object_results;
+      $results[] = $datastream_results;
+      return $results;
     }
   }
   return NULL;

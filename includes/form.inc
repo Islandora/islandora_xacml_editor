@@ -122,12 +122,25 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
     $form_state['islandora_xacml']['access']['enabled'] = $form['access_enabled']['#default_value'];
   }
 
+  $form['manage_enabled'] = array(
+    '#weight' => -2,
+    '#type' => 'checkbox',
+    '#title' => t('Enable XACML Restrictions on Object Management'),
+    '#default_value' => $xacml->managementRule->isPopulated(),
+  );
+
   $form['manage'] = array(
     '#weight' => -1,
     '#type' => 'fieldset',
     '#title' => t('Object Management'),
     '#description' => 'Select the Users and Roles that are allowed to manage this object. These users will also be able to view the object even if not explicitly allowed to in the object access section. WARNING: If you unselect yourself you will be locked out of the object.',
-    '#collapsible' => FALSE,
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="manage_enabled"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $form['manage']['users'] = array(
@@ -957,15 +970,17 @@ function islandora_xacml_editor_form_validate(&$form, &$form_state) {
   $current_user = $form_state['islandora_xacml']['current_user'];
 
   // Management functions.
-  if (!array_key_exists($admin_user, $form_state['values']['manage']['users']) ||
-      !array_key_exists($current_user, $form_state['values']['manage']['users'])) {
-    if ($admin_user == $current_user) {
-      form_set_error('manage][users', "Please make sure that $admin_user is selected in the manage
-        section to prevent locking yourself out of the object.");
-    }
-    else {
-      form_set_error('manage][users', "Please make sure that $admin_user and $current_user are selected in the manage
-        section to prevent locking yourself and the admin user out of the object.");
+  if ($form_state['values']['manage_enabled']) {
+    if (!array_key_exists($admin_user, $form_state['values']['manage']['users']) ||
+        !array_key_exists($current_user, $form_state['values']['manage']['users'])) {
+      if ($admin_user == $current_user) {
+        form_set_error('manage][users', "Please make sure that $admin_user is selected in the manage
+          section to prevent locking yourself out of the object.");
+      }
+      else {
+        form_set_error('manage][users', "Please make sure that $admin_user and $current_user are selected in the manage
+          section to prevent locking yourself and the admin user out of the object.");
+      }
     }
   }
 
@@ -998,9 +1013,8 @@ function islandora_xacml_editor_form_submit(&$form, &$form_state) {
   // Check datastreams and mime.
   $values = $form_state['values']['dsid_mime'];
 
+  $xacml->datastreamRule->clear();
   if ($form_state['values']['dsid_mime_enabled']) {
-    $xacml->datastreamRule->clear();
-
     if (array_key_exists('selected_mime', $form_state['islandora_xacml'])) {
       $xacml->datastreamRule->addMimetype($form_state['islandora_xacml']['selected_mime']);
     }
@@ -1020,26 +1034,21 @@ function islandora_xacml_editor_form_submit(&$form, &$form_state) {
     $xacml->datastreamRule->addUser($values['users']);
     $xacml->datastreamRule->addRole($values['roles']);
   }
-  // User selects to disable the datastream rule when it was previously enabled.
-  elseif ($form_state['values']['dsid_mime_enabled'] != $form_state['islandora_xacml']['dsid_mime']['enabled']) {
-    $xacml->datastreamRule->clear();
-  }
+
   // Check admin (always have this rule).
   $values = $form_state['values']['manage'];
   $xacml->managementRule->clear();
-  $xacml->managementRule->addUser($values['users']);
-  $xacml->managementRule->addRole($values['roles']);
+  if ($form_state['values']['manage_enabled']) {
+    $xacml->managementRule->addUser($values['users']);
+    $xacml->managementRule->addRole($values['roles']);
+  }
 
   // Check access.
   $values = $form_state['values']['access'];
+  $xacml->viewingRule->clear();
   if ($form_state['values']['access_enabled']) {
-    $xacml->viewingRule->clear();
     $xacml->viewingRule->addUser($values['users']);
     $xacml->viewingRule->addRole($values['roles']);
-  }
-  // User selects to disable the access rule when it was previously enabled.
-  elseif ($form_state['values']['access_enabled'] != $form_state['islandora_xacml']['access']['enabled']) {
-    $xacml->viewingRule->clear();
   }
 
   $xacml->writeBackToFedora();
