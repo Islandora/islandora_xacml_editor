@@ -4,6 +4,6 @@ dependencies[] = islandora_xacml_api
 description = Visually edit XACML policies for objects.
 configure = admin/islandora/xacml/editor
 package = Islandora
-version = 7.x-1.2-RC2
+version = 7.x-1.2
 core = 7.x
 files[] = tests/hooked_access.test
