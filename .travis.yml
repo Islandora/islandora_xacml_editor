@@ -4,7 +4,7 @@ php:
   - 5.4
 branches:
   only:
-    - 7.x
+    - /^7.x/
 env:
   - FEDORA_VERSION="3.5"
   - FEDORA_VERSION="3.6.2"
@@ -20,5 +20,6 @@ script:
   - ant -buildfile sites/all/modules/islandora_xacml_editor/build.xml lint
   - $ISLANDORA_DIR/tests/scripts/line_endings.sh sites/all/modules/islandora_xacml_editor
   - drush coder-review --reviews=production,security,style,i18n,potx,sniffer islandora_xacml_editor
+  - drush coder-review --reviews=production,security,style,i18n,potx,sniffer islandora_xacml_api
   - phpcpd --names *.module,*.inc,*.test sites/all/modules/islandora_xacml_editor
   - drush test-run --uri=http://localhost:8081 "Islandora XACML Editor"
