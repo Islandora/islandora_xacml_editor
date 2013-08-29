@@ -14,7 +14,17 @@ function islandora_xacml_editor_permission() {
     ),
   );
 }
-
+/**
+ * Implements hook_theme().
+ */
+function islandora_xacml_editor_theme($existing, $type, $theme, $path) {
+  return array(
+    'islandora_xacml_editor_policy_management_table' => array(
+      'file' => 'includes/form.inc',
+      'render element' => 'table',
+    ),
+  );
+}
 /**
  * Implements hook_menu().
  */
@@ -216,14 +226,18 @@ function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
  */
 function islandora_xacml_editor_apply_policy(&$form_state, $parent) {
   $parent_object = islandora_object_load($parent);
-  if ($parent_object['POLICY'] && $form_state['input']['xacml'] != 'None') {
+  if ((!isset($form_state['input']['xacml']) && $parent_object['POLICY']) ||
+    ($parent_object['POLICY'] && $form_state['input']['xacml'] != 'None')) {
     foreach ($form_state['islandora']['objects'] as $object) {
       // Need to update the RELS-INT to indicate which parent this policy is
       // inherited from.
-      $object->relationships->add(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent, TRUE);
+      $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent, TRUE);
       $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
       $xacml->writeBackToFedora();
     }
+  }
+  if (!isset($parent_object['POLICY'])) {
+    drupal_set_message(t("Parent $parent does not contain an xacml policy."), 'status');
   }
 }
 
@@ -257,7 +271,7 @@ function islandora_xacml_editor_undo_policy(&$form_state) {
 }
 
 /**
- * Implements islandora_build_manage_object_hook().
+ * Implements islandora_basic_collection_build_manage_object().
  *
  * @param array $form_state
  *   The current Form State being processed.
@@ -267,7 +281,7 @@ function islandora_xacml_editor_undo_policy(&$form_state) {
  * @return array
  *   The current Form State with manage_xacml element appended.
  */
-function islandora_xacml_editor_islandora_build_manage_object(array $form_state, AbstractObject $object) {
+function islandora_xacml_editor_islandora_basic_collection_build_manage_object(array $form_state, AbstractObject $object) {
   $form_state['manage_collection_object']['manage_xacml'] = array(
     '#id' => 'manage-xacml',
     '#group' => 'manage_xacml_object',
@@ -289,7 +303,6 @@ function islandora_xacml_editor_islandora_build_manage_object(array $form_state,
  *   The current Form State being processed.
  */
 function islandora_xacml_editor_form_islandora_basic_collection_create_child_collection_form_alter(array &$form, array &$form_state) {
-  dsm($form);
   $parent_object = islandora_object_load($form_state['islandora']['shared_storage']['parent']);
   $xacml_options = array('None' => 'none');
   if ($parent_object) {
@@ -297,7 +310,7 @@ function islandora_xacml_editor_form_islandora_basic_collection_create_child_col
   }
 
   $form['xacml'] = array(
-    '#weight' => 1,
+    '#weight' => -1,
     '#type' => 'select',
     '#title' => t('Inherit XACML policy from'),
     '#options' => $xacml_options,
@@ -319,10 +332,14 @@ function islandora_xacml_editor_form_islandora_basic_collection_create_child_col
  */
 function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_state, AbstractObject $object) {
   module_load_include('inc', 'islandora', 'includes/utilities');
-  $child_collections_pids = islandora_basic_collection_get_child_pids($object, 'islandora:collectionCModel');
+  $dt = islandora_basic_collection_get_member_objects($object, 0, 20, 'view', 'islandora:collectionCModel');
+  $child_collections_pids = array();
   $rows = array();
   $options = array('none' => 'None');
-  $child_collection;
+  // Get the pids of the children for this collection.
+  foreach ($dt[1] as $info) {
+    array_push($child_collections_pids, $info['object']['value']);
+  }
   foreach ($child_collections_pids as $pid) {
     $child_collection = islandora_object_load($pid);
     $parent_pids = islandora_basic_collection_get_parent_pids($child_collection);
@@ -358,7 +375,10 @@ function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_stat
       '#header' => array(
         array('class' => array('select-all')), t('COLLECTION(PID)'), 'INHERIT FROM',
       ),
-      '#theme' => 'islandora_basic_collection_policy_management_table',
+      'pager' => array(
+        '#markup' => theme('pager'),
+      ),
+      '#theme' => 'islandora_xacml_editor_policy_management_table',
       'rows' => $rows,
     ),
     'submit' => array(
@@ -377,7 +397,6 @@ function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_stat
  *   The Drupal form state.
  */
 function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$form_state) {
-  $parent_object;
   $child_pids = array_keys($form_state['values']['table']['rows']);
   $count = 0;
   foreach ($form_state['values']['table']['rows'] as $row) {
