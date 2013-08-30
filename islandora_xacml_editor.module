@@ -310,11 +310,30 @@ function islandora_xacml_editor_form_islandora_basic_collection_create_child_col
   }
 
   $form['xacml'] = array(
-    '#weight' => -1,
     '#type' => 'select',
     '#title' => t('Inherit XACML policy from'),
     '#options' => $xacml_options,
   );
+  // Using after_build to alter the weight dynamically.
+  $form['#after_build'][] = 'islandora_xacml_editor_after_build';
+}
+
+/**
+ * Dynamically adjust form element weights in after_build.
+ *
+ * @param array $form
+ *   The form that has been rendered.
+ * @param array $form_state
+ *   The active form's form state.
+ *
+ * @return array
+ *   The form after POST processing is complete.
+ */
+function islandora_xacml_editor_after_build($form, &$form_state) {
+  $form['xacml']['#weight'] = $form['next']['#weight'] - .001;
+  unset($form['#sorted']);
+  dsm($form);
+  return $form;
 }
 
 /**
