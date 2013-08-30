@@ -332,7 +332,6 @@ function islandora_xacml_editor_form_islandora_basic_collection_create_child_col
 function islandora_xacml_editor_after_build($form, &$form_state) {
   $form['xacml']['#weight'] = $form['next']['#weight'] - .001;
   unset($form['#sorted']);
-  dsm($form);
   return $form;
 }
 
