@@ -237,7 +237,7 @@ function islandora_xacml_editor_apply_policy(&$form_state, $parent) {
     }
   }
   if (!isset($parent_object['POLICY'])) {
-    drupal_set_message(check_plain(t('Parent $tmp does not contain an xacml policy.'), 'status'));
+    drupal_set_message(t('Parent @object does not contain an xacml policy.'), array('@object' => $parent->id), 'status');
   }
 }
 
