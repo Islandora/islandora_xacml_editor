@@ -470,7 +470,6 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
         }
       }
     }
-    
     $count++;
   }
 }
