@@ -430,6 +430,12 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
           $object->relationships->add(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
           $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
           $xacml->writeBackToFedora();
+          drupal_set_message(t('@object now inherits XACML from @parent',
+            array(
+              '@object' => $object->id,
+              '@parent' => $parent_object->id),
+            'status')
+          );
         }
       }
       else {
@@ -454,9 +460,17 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
             $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_user);
             $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
           }
+          drupal_set_message(t('@object no longer inherits XACML from @parent',
+            array(
+              '@object' => $object->id,
+              '@parent' => $parent_object->id),
+              'status'
+            )
+          );
         }
       }
     }
+    
     $count++;
   }
 }
