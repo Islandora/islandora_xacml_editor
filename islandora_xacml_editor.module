@@ -42,7 +42,7 @@ function islandora_xacml_editor_menu() {
     'weight' => 0,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_xacml_editor_form', 2),
-    'access callback' => array('administer islandora_xacml_editor'),
+    'access callback' => 'islandora_xacml_editor_access',
     'access arguments' => array(2),
     'file' => 'includes/form.inc',
   );
@@ -90,9 +90,6 @@ function islandora_xacml_editor_access($object) {
   return islandora_object_access('administer islandora_xacml_editor', $object);
 }
 
-function islandora_xacml_editor_manage_inheritance($object) {
-  return islandora_object_access(ISLANDORA_XACML_ADMINISTER_INHERITANCE_PERMISSION, $object);
-}
 /**
  * Implements hook_islandora_object_access().
  */
@@ -300,7 +297,6 @@ function islandora_xacml_editor_islandora_basic_collection_build_manage_object(a
     'form' => drupal_get_form('islandora_xacml_editor_manage_xacml_form', $object),
   );
   $form_state['manage_collection_object']['manage_xacml']['form']['#submit'][] = 'islandora_xacml_editor_manage_xacml_form_submit';
-
   return $form_state;
 }
 
@@ -427,7 +423,7 @@ function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_stat
 function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$form_state) {
   $child_pids = array_keys($form_state['values']['table']['rows']);
   $count = 0;
-  $message = "Complete: " . "\n";
+  $message = "Complete: \n";
   foreach ($form_state['values']['table']['rows'] as $row) {
     // Check if selected.
     if ($row['selected'] > 0) {
@@ -472,5 +468,5 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
     }
     $count++;
   }
-  drupal_set_message(t($message,'status'));
+  drupal_set_message(t('@message', array('@message' => $message), 'status'));
 }
