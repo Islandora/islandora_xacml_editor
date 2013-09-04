@@ -4,6 +4,9 @@
  * The main module file for the Islanora XACML Editor.
  */
 
+// Permission.
+define('ISLANDORA_XACML_ADMINISTER_INHERITANCE_PERMISSION', 'administer xacml inheritance');
+
 /**
  * Implements hook_permission().
  */
@@ -11,6 +14,9 @@ function islandora_xacml_editor_permission() {
   return array(
     'administer islandora_xacml_editor' => array(
       'title' => 'Edit XACML Policies',
+    ),
+    ISLANDORA_XACML_ADMINISTER_INHERITANCE_PERMISSION => array(
+      'title' => 'Edit XACML Inheritance',
     ),
   );
 }
@@ -36,7 +42,7 @@ function islandora_xacml_editor_menu() {
     'weight' => 0,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_xacml_editor_form', 2),
-    'access callback' => 'islandora_xacml_editor_access',
+    'access callback' => array('administer islandora_xacml_editor'),
     'access arguments' => array(2),
     'file' => 'includes/form.inc',
   );
@@ -84,6 +90,9 @@ function islandora_xacml_editor_access($object) {
   return islandora_object_access('administer islandora_xacml_editor', $object);
 }
 
+function islandora_xacml_editor_manage_inheritance($object) {
+  return islandora_object_access(ISLANDORA_XACML_ADMINISTER_INHERITANCE_PERMISSION, $object);
+}
 /**
  * Implements hook_islandora_object_access().
  */
@@ -285,12 +294,13 @@ function islandora_xacml_editor_islandora_basic_collection_build_manage_object(a
   $form_state['manage_collection_object']['manage_xacml'] = array(
     '#id' => 'manage-xacml',
     '#group' => 'manage_xacml_object',
-    '#access' => TRUE,
+    '#access' => user_access(ISLANDORA_XACML_ADMINISTER_INHERITANCE_PERMISSION),
     '#type' => 'fieldset',
     '#title' => t('Manage XACML Inheritance'),
     'form' => drupal_get_form('islandora_xacml_editor_manage_xacml_form', $object),
   );
   $form_state['manage_collection_object']['manage_xacml']['form']['#submit'][] = 'islandora_xacml_editor_manage_xacml_form_submit';
+
   return $form_state;
 }
 
@@ -417,6 +427,7 @@ function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_stat
 function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$form_state) {
   $child_pids = array_keys($form_state['values']['table']['rows']);
   $count = 0;
+  $message = "Complete: " . "\n";
   foreach ($form_state['values']['table']['rows'] as $row) {
     // Check if selected.
     if ($row['selected'] > 0) {
@@ -430,12 +441,7 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
           $object->relationships->add(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
           $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
           $xacml->writeBackToFedora();
-          drupal_set_message(t('@object now inherits XACML from @parent',
-            array(
-              '@object' => $object->id,
-              '@parent' => $parent_object->id),
-            'status')
-          );
+          $message .= $object->id . " now inherits XACML from " . $parent_object->id . "\n";
         }
       }
       else {
@@ -460,16 +466,11 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
             $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_user);
             $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
           }
-          drupal_set_message(t('@object no longer inherits XACML from @parent',
-            array(
-              '@object' => $object->id,
-              '@parent' => $parent_object->id),
-              'status'
-            )
-          );
+          $message .= $object->id . " no longer inherits XACML from " . $parent_object->id . "\n";
         }
       }
     }
     $count++;
   }
+  drupal_set_message(t($message,'status'));
 }
