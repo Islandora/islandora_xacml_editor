@@ -5,7 +5,7 @@
  */
 
 // Permission.
-define('ISLANDORA_XACML_ADMINISTER_INHERITANCE_PERMISSION', 'administer xacml inheritance');
+define('ISLANDORA_XACML_EDITOR_ADMINISTER_INHERITANCE_PERMISSION', 'administer xacml inheritance');
 
 /**
  * Implements hook_permission().
@@ -15,7 +15,7 @@ function islandora_xacml_editor_permission() {
     'administer islandora_xacml_editor' => array(
       'title' => 'Edit XACML Policies',
     ),
-    ISLANDORA_XACML_ADMINISTER_INHERITANCE_PERMISSION => array(
+    ISLANDORA_XACML_EDITOR_ADMINISTER_INHERITANCE_PERMISSION => array(
       'title' => 'Edit XACML Inheritance',
     ),
   );
@@ -107,68 +107,6 @@ function islandora_xacml_editor_islandora_object_access($op, $object, $user) {
 }
 
 /**
- * Implements hook_islandora_datastream_purged().
- */
-function islandora_xacml_editor_islandora_datastream_purged(AbstractObject $object, $dsid) {
-  $viewable_by_user = 'isViewableByUser';
-  $viewable_by_role = 'isViewableByRole';
-  // The XACML POLICY is removed.
-  if ($dsid === 'POLICY') {
-    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
-    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
-    foreach ($object as $dsid => $value) {
-      $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
-      $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
-    }
-  }
-  else {
-    // An individual datastream is removed.
-    if (isset($object['POLICY'])) {
-      $xacml = new IslandoraXacml($object);
-      $ds_rule = $xacml->datastreamRule->getRuleArray();
-      if (array_search($dsid, $ds_rule['dsids']) !== FALSE) {
-        if (count($ds_rule['users']) > 0) {
-          $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
-        }
-        if (count($ds_rule['roles']) > 0) {
-          $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
-        }
-      }
-    }
-  }
-}
-
-/**
- * Implements hook_islandora_datastream_ingested().
- */
-function islandora_xacml_editor_islandora_datastream_ingested(AbstractObject $object, AbstractDatastream $datastream) {
-  if (isset($object['POLICY'])) {
-    $xacml = new IslandoraXacml($object);
-    $ds_rule = $xacml->datastreamRule->getRuleArray();
-    if (array_search($datastream->id, $ds_rule['dsids']) !== FALSE) {
-      $viewable_by_user = 'isViewableByUser';
-      $viewable_by_role = 'isViewableByRole';
-      if (count($ds_rule['users']) > 0) {
-        foreach ($ds_rule['users'] as $user) {
-          // The XACML API adds fedoraAdmin to the list of users as to prevent
-          // an object from being completely locked out. As this role is a
-          // Fedora role and has no interaction with Drupal we won't add it for
-          // cleanliness sake.
-          if ($user !== 'fedoraAdmin') {
-            $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
-          }
-        }
-      }
-      if (count($ds_rule['roles']) > 0) {
-        foreach ($ds_rule['roles'] as $role) {
-          $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
-        }
-      }
-    }
-  }
-}
-
-/**
  * Implemenets hook_islandora_xacml_editor_child_query().
  */
 function islandora_xacml_editor_islandora_collectionCModel_islandora_xacml_editor_child_query($object) {
@@ -243,7 +181,7 @@ function islandora_xacml_editor_apply_policy(&$form_state, $parent) {
     }
   }
   if (!isset($parent_object['POLICY'])) {
-    drupal_set_message(t('Parent @object does not contain an xacml policy.'), array('@object' => $parent->id), 'status');
+    drupal_set_message(t('Parent @object does not contain an xacml policy.'), array('@object' => $parent), 'status');
   }
 }
 
@@ -291,7 +229,7 @@ function islandora_xacml_editor_islandora_basic_collection_build_manage_object(a
   $form_state['manage_collection_object']['manage_xacml'] = array(
     '#id' => 'manage-xacml',
     '#group' => 'manage_xacml_object',
-    '#access' => user_access(ISLANDORA_XACML_ADMINISTER_INHERITANCE_PERMISSION),
+    '#access' => user_access(ISLANDORA_XACML_EDITOR_ADMINISTER_INHERITANCE_PERMISSION),
     '#type' => 'fieldset',
     '#title' => t('Manage XACML Inheritance'),
     'form' => drupal_get_form('islandora_xacml_editor_manage_xacml_form', $object),
@@ -445,23 +383,8 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
         // we must remove the current XACML policy if it exists.
         $object = islandora_object_load($child_pids[$count]);
         if (isset($object['POLICY'])) {
-          $viewable_by_user = 'isViewableByUser';
-          $viewable_by_role = 'isViewableByRole';
-          $manageable_by_user = 'isManageableByUser';
-          $manageable_by_role = 'isManageableByRole';
           $object->relationships->remove(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
           $object->purgeDatastream('POLICY');
-          $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
-          $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
-          $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_user);
-          $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_role);
-
-          foreach ($object as $dsid => $value) {
-            $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
-            $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
-            $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_user);
-            $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
-          }
           $message .= $object->id . " no longer inherits XACML from " . $parent_object->id . "\n";
         }
       }
