@@ -158,6 +158,7 @@ function islandora_xacml_api_islandora_object_access($op, $object, $user) {
     ISLANDORA_ADD_DS,
     ISLANDORA_PURGE,
     ISLANDORA_INGEST,
+    ISLANDORA_REVERT_DATASTREAM,
   );
 
   // XXX: Is it necessary to address the case when POLICY is not readable?...
@@ -196,6 +197,7 @@ function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user
       ISLANDORA_VIEW_OBJECTS,
       ISLANDORA_METADATA_EDIT,
       ISLANDORA_PURGE,
+      ISLANDORA_REVERT_DATASTREAM,
     );
     if (in_array($op, $check_ops)) {
       $object_results = islandora_xacml_api_islandora_object_access(
