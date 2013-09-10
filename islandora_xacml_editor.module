@@ -375,7 +375,12 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
           $object->relationships->add(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
           $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
           $xacml->writeBackToFedora();
-          $message .= $object->id . " now inherits XACML from " . $parent_object->id . "\n";
+          drupal_set_message(t('@child now inherits XACML from @parent.',
+            array(
+              '@child' => $object->id,
+              '@parent' => $parent_object->id),
+            'status')
+          );
         }
       }
       else {
@@ -385,11 +390,13 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
         if (isset($object['POLICY'])) {
           $object->relationships->remove(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
           $object->purgeDatastream('POLICY');
-          $message .= $object->id . " no longer inherits XACML from " . $parent_object->id . "\n";
+          drupal_set_message(t('@child no longer inherits XACML.',
+            array('@object' => $object->id),
+            'status')
+          );
         }
       }
     }
     $count++;
   }
-  drupal_set_message(t('@message', array('@message' => $message), 'status'));
 }
