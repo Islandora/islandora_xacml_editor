@@ -396,7 +396,7 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
           $object->relationships->remove(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
           $object->purgeDatastream('POLICY');
           drupal_set_message(t('@child no longer inherits XACML.',
-            array('@object' => $object->id)),
+            array('@child' => $object->id)),
             'status');
         }
       }
