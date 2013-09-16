@@ -374,15 +374,15 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
           $object->relationships->add(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
           $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
           $xacml->writeBackToFedora();
-          drupal_set_message(t('@parent does not have an XACML policy.',
+          drupal_set_message(t('@child now inherits XACML from @parent.',
             array(
+              '@child' => $object->id,
               '@parent' => $parent_object->id)),
             'status');
         }
         else {
-          drupal_set_message(t('@child now inherits XACML from @parent.',
+          drupal_set_message(t('@parent does not have an XACML policy.',
             array(
-              '@child' => $object->id,
               '@parent' => $parent_object->id)),
             'status');
         }
