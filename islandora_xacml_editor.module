@@ -4,6 +4,9 @@
  * The main module file for the Islanora XACML Editor.
  */
 
+// Permission.
+define('ISLANDORA_XACML_EDITOR_ADMINISTER_INHERITANCE_PERMISSION', 'administer xacml inheritance');
+
 /**
  * Implements hook_permission().
  */
@@ -12,9 +15,22 @@ function islandora_xacml_editor_permission() {
     'administer islandora_xacml_editor' => array(
       'title' => 'Edit XACML Policies',
     ),
+    ISLANDORA_XACML_EDITOR_ADMINISTER_INHERITANCE_PERMISSION => array(
+      'title' => 'Edit XACML Inheritance',
+    ),
   );
 }
-
+/**
+ * Implements hook_theme().
+ */
+function islandora_xacml_editor_theme($existing, $type, $theme, $path) {
+  return array(
+    'islandora_xacml_editor_policy_management_table' => array(
+      'file' => 'includes/form.inc',
+      'render element' => 'table',
+    ),
+  );
+}
 /**
  * Implements hook_menu().
  */
@@ -91,68 +107,6 @@ function islandora_xacml_editor_islandora_object_access($op, $object, $user) {
 }
 
 /**
- * Implements hook_islandora_datastream_purged().
- */
-function islandora_xacml_editor_islandora_datastream_purged(AbstractObject $object, $dsid) {
-  $viewable_by_user = 'isViewableByUser';
-  $viewable_by_role = 'isViewableByRole';
-  // The XACML POLICY is removed.
-  if ($dsid === 'POLICY') {
-    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_user);
-    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, $viewable_by_role);
-    foreach ($object as $dsid => $value) {
-      $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
-      $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
-    }
-  }
-  else {
-    // An individual datastream is removed.
-    if (isset($object['POLICY'])) {
-      $xacml = new IslandoraXacml($object);
-      $ds_rule = $xacml->datastreamRule->getRuleArray();
-      if (array_search($dsid, $ds_rule['dsids']) !== FALSE) {
-        if (count($ds_rule['users']) > 0) {
-          $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
-        }
-        if (count($ds_rule['roles']) > 0) {
-          $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
-        }
-      }
-    }
-  }
-}
-
-/**
- * Implements hook_islandora_datastream_ingested().
- */
-function islandora_xacml_editor_islandora_datastream_ingested(AbstractObject $object, AbstractDatastream $datastream) {
-  if (isset($object['POLICY'])) {
-    $xacml = new IslandoraXacml($object);
-    $ds_rule = $xacml->datastreamRule->getRuleArray();
-    if (array_search($datastream->id, $ds_rule['dsids']) !== FALSE) {
-      $viewable_by_user = 'isViewableByUser';
-      $viewable_by_role = 'isViewableByRole';
-      if (count($ds_rule['users']) > 0) {
-        foreach ($ds_rule['users'] as $user) {
-          // The XACML API adds fedoraAdmin to the list of users as to prevent
-          // an object from being completely locked out. As this role is a
-          // Fedora role and has no interaction with Drupal we won't add it for
-          // cleanliness sake.
-          if ($user !== 'fedoraAdmin') {
-            $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
-          }
-        }
-      }
-      if (count($ds_rule['roles']) > 0) {
-        foreach ($ds_rule['roles'] as $role) {
-          $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
-        }
-      }
-    }
-  }
-}
-
-/**
  * Implemenets hook_islandora_xacml_editor_child_query().
  */
 function islandora_xacml_editor_islandora_collectionCModel_islandora_xacml_editor_child_query($object) {
@@ -216,11 +170,18 @@ function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
  */
 function islandora_xacml_editor_apply_policy(&$form_state, $parent) {
   $parent_object = islandora_object_load($parent);
-  if ($parent_object['POLICY']) {
+  if ((!isset($form_state['input']['xacml']) && $parent_object['POLICY']) ||
+    ($parent_object['POLICY'] && $form_state['input']['xacml'] != 'None')) {
     foreach ($form_state['islandora']['objects'] as $object) {
+      // Need to update the RELS-INT to indicate which parent this policy is
+      // inherited from.
+      $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent, TRUE);
       $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
       $xacml->writeBackToFedora();
     }
+  }
+  if (!isset($parent_object['POLICY'])) {
+    drupal_set_message(t('Parent @object does not contain an xacml policy.'), array('@object' => $parent), 'status');
   }
 }
 
@@ -250,5 +211,195 @@ function islandora_xacml_editor_undo_policy(&$form_state) {
         $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
       }
     }
+  }
+}
+
+/**
+ * Implements islandora_basic_collection_build_manage_object().
+ *
+ * @param array $form_state
+ *   The current Form State being processed.
+ * @param AbstractObject $object
+ *   The Islandora Object being processed.
+ *
+ * @return array
+ *   The current Form State with manage_xacml element appended.
+ */
+function islandora_xacml_editor_islandora_basic_collection_build_manage_object(array $form_state, AbstractObject $object) {
+  $form_state['manage_collection_object']['manage_xacml'] = array(
+    '#id' => 'manage-xacml',
+    '#group' => 'manage_xacml_object',
+    '#access' => user_access(ISLANDORA_XACML_EDITOR_ADMINISTER_INHERITANCE_PERMISSION),
+    '#type' => 'fieldset',
+    '#title' => t('Manage XACML Inheritance'),
+    'form' => drupal_get_form('islandora_xacml_editor_manage_xacml_form', $object),
+  );
+  $form_state['manage_collection_object']['manage_xacml']['form']['#submit'][] = 'islandora_xacml_editor_manage_xacml_form_submit';
+  return $form_state;
+}
+
+/**
+ * Form alter the child collection form.
+ *
+ * @param array $form
+ *   The form being passed from the hook.
+ * @param array $form_state
+ *   The current Form State being processed.
+ */
+function islandora_xacml_editor_form_islandora_basic_collection_create_child_collection_form_alter(array &$form, array &$form_state) {
+  $parent_object = islandora_object_load($form_state['islandora']['shared_storage']['parent']);
+  $xacml_options = array('None' => 'none');
+  if ($parent_object) {
+    $xacml_options[$parent_object->id] = $parent_object->label;
+  }
+
+  $form['xacml'] = array(
+    '#type' => 'select',
+    '#title' => t('Inherit XACML policy from'),
+    '#options' => $xacml_options,
+  );
+  // Using after_build to alter the weight dynamically.
+  $form['#after_build'][] = 'islandora_xacml_editor_after_build';
+}
+
+/**
+ * Dynamically adjust form element weights in after_build.
+ *
+ * @param array $form
+ *   The form that has been rendered.
+ * @param array $form_state
+ *   The active form's form state.
+ *
+ * @return array
+ *   The form after POST processing is complete.
+ */
+function islandora_xacml_editor_after_build($form, &$form_state) {
+  $form['xacml']['#weight'] = $form['next']['#weight'] - .001;
+  unset($form['#sorted']);
+  return $form;
+}
+
+/**
+ * Define the xacml management form.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ * @param AbstractObject $object
+ *   The collection to move child objects from.
+ *
+ * @return array
+ *   The Drupal form definition.
+ */
+function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_state, AbstractObject $object) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
+  $dt = islandora_basic_collection_get_member_objects($object, 0, 20, 'view', 'islandora:collectionCModel');
+  $child_collections_pids = array();
+  $rows = array();
+  $options = array('none' => 'None');
+  // Get the pids of the children for this collection.
+  foreach ($dt[1] as $info) {
+    array_push($child_collections_pids, $info['object']['value']);
+  }
+  foreach ($child_collections_pids as $pid) {
+    $child_collection = islandora_object_load($pid);
+    $parent_pids = islandora_basic_collection_get_parent_pids($child_collection);
+    $rels_ext = $child_collection->relationships->get(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom');
+    foreach ($parent_pids as $parent_pid) {
+      $parent_object = islandora_object_load($parent_pid);
+      $options[$parent_object->id] = $parent_object->label;
+    }
+    $default_value = (isset($rels_ext[0]) ? $rels_ext[0]['object']['value'] : 'none');
+    $rows[$pid] = array(
+      'selected' => array(
+        '#type' => 'checkbox',
+        '#default_value' => FALSE,
+      ),
+      'title' => array(
+        '#markup' => l(t('@label (@pid)', array('@label' => $child_collection->label, '@pid' => $pid)), "islandora/object/{$pid}"),
+      ),
+      'parents' => array(
+        '#type' => 'select',
+        '#options' => $options,
+        '#default_value' => $default_value,
+      ),
+    );
+  }
+  return array(
+    '#action' => request_uri() . '#policy-management',
+    'help' => array(
+      '#type' => 'item',
+      '#markup' => t('XACML Inheritance Policies'),
+    ),
+    'table' => array(
+      '#tree' => TRUE,
+      '#header' => array(
+        array('class' => array('select-all')), t('COLLECTION(PID)'), 'INHERIT FROM',
+      ),
+      'pager' => array(
+        '#markup' => theme('pager'),
+      ),
+      '#theme' => 'islandora_xacml_editor_policy_management_table',
+      'rows' => $rows,
+    ),
+    'submit' => array(
+      '#type' => 'submit',
+      '#value' => t('Update XACML Inheritance'),
+    ),
+  );
+}
+
+/**
+ * Submit handler for the manage XACML form.
+ *
+ * @param array $form
+ *   The Drupal form definition.
+ * @param array $form_state
+ *   The Drupal form state.
+ */
+function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$form_state) {
+  $child_pids = array_keys($form_state['values']['table']['rows']);
+  $count = 0;
+  foreach ($form_state['values']['table']['rows'] as $row) {
+    // Check if selected.
+    if ($row['selected'] > 0) {
+      $parent_object = islandora_object_load($row['parents']);
+      // Are we adding the XACML POLICY or removing it? Just
+      // check for a valid fedora object.
+      if ($parent_object) {
+        $object = islandora_object_load($child_pids[$count]);
+        // Make sure there is a POLICY to inherit.
+        if ($parent_object['POLICY']) {
+          $object->relationships->add(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
+          $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
+          $xacml->writeBackToFedora();
+          drupal_set_message(t('@child now inherits XACML from @parent.',
+            array(
+              '@child' => $object->id,
+              '@parent' => $parent_object->id)),
+            'status');
+        }
+        else {
+          drupal_set_message(t('@parent does not have an XACML policy.',
+            array(
+              '@parent' => $parent_object->id)),
+            'status');
+        }
+      }
+      else {
+        // 'None' is currently selected for this row, so if it is selected,
+        // we must remove the current XACML policy if it exists.
+        $object = islandora_object_load($child_pids[$count]);
+        if (isset($object['POLICY'])) {
+          $object->relationships->remove(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
+          $object->purgeDatastream('POLICY');
+          drupal_set_message(t('@child no longer inherits XACML.',
+            array('@child' => $object->id)),
+            'status');
+        }
+      }
+    }
+    $count++;
   }
 }
