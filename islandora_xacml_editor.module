@@ -361,7 +361,6 @@ function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_stat
 function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$form_state) {
   $child_pids = array_keys($form_state['values']['table']['rows']);
   $count = 0;
-  $message = "Complete: \n";
   foreach ($form_state['values']['table']['rows'] as $row) {
     // Check if selected.
     if ($row['selected'] > 0) {
@@ -369,9 +368,9 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
       // Are we adding the XACML POLICY or removing it? Just
       // check for a valid fedora object.
       if ($parent_object) {
+        $object = islandora_object_load($child_pids[$count]);
         // Make sure there is a POLICY to inherit.
         if ($parent_object['POLICY']) {
-          $object = islandora_object_load($child_pids[$count]);
           $object->relationships->add(FEDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
           $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
           $xacml->writeBackToFedora();
