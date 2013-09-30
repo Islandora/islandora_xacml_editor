@@ -180,8 +180,8 @@ function islandora_xacml_editor_apply_policy(&$form_state, $parent) {
       $xacml->writeBackToFedora();
     }
   }
-  if (!isset($parent_object['POLICY'])) {
-    drupal_set_message(t('Parent @object does not contain an xacml policy.'), array('@object' => $parent), 'status');
+  if (isset($form_state['input']['xacml']) && !isset($parent_object['POLICY'])) {
+    drupal_set_message(t('Parent @object does not contain an xacml policy.', array('@object' => $parent)), 'status');
   }
 }
 
@@ -248,7 +248,7 @@ function islandora_xacml_editor_islandora_basic_collection_build_manage_object(a
  */
 function islandora_xacml_editor_form_islandora_basic_collection_create_child_collection_form_alter(array &$form, array &$form_state) {
   $parent_object = islandora_object_load($form_state['islandora']['shared_storage']['parent']);
-  $xacml_options = array('None' => 'none');
+  $xacml_options = array('None' => 'None');
   if ($parent_object) {
     $xacml_options[$parent_object->id] = $parent_object->label;
   }
