@@ -95,7 +95,7 @@
 
   <target name="test">
     <exec executable="bash">
-        <arg line='-c "php ../../../../scripts/run-tests.sh --xml ${basedir}/build/test Islandora\ Xacml\ Editor"' />
+        <arg line='-c "php ../../../../scripts/run-tests.sh --xml ${basedir}/build/test Islandora\ XACML\ Editor"' />
     </exec>
   </target>
   
