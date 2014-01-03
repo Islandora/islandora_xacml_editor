@@ -214,7 +214,6 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
       $form['update_options']['#value'] = $form_state['islandora_xacml']['child_option'];
     }
   }
-
   $form['dsid_mime']['users'] = array(
     '#type' => 'select',
     '#title' => t('Users'),

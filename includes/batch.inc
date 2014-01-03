@@ -150,6 +150,8 @@ class IslandoraXacmlEditorQuery {
   public function __construct($pid, $query_array) {
     $this->pid = $pid;
     $this->query = $query_array;
+    $this->result_pids = array();
+    $this->recursed_pairs = array();
   }
 
   /**
@@ -166,7 +168,8 @@ class IslandoraXacmlEditorQuery {
    * @return array
    *   An array containing the results of our query.
    */
-  public static function query($query_array, $object_pid) {
+  public function query($query_array, $object_pid) {
+    module_load_include('inc', 'islandora', 'includes/utilities');
     $object = islandora_object_load($object_pid);
     if ($query_array['type'] == 'itql') {
       $content = $object->repository->ri->itqlQuery($query_array['query'], 'unlimited', '0');
@@ -174,7 +177,39 @@ class IslandoraXacmlEditorQuery {
     else {
       $content = $object->repository->ri->sparqlQuery($query_array['query'], 'unlimited', '0');
     }
-    return $content;
+    foreach ($content as $result) {
+      if (!in_array($result['object']['value'], $this->result_pids)) {
+        $this->result_pids[] = $result['object']['value'];
+      }
+    }
+    // We need to potentially recurse down even more to cover differing data
+    // structure for example books and newspapers.
+    if (isset($query_array['walk'])) {
+      $restricted_cmodels = array();
+      if (isset($query_array['walk']['restricted_cmodels'])) {
+        $restricted_cmodels = $query_array['walk']['restricted_cmodels'];
+      }
+      // We need to take the content model and object pid result and go see if
+      // any potential results exist out for each of them.
+      foreach ($content as $result) {
+        // Check to see if we have already recursed the PID/content model pair
+        // and that it's not restricted content model to walk on.
+        if ($this->checkRecursion($result) && !in_array($result['model']['value'], $restricted_cmodels)) {
+          foreach (islandora_build_hook_list('islandora_xacml_editor_child_query', array($result['model']['value'])) as $hook) {
+            $query_implementations = module_invoke_all($hook, islandora_object_load($result['object']['value']));
+            if (!empty($query_implementations)) {
+              foreach ($query_implementations as $query_choice) {
+                $this->recursed_pairs[] = array(
+                  'pid' => $result['object']['value'],
+                  'cmodel' => $result['model']['value'],
+                );
+                $this->query($query_choice, $result['object']['value']);
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -183,13 +218,27 @@ class IslandoraXacmlEditorQuery {
    *   An array of the PIDs returned from the defiend query.
    */
   public function getPids() {
-    $pids = array();
-    $query_results = IslandoraXacmlEditorQuery::query($this->query, $this->pid);
+    IslandoraXacmlEditorQuery::query($this->query, $this->pid);
+    // May be duplicates in this array so let's unique it.
+    $result_pids = array_unique($this->result_pids);
+    return $result_pids;
+  }
 
-    foreach ($query_results as $result) {
-      $pid = $result['object']['value'];
-      $pids[] = $pid;
+  /**
+   * Checks to see if we have already recursed the cmodel/pid pairing.
+   *
+   * @param array $result
+   *   The result of an RI query containing the pid and content model.
+   *
+   * @return bool
+   *   TRUE if we have yet to recurse the pairing, FALSE otherwise.
+   */
+  public function checkRecursion($result) {
+    foreach ($this->recursed_pairs as $pair) {
+      if ($result['object']['value'] == $pair['pid'] && $result['model']['value'] == $pair['cmodel']) {
+        return FALSE;
+      }
     }
-    return $pids;
+    return TRUE;
   }
 }
