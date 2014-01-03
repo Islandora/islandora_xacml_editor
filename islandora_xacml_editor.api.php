@@ -17,7 +17,8 @@
  *   structure:
  *   - type: The type of query to be executed either itql or sparql.
  *   - query: The defined query string. The field we expect returned is that of
- *     "object". I.e select ?object.
+ *     "object". I.e select ?object. It's to be noted that if the "walk"
+ *     parameter ?model must also be returned.
  *   - description: Human-readable description used in populating the options
  *   dropdown.
  *   - walk (Optional): An array if that exists that tells us whether to recurse
@@ -28,7 +29,7 @@ function hook_islandora_xacml_editor_child_query(AbstractObject $object) {
   return array(
     'sample_query' => array(
       'type' => 'itql',
-      'query' => 'select $object from <#ri> where $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/islandora:root>',
+      'query' => 'select $object $model from <#ri> where $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/islandora:root> and $object <fedora-model:hasModel> $model</fedora-model:hasModel>',
       'description' => t('Sweet query bro.'),
       'walk' => array(
         'restricted_cmodels' => array('islandora:collectionCModel'),
