@@ -193,6 +193,14 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
     $temp = module_invoke_all($hook, $object);
     if (!empty($temp)) {
       $query_choices = array_merge_recursive($query_choices, $temp);
+      // We are doing this to handle the "flat" use case where we are not
+      // recursing more than one level. This is a unique case so this is the
+      // easiest way to handle it.
+      if (isset($query_choices['all_children'])) {
+        $query_choices['flat_collection'] = $query_choices['all_children'];
+        $query_choices['flat_collection']['description'] = t('All immediate children of the collection (shallow traversal)');
+        $query_choices['flat_collection']['restricted_cmodels'] = array('islandora:collectionCModel');
+      }
     }
   }
 

@@ -21,19 +21,15 @@
  *     parameter ?model must also be returned.
  *   - description: Human-readable description used in populating the options
  *   dropdown.
- *   - walk (Optional): An array if that exists that tells us whether to recurse
- *   down through children. Has an optional parameter of 'restricted_cmodels'
- *   which specifies if we should not recurse certain content models.
+ *   - restricted_cmodels (Optional): An array defining restricted content
+ *     models that shouldn't be recursed upon if encountered.
  */
 function hook_islandora_xacml_editor_child_query(AbstractObject $object) {
   return array(
     'sample_query' => array(
       'type' => 'itql',
-      'query' => 'select $object $model from <#ri> where $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/islandora:root> and $object <fedora-model:hasModel> $model</fedora-model:hasModel>',
+      'query' => 'select $object from <#ri> where $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/islandora:root>',
       'description' => t('Sweet query bro.'),
-      'walk' => array(
-        'restricted_cmodels' => array('islandora:collectionCModel'),
-      ),
     ),
   );
 }
