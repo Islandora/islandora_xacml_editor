@@ -150,6 +150,7 @@ class IslandoraXacmlEditorQuery {
   public function __construct($pid, $query_array) {
     $this->pid = $pid;
     $this->query = $query_array;
+    $this->result_pids = array();
   }
 
   /**
@@ -166,15 +167,37 @@ class IslandoraXacmlEditorQuery {
    * @return array
    *   An array containing the results of our query.
    */
-  public static function query($query_array, $object_pid) {
+  public function query($query_array, $object_pid) {
+    module_load_include('inc', 'islandora', 'includes/utilities');
     $object = islandora_object_load($object_pid);
     if ($query_array['type'] == 'itql') {
-      $content = $object->repository->ri->itqlQuery($query_array['query'], 'unlimited', '0');
+      $content = $object->repository->ri->itqlQuery($query_array['query']);
     }
     else {
-      $content = $object->repository->ri->sparqlQuery($query_array['query'], 'unlimited', '0');
+      $content = $object->repository->ri->sparqlQuery($query_array['query']);
     }
-    return $content;
+    foreach ($content as $result) {
+      // We need to potentially recurse down even more to cover differing data
+      // structure for example books and newspapers.
+      $result_pid = $result['object']['value'];
+      if (!isset($this->result_pids[$result_pid])) {
+        $this->result_pids[$result_pid] = TRUE;
+        $restricted_cmodels = array();
+        if (isset($query_array['restricted_cmodels'])) {
+          $restricted_cmodels = $query_array['restricted_cmodels'];
+        }
+        $result_object = islandora_object_load($result_pid);
+        $object_models = array_diff($result_object->models, $restricted_cmodels);
+        foreach (islandora_build_hook_list('islandora_xacml_editor_child_query', $object_models) as $hook) {
+          $query_implementations = module_invoke_all($hook, $result_object);
+          if (!empty($query_implementations)) {
+            foreach ($query_implementations as $query_choice) {
+              $this->query($query_choice, $result['object']['value']);
+            }
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -183,13 +206,8 @@ class IslandoraXacmlEditorQuery {
    *   An array of the PIDs returned from the defiend query.
    */
   public function getPids() {
-    $pids = array();
-    $query_results = IslandoraXacmlEditorQuery::query($this->query, $this->pid);
-
-    foreach ($query_results as $result) {
-      $pid = $result['object']['value'];
-      $pids[] = $pid;
-    }
-    return $pids;
+    IslandoraXacmlEditorQuery::query($this->query, $this->pid);
+    $result_pids = array_keys($this->result_pids);
+    return $result_pids;
   }
 }
