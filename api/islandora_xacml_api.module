@@ -66,12 +66,12 @@ function islandora_xacml_api_settings() {
   $form['islandora_xacml_api_rels_viewable_role'] = array(
     '#type' => 'textfield',
     '#title' => t('Solr RELS-EXT ViewableByRole field'),
-    '#default_value' => variable_get('islandora_xacml_api_rels_viewable_role', 'rels.isViewableByRole'),
+    '#default_value' => variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms'),
   );
   $form['islandora_xacml_api_rels_viewable_user'] = array(
     '#type' => 'textfield',
     '#title' => t('Solr RELS-EXT ViewableByUser field'),
-    '#default_value' => variable_get('islandora_xacml_api_rels_viewable_user', 'rels.isViewableByUser'),
+    '#default_value' => variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms'),
   );
 
   return system_settings_form($form);
@@ -93,14 +93,14 @@ function islandora_xacml_api_islandora_solr_query($islandora_solr_query) {
     $user_name = 'anonymous';
   }
 
-  $fq = variable_get('islandora_xacml_api_rels_viewable_user', 'rels.isViewableByUser') . ":\"" . $user_name . "\" OR ";
+  $fq = variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":\"" . $user_name . "\" OR ";
 
   // Check if any of my roles are allowed.
   foreach ($user->roles as $role) {
-    $fq .= variable_get('islandora_xacml_api_rels_viewable_role', 'rels.isViewableByRole') . ":\"" . $role . "\" OR ";
+    $fq .= variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":\"" . $role . "\" OR ";
   }
   // Check if the object is open (unrestricted).
-  $fq .= "((*:* -" . variable_get('islandora_xacml_api_rels_viewable_user', 'rels.isViewableByUser') . ":[* TO *]) AND (*:* -" . variable_get('islandora_xacml_api_rels_viewable_role', 'rels.isViewableByRole') . ":[* TO *]))";
+  $fq .= "((*:* -" . variable_get('islandora_xacml_api_rels_viewable_user', 'RELS_EXT_isViewableByUser_literal_ms') . ":[* TO *]) AND (*:* -" . variable_get('islandora_xacml_api_rels_viewable_role', 'RELS_EXT_isViewableByRole_literal_ms') . ":[* TO *]))";
   $islandora_solr_query->solrParams['fq'][] = $fq;
 }
 
