@@ -171,11 +171,7 @@ function islandora_xacml_editor_apply_policy(&$form_state, $parent) {
   if ((!isset($form_state['input']['xacml']) && $parent_object['POLICY']) ||
     ($parent_object['POLICY'] && $form_state['input']['xacml'] != 'None')) {
     foreach ($form_state['islandora']['objects'] as $object) {
-      // Need to update the RELS-INT to indicate which parent this policy is
-      // inherited from.
-      $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent, TRUE);
-      $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
-      $xacml->writeBackToFedora();
+      islandora_xacml_editor_apply_parent_policy($object, $parent_object);
     }
   }
   if (isset($form_state['input']['xacml']) && !isset($parent_object['POLICY'])) {
@@ -399,5 +395,23 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
       }
     }
     $count++;
+  }
+}
+
+/**
+ * Applies the parent's POLICY datastream to the child if it exists.
+ *
+ * @param AbstractObject $child
+ *   The object to add the POLICY to.
+ * @param AbstractObject $parent
+ *   The object to take the POLICY from.
+ */
+function islandora_xacml_editor_apply_parent_policy(AbstractObject $child, AbstractObject $parent) {
+  if (isset($parent['POLICY'])) {
+    // Need to update the RELS-INT to indicate which parent this policy is
+    // inherited from.
+    $child->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent->id, TRUE);
+    $xacml = new IslandoraXacml($child, $parent['POLICY']->content);
+    $xacml->writeBackToFedora();
   }
 }

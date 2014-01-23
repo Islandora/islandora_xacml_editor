@@ -206,7 +206,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
 
   if (!empty($query_choices)) {
     // The "newchildren" option is applied automatically through ingest steps.
-    $update_options = array('newchildren' => t('New children of this collection.'));
+    $update_options = array('newchildren' => t('New children of this object.'));
     foreach ($query_choices as $key => $query) {
       $form_state['islandora_xacml']['query_choices'][$key] = $query;
       $update_options[$key] = $query['description'];
