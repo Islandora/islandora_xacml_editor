@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * The main module file for the Islanora XACML Editor.
+ * The main module file for the Islandora XACML Editor.
  */
 
 // Permission.
@@ -412,6 +412,5 @@ function islandora_xacml_editor_apply_parent_policy(AbstractObject $child, Abstr
     // inherited from.
     $child->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent->id, TRUE);
     $xacml = new IslandoraXacml($child, $parent['POLICY']->content);
-    $xacml->writeBackToFedora();
   }
 }

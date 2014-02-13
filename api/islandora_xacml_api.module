@@ -197,7 +197,6 @@ function islandora_xacml_api_islandora_basic_collection_get_query_statements($ty
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user . }',
       );
       return $to_return;
-
   }
 }
 
@@ -275,15 +274,10 @@ function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user
     );
     if (in_array($op, $check_ops)) {
       $object_results = islandora_xacml_api_islandora_object_access(
-        $op,
-        $datastream->parent,
-        $user
+          $op, $datastream->parent, $user
       );
       $datastream_results = $xacml->datastreamRule->hasPermission(
-        $user->name,
-        $user->roles,
-        $datastream->mimetype,
-        $datastream->id
+          $user->name, $user->roles, $datastream->mimetype, $datastream->id
       );
 
       $results = (array) $object_results;
@@ -292,4 +286,25 @@ function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user
     }
   }
   return NULL;
+}
+
+/**
+ * Implements hook_islandora_object_alter().
+ */
+function islandora_xacml_api_islandora_object_alter(AbstractObject $object, array &$context) {
+  switch ($context['action']) {
+    case 'ingest':
+      $inherit = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom');
+      if (count($inherit) > 0) {
+        $collection_object = islandora_object_load($inherit[0]['object']['value']);
+        if ($collection_object['POLICY'] && !$object['POLICY']) {
+          $xacml_datastream = $object->constructDatastream('POLICY', 'X');
+          $xacml_datastream->label = 'XACML Policy Stream';
+          $xacml_datastream->mimetype = 'text/xml';
+          $xacml_datastream->setContentFromString($collection_object['POLICY']->content);
+          $object->ingestDatastream($xacml_datastream);
+        }
+        break;
+      }
+  }
 }
