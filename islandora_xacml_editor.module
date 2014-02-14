@@ -107,7 +107,7 @@ function islandora_xacml_editor_islandora_object_access($op, $object, $user) {
 }
 
 /**
- * Implemenets hook_islandora_xacml_editor_child_query().
+ * Implements hook_islandora_xacml_editor_child_query().
  */
 function islandora_xacml_editor_islandora_collectionCModel_islandora_xacml_editor_child_query(AbstractObject $object) {
   $collection_query = <<<EOQ
@@ -411,6 +411,5 @@ function islandora_xacml_editor_apply_parent_policy(AbstractObject $child, Abstr
     // Need to update the RELS-INT to indicate which parent this policy is
     // inherited from.
     $child->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent->id, TRUE);
-    $xacml = new IslandoraXacml($child, $parent['POLICY']->content);
   }
 }
