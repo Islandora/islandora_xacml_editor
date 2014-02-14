@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Houses the forms used in the Islanora XACML Editor.
+ * Houses the forms used in the Islandora XACML Editor.
  */
 
 /**

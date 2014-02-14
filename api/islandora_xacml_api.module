@@ -197,7 +197,6 @@ function islandora_xacml_api_islandora_basic_collection_get_query_statements($ty
         'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user . }',
       );
       return $to_return;
-
   }
 }
 
@@ -275,15 +274,10 @@ function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user
     );
     if (in_array($op, $check_ops)) {
       $object_results = islandora_xacml_api_islandora_object_access(
-        $op,
-        $datastream->parent,
-        $user
+          $op, $datastream->parent, $user
       );
       $datastream_results = $xacml->datastreamRule->hasPermission(
-        $user->name,
-        $user->roles,
-        $datastream->mimetype,
-        $datastream->id
+          $user->name, $user->roles, $datastream->mimetype, $datastream->id
       );
 
       $results = (array) $object_results;
@@ -292,4 +286,73 @@ function islandora_xacml_api_islandora_datastream_access($op, $datastream, $user
     }
   }
   return NULL;
+}
+
+/**
+ * Implements hook_islandora_object_alter().
+ */
+function islandora_xacml_api_islandora_object_alter(AbstractObject $object, array &$context) {
+  switch ($context['action']) {
+    case 'ingest':
+      $inherit = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom');
+      if (count($inherit) > 0) {
+        $collection_object = islandora_object_load($inherit[0]['object']['value']);
+        if ($collection_object['POLICY']) {
+          if (!$object['POLICY']) {
+            $xacml_datastream = $object->constructDatastream('POLICY', 'X');
+            $xacml_datastream->label = 'XACML Policy Stream';
+            $xacml_datastream->mimetype = 'text/xml';
+            $xacml_datastream->setContentFromString($collection_object['POLICY']->content);
+            $object->ingestDatastream($xacml_datastream);
+          }
+          else {
+            $object['POLICY']->content = $collection_object['POLICY']->content;
+          }
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Implements hook_islandora_object_ingested().
+ */
+function islandora_xacml_api_islandora_object_ingested(AbstractObject $object) {
+  $query = <<< EOQ
+      select ?object from <#ri> WHERE
+{
+    {
+      ?object <fedora-rels-ext:isMemberOfCollection> <info:fedora/{$object->id}>
+    }
+    UNION
+    {
+      ?object <fedora-rels-ext:isMemberOf> <info:fedora/{$object->id}>
+    }
+    ?object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>.
+    ?object <http://islandora.ca/ontology/relsext#inheritXacmlFrom>  <info:fedora/{$object->id}>
+}
+EOQ;
+  $children = $object->repository->ri->sparqlQuery($query);
+  if (count($children) > 0 && $object['POLICY']) {
+    $query_array = array(
+      'type' => 'sparql',
+      'query' => $query,
+      'description' => t('Applies policy to existing objects.'),
+    );
+    $xml = $object['POLICY']->content;
+    $pid = $object->id;
+    $batch = array(
+      'title' => t('Updating Policies'),
+      'progress_message' => t('Please wait if many objects are being updated this could take a few minutes.'),
+      'operations' => array(
+        array(
+          'islandora_xacml_editor_batch_function',
+          array($xml, $pid, $query_array),
+        ),
+      ),
+      'finished' => 'islandora_xacml_editor_batch_finished',
+      'file' => drupal_get_path('module', 'islandora_xacml_editor') . '/includes/batch.inc',
+    );
+    batch_set($batch);
+  }
 }
