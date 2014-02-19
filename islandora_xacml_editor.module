@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * The main module file for the Islandora XACML Editor.
@@ -20,6 +21,7 @@ function islandora_xacml_editor_permission() {
     ),
   );
 }
+
 /**
  * Implements hook_theme().
  */
@@ -31,6 +33,7 @@ function islandora_xacml_editor_theme($existing, $type, $theme, $path) {
     ),
   );
 }
+
 /**
  * Implements hook_menu().
  */
@@ -123,13 +126,17 @@ select ?object from <#ri> WHERE
     ?object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
 }
 EOQ;
-  return array(
-    'all_children' => array(
-      'type' => 'sparql',
-      'query' => $collection_query,
-      'description' => t('All children of this collection and collections within this collection (existing and new).'),
-    ),
-  );
+  $results = $object->repository->ri->sparqlQuery($collection_query);
+
+  if (count($results) > 0) {
+    return array(
+      'all_children' => array(
+        'type' => 'sparql',
+        'query' => $collection_query,
+        'description' => t('All children of this collection and collections within this collection (existing and new).'),
+      ),
+    );
+  }
 }
 
 /**
@@ -169,7 +176,7 @@ function islandora_xacml_editor_islandora_ingest_steps(array $form_state) {
 function islandora_xacml_editor_apply_policy(&$form_state, $parent) {
   $parent_object = islandora_object_load($parent);
   if ((!isset($form_state['input']['xacml']) && $parent_object['POLICY']) ||
-    ($parent_object['POLICY'] && $form_state['input']['xacml'] != 'None')) {
+      ($parent_object['POLICY'] && $form_state['input']['xacml'] != 'None')) {
     foreach ($form_state['islandora']['objects'] as $object) {
       islandora_xacml_editor_apply_parent_policy($object, $parent_object);
     }
@@ -368,17 +375,13 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
           $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, RELS_TYPE_URI);
           $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
           $xacml->writeBackToFedora();
-          drupal_set_message(t('@child now inherits XACML from @parent.',
-            array(
-              '@child' => $object->id,
-              '@parent' => $parent_object->id)),
-            'status');
+          drupal_set_message(t('@child now inherits XACML from @parent.', array(
+            '@child' => $object->id,
+            '@parent' => $parent_object->id)), 'status');
         }
         else {
-          drupal_set_message(t('@parent does not have an XACML policy.',
-            array(
-              '@parent' => $parent_object->id)),
-            'status');
+          drupal_set_message(t('@parent does not have an XACML policy.', array(
+            '@parent' => $parent_object->id)), 'status');
         }
       }
       else {
@@ -388,9 +391,7 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
         if (isset($object['POLICY'])) {
           $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
           $object->purgeDatastream('POLICY');
-          drupal_set_message(t('@child no longer inherits XACML.',
-            array('@child' => $object->id)),
-            'status');
+          drupal_set_message(t('@child no longer inherits XACML.', array('@child' => $object->id)), 'status');
         }
       }
     }
