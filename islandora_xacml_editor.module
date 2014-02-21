@@ -411,6 +411,6 @@ function islandora_xacml_editor_apply_parent_policy(AbstractObject $child, Abstr
   if (isset($parent['POLICY'])) {
     // Need to update the RELS-INT to indicate which parent this policy is
     // inherited from.
-    $child->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent->id, TRUE);
+    $child->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent->id, RELS_TYPE_URI);
   }
 }
