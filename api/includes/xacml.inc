@@ -61,7 +61,7 @@ abstract class XacmlRule {
   /**
    * Helper function. Allows strings or arrays of strings to be passed in.
    *
-   * @param String $type
+   * @param string $type
    *   Array key to modify in internal $rules datastructure.
    * @param mixed $data
    *   Data to be added.
@@ -78,7 +78,7 @@ abstract class XacmlRule {
   /**
    * Helper function. Internal arrays may have repeated values,  fixes this.
    *
-   * @param String $type
+   * @param string $type
    *   Array key in internal datastructure to return
    *
    * @return array
@@ -93,7 +93,7 @@ abstract class XacmlRule {
    *
    * @todo This could all be made more efficient.
    *
-   * @param String $type
+   * @param string $type
    *   Array key to work on
    * @param mixed $data
    *   Data to be removed.
@@ -847,8 +847,8 @@ class Xacml {
    * @param bool $pretty_print
    *   If set to TRUE the function will return a prettyprinted xacml policy.
    *
-   * @return String
-   *   string containing xacml xml
+   * @return string
+   *   String containing XACML XML.
    */
   public function getXmlString($pretty_print = TRUE) {
     $this->updateRulesArray();
