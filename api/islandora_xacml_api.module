@@ -184,18 +184,36 @@ function islandora_xacml_api_islandora_datastream_ingested(AbstractObject $objec
 function islandora_xacml_api_islandora_basic_collection_get_query_statements($type) {
   switch ($type) {
     case 'manage':
-      $to_return = array(
-        'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isManageableByRole> ?role . }',
-        'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isManageableByUser> ?user . }',
-      );
+      $manage_query = <<<EOQ
+OPTIONAL
+{
+  {
+    ?object <http://islandora.ca/ontology/relsext#isManagableByRole> ?role
+  }
+  UNION
+  {
+    ?object <http://islandora.ca/ontology/relsext#isManagableByUser> ?user
+  }
+}
+EOQ;
+      $to_return = array($manage_query);
       return $to_return;
 
     case 'view':
     default:
-      $to_return = array(
-        'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByRole> ?role . }',
-        'OPTIONAL {?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user . }',
-      );
+      $view_query = <<<EOQ
+OPTIONAL
+{
+  {
+    ?object <http://islandora.ca/ontology/relsext#isViewableByRole> ?role
+  }
+  UNION
+  {
+    ?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user
+  }
+}
+EOQ;
+      $to_return = array($view_query);
       return $to_return;
   }
 }
