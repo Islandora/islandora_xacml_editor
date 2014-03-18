@@ -29,7 +29,7 @@ EOQ;
     if ($sandbox['total'] == 0) {
       // Nothing to process.
       $sandbox['#finished'] = 1;
-      return;
+      return t('Nothing to fix.');
     }
     $sandbox['result_stash'] = array();
   }
@@ -44,12 +44,15 @@ EOQ;
     if (empty($sandbox['result_stash'])) {
       // Ran out of items early?
       $sandbox['#finished'] = 1;
-      return;
+      return t('Updated @count PID(s) and ran out of items early... Somebody manually updated a document?', array(
+        '@count' => $sandbox['total'],
+      ));
     }
   }
 
   $result = array_pop($sandbox['result_stash']);
-  $object_to_update = islandora_object_load($result['object']['value']);
+  $updating_pid = $result['object']['value'];
+  $object_to_update = islandora_object_load($updating_pid);
   $rels = $object_to_update->relationships;
   $xacml_parents = array_merge($rels->get(ISLANDORA_RELS_EXT_URI, $pred), $rels->get(FEDORA_RELS_EXT_URI, $pred));
   $xacml_parent = reset($xacml_parents);
@@ -59,15 +62,25 @@ EOQ;
     $rels->remove(ISLANDORA_RELS_EXT_URI, $pred);
     $rels->add(ISLANDORA_RELS_EXT_URI, $pred, $xacml_parent['object']['value'], RELS_TYPE_URI);
     $rels->commitRelationships();
+    watchdog('islandora_xacml_api', 'Converted deprecated "@pred" literal to currently-supported URI for @pid.', array(
+      '@pred' => $pred,
+      '@pid' => $updating_pid,
+    ));
   }
   else {
     // Should never be able to get here really... Somebody else is running
     // this at the same time?
-    watchdog('islandora_xacml_api', 'Selected @pid to update, but was missing relationships when we checked!?', array(
+    watchdog('islandora_xacml_api', 'Selected @pid to update "@pred" literal, but was missing relationships when we checked!?', array(
+      '@pred' => $pred,
       '@pid' => $object_to_update->id,
     ));
   }
 
   $sandbox['progress'] = min($sandbox['total'], $sandbox['progress'] + 1);
   $sandbox['#finished'] = $sandbox['progress'] / $sandbox['total'];
+  if ($sandbox['#finished'] >= 1) {
+    return t('Updated @count PID(s).', array(
+      '@count' => $sandbox['total'],
+    ));
+  }
 }
