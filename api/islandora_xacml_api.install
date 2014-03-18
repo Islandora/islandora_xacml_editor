@@ -1,0 +1,73 @@
+<?php
+
+/**
+ * @file
+ * Installation/upgrade hooks.
+ */
+
+/**
+ * Fix "inheritXacmlFrom" literals to be URIs.
+ */
+function islandora_xacml_api_update_7100(&$sandbox) {
+  drupal_load('module', 'islandora');
+  $tuque = islandora_get_tuque_connection();
+  $pred = 'inheritXacmlFrom';
+
+  $query = <<<EOQ
+SELECT DISTINCT ?object
+FROM <#ri>
+WHERE {
+  ?object <fedora-rels-ext:$pred> ?parent
+  FILTER (IsLITERAL(?parent))
+}
+
+EOQ;
+
+  if (!isset($sandbox['total'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['total'] = $tuque->repository->ri->countQuery($query, 'sparql');
+    if ($sandbox['total'] == 0) {
+      // Nothing to process.
+      $sandbox['#finished'] = 1;
+      return;
+    }
+    $sandbox['result_stash'] = array();
+  }
+
+  if (empty($sandbox['result_stash'])) {
+    $offset = 100;
+    $limited_query = $query . <<<EOQ
+LIMIT $offset
+EOQ;
+
+    $sandbox['result_stash'] = $tuque->repository->ri->sparqlQuery($limited_query);
+    if (empty($sandbox['result_stash'])) {
+      // Ran out of items early?
+      $sandbox['#finished'] = 1;
+      return;
+    }
+  }
+
+  $result = array_pop($sandbox['result_stash']);
+  $object_to_update = islandora_object_load($result['object']['value']);
+  $rels = $object_to_update->relationships;
+  $xacml_parents = array_merge($rels->get(ISLANDORA_RELS_EXT_URI, $pred), $rels->get(FEDORA_RELS_EXT_URI, $pred));
+  $xacml_parent = reset($xacml_parents);
+  if ($xacml_parent) {
+    $rels->autoCommit = FALSE;
+    $rels->remove(FEDORA_RELS_EXT_URI, $pred);
+    $rels->remove(ISLANDORA_RELS_EXT_URI, $pred);
+    $rels->add(ISLANDORA_RELS_EXT_URI, $pred, $xacml_parent['object']['value'], RELS_TYPE_URI);
+    $rels->commitRelationships();
+  }
+  else {
+    // Should never be able to get here really... Somebody else is running
+    // this at the same time?
+    watchdog('islandora_xacml_api', 'Selected @pid to update, but was missing relationships when we checked!?', array(
+      '@pid' => $object_to_update->id,
+    ));
+  }
+
+  $sandbox['progress'] = min($sandbox['total'], $sandbox['progress'] + 1);
+  $sandbox['#finished'] = $sandbox['progress'] / $sandbox['total'];
+}
