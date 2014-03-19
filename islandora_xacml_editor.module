@@ -372,7 +372,7 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
         $object = islandora_object_load($child_pids[$count]);
         // Make sure there is a POLICY to inherit.
         if ($parent_object['POLICY']) {
-          $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, RELS_TYPE_URI);
+          $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object->id, RELS_TYPE_URI);
           $xacml = new IslandoraXacml($object, $parent_object['POLICY']->content);
           $xacml->writeBackToFedora();
           drupal_set_message(t('@child now inherits XACML from @parent.', array(
@@ -389,7 +389,7 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
         // we must remove the current XACML policy if it exists.
         $object = islandora_object_load($child_pids[$count]);
         if (isset($object['POLICY'])) {
-          $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object, TRUE);
+          $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object->id, RELS_TYPE_URI);
           $object->purgeDatastream('POLICY');
           drupal_set_message(t('@child no longer inherits XACML.', array('@child' => $object->id)), 'status');
         }
@@ -409,7 +409,7 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
  */
 function islandora_xacml_editor_apply_parent_policy(AbstractObject $child, AbstractObject $parent) {
   if (isset($parent['POLICY'])) {
-    // Need to update the RELS-INT to indicate which parent this policy is
+    // Need to update the RELS-EXT to indicate which parent this policy is
     // inherited from.
     $child->relationships->add(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent->id, RELS_TYPE_URI);
   }
