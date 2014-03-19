@@ -182,41 +182,35 @@ function islandora_xacml_api_islandora_datastream_ingested(AbstractObject $objec
 }
 
 /**
- * Implements hook_islandora_basic_collection_query_get_query_statements().
+ * Implements hook_islandora_basic_collection_query_get_query_optionals().
  */
-function islandora_xacml_api_islandora_basic_collection_get_query_statements($type) {
+function islandora_xacml_api_islandora_basic_collection_get_query_optionals($type) {
   switch ($type) {
     case 'manage':
-      $manage_query = <<<EOQ
-OPTIONAL
-{
-  {
-    ?object <http://islandora.ca/ontology/relsext#isManagableByRole> ?role
-  }
-  UNION
-  {
-    ?object <http://islandora.ca/ontology/relsext#isManagableByUser> ?user
-  }
-}
-EOQ;
-      $to_return = array($manage_query);
+      $to_return = array(
+        format_string('?object <!uri!pred> ?role', array(
+          '!uri' => ISLANDORA_RELS_EXT_URI,
+          '!pred' => 'isManagableByRole',
+        )),
+        format_string('?object <!uri!pred> ?user', array(
+          '!uri' => ISLANDORA_RELS_EXT_URI,
+          '!pred' => 'isManagableByUser',
+        )),
+      );
       return $to_return;
 
     case 'view':
     default:
-      $view_query = <<<EOQ
-OPTIONAL
-{
-  {
-    ?object <http://islandora.ca/ontology/relsext#isViewableByRole> ?role
-  }
-  UNION
-  {
-    ?object <http://islandora.ca/ontology/relsext#isViewableByUser> ?user
-  }
-}
-EOQ;
-      $to_return = array($view_query);
+      $to_return = array(
+        format_string('?object <!uri!pred> ?role', array(
+          '!uri' => ISLANDORA_RELS_EXT_URI,
+          '!pred' => 'isViewableByRole',
+        )),
+        format_string('?object <!uri!pred> ?user', array(
+          '!uri' => ISLANDORA_RELS_EXT_URI,
+          '!pred' => 'isViewableByUser',
+        )),
+      );
       return $to_return;
   }
 }
