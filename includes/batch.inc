@@ -187,12 +187,14 @@ class IslandoraXacmlEditorQuery {
           $restricted_cmodels = $query_array['restricted_cmodels'];
         }
         $result_object = islandora_object_load($result_pid);
-        $object_models = array_diff($result_object->models, $restricted_cmodels);
-        foreach (islandora_build_hook_list('islandora_xacml_editor_child_query', $object_models) as $hook) {
-          $query_implementations = module_invoke_all($hook, $result_object);
-          if (!empty($query_implementations)) {
-            foreach ($query_implementations as $query_choice) {
-              $this->query($query_choice, $result['object']['value']);
+        if ($result_object) {
+          $object_models = array_diff($result_object->models, $restricted_cmodels);
+          foreach (islandora_build_hook_list('islandora_xacml_editor_child_query', $object_models) as $hook) {
+            $query_implementations = module_invoke_all($hook, $result_object);
+            if (!empty($query_implementations)) {
+              foreach ($query_implementations as $query_choice) {
+                $this->query($query_choice, $result['object']['value']);
+              }
             }
           }
         }
