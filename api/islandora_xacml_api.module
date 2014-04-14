@@ -23,7 +23,7 @@ define('PERMIT_RULE', ISLANDORA_XACML_API_PERMIT_RULE);
  */
 function islandora_xacml_api_menu() {
   $items = array();
-  $items['admin/islandora/xacml'] = array(
+  $items['admin/islandora/tools/xacml'] = array(
     'title' => 'Islandora XACML',
     'description' => 'Settings for the Islandora XACML modules.',
     'page callback' => 'drupal_get_form',
@@ -31,7 +31,7 @@ function islandora_xacml_api_menu() {
     'access arguments' => array('administer islandora_xacml_api'),
   );
 
-  $items['admin/islandora/xacml/api'] = array(
+  $items['admin/islandora/tools/xacml/api'] = array(
     'title' => 'Islandora XACML API',
     'description' => 'Settings for the Islandora XACML API module.',
     'access arguments' => array('administer islandora_xacml_api'),

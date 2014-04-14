@@ -49,7 +49,7 @@ function islandora_xacml_editor_menu() {
     'access arguments' => array(2),
     'file' => 'includes/form.inc',
   );
-  $items['admin/islandora/xacml/editor'] = array(
+  $items['admin/islandora/tools/xacml/editor'] = array(
     'title' => 'Islandora XACML Editor',
     'description' => 'Settings for the Islandora XACML module.',
     'page callback' => 'drupal_get_form',
