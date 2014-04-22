@@ -1,29 +1,58 @@
-BUILD STATUS
-------------
+# Islandora XACML Editor [![Build Status](https://travis-ci.org/Islandora/islandora_xacml_editor.png?branch=7.x)](https://travis-ci.org/Islandora/islandora_xacml_editor)
 
-Current build status:
-[![Build Status](https://travis-ci.org/Islandora/islandora_xacml_editor.png?branch=7.x)](https://travis-ci.org/Islandora/islandora_xacml_editor)
+## Introduction
 
-CI Server:
-http://jenkins.discoverygarden.ca
+The Islandora XACML Editor provides a graphical user interface to edit XACML policies for objects in a repository or collection. It adds a new tab to each collection called Child Policy and a tab to each item called Item Policy, where permissions can be set on a per User or per Role basis for:
 
-FEDORA CONFIGURATION
---------------------
+* Object Management: Controls who can set XACML policies for an object/collection.
+* Object Viewing: Controls who can view an object/collection.
+* Datastreams and MIME types: Controls who can view datastreams by DSID and MIME type.
 
-It may be desirable--and in fact necessary for some modules--to disable/remove
-one of the default XACML policies which denies any interactions with the
-POLICY datastream to users without the "administrator" role.
+## Requirements
+
+This module requires the following modules/libraries:
+
+* [Islandora](https://github.com/islandora/islandora)
+* [Tuque](https://github.com/islandora/tuque)
+
+## Installation
+
+Install as usual, see [this](https://drupal.org/documentation/install/modules-themes/modules-7) for further information.
+
+## Configuration
+
+### Fedora Configuration
+
+It may be desirable--and in fact necessary for some modules--to disable/remove ene of the default XACML policies which denies any interactions with the POLICY datastream to users without the "administrator" role.
 
 This policy is located here:
-$FEDORA_HOME/data/fedora-xacml-policies/repository-policies/default/deny-policy-management-if-not-administrator.xml
+`$FEDORA_HOME/data/fedora-xacml-policies/repository-policies/default/deny-policy-management-if-not-administrator.xml`
 
-SOLR SEARCHING HOOK
--------------------
+### Solr Searching Hook
 
-In order to comply with XACML restrictions placed on objects, a hook is used to filter results that do not conform to a searching user's roles and name.
-This hook will not function correctly if the Solr fields for 'ViewableByUser' and 'ViewableByRole' are not defined correctly as they are set in the XSLT.
-These values can be set through the admin page for the module.
+In order to comply with XACML restrictions placed on objects, a hook is used to filter results that do not conform to a searching user's roles and name. This hook will not function correctly if the Solr fields for `ViewableByUser` and `ViewableByRole` are not defined correctly as they are set in the XSLT. These values can be set through the admin page for the module.
 
-NOTES
------
+### Notes
+
 The XACML editor hooks into ingesting through the interface. When a child is added through the interface, the parent's POLICY will be applied if one exists.
+
+## Troubleshooting/Issues
+
+Having problems or solved a problem? Check out the Islandora google groups for a solution.
+
+* [Islandora Group](https://groups.google.com/forum/?hl=en&fromgroups#!forum/islandora)
+* [Islandora Dev Group](https://groups.google.com/forum/?hl=en&fromgroups#!forum/islandora-dev)
+
+## Maintainers/Sponsors
+
+Current maintainers:
+
+* [Jordan Dukart](https://github.com/jordandukart)
+
+## Development
+
+If you would like to contribute to this module, please check out our helpful [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers) info, as well as our [Developers](http://islandora.ca/developers) section on the Islandora.ca site.
+
+## License
+
+[GPLv3](http://www.gnu.org/licenses/gpl-3.0.txt)
