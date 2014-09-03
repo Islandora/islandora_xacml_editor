@@ -144,7 +144,7 @@ function islandora_xacml_api_islandora_solr_search_query_processor($processor) {
  *
  * Uses any existing POLICY stream to allow or deny the operation.
  */
-function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user) {
+function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user, $dsid = NULL) {
   module_load_include('inc', 'fedora_repository', 'ObjectHelper');
   module_load_include('inc', 'fedora_repository', 'api/fedora_item');
   module_load_include('inc', 'islandora_xacml_api', 'IslandoraXacml');
@@ -165,7 +165,13 @@ function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user) {
 
       // Map the Islandora/fedora_repository perms to our rules.
       if ($op == ObjectHelper::$OBJECT_HELPER_VIEW_FEDORA || $op == ObjectHelper::$VIEW_DETAILED_CONTENT_LIST) {
-        return $xacml->viewingRule->hasPermission($user->name, $user->roles);
+        if ($dsid && isset($item->datastreams[$dsid])) {
+          $datastream = $item->datastreams[$dsid];
+          return $xacml->datastreamRule->hasPermission($user->name, $user->roles, $datastream['MIMEType'], $dsid);
+        }
+        else {
+          return $xacml->viewingRule->hasPermission($user->name, $user->roles);
+        }
       }
       elseif (in_array($op, array(
             ObjectHelper::$EDIT_FEDORA_METADATA,
