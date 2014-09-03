@@ -296,32 +296,32 @@ class XacmlManagementRule extends XacmlRule {
     parent::__construct($arg1, $xacml);
     if ($arg1 == NULL) {
       $this->rule = $this->initializeRule(MANAGEMENT_RULE, 'Deny');
-      $this->rule['methods'] = array(
-        'addDatastream',
-        'addDisseminator',
-        'adminPing',
-        'getDisseminatorHistory',
-        'getNextPid',
-        'ingest',
-        'modifyDatastreamByReference',
-        'modifyDatastreamByValue',
-        'modifyDisseminator',
-        'modifyObject',
-        'purgeObject',
-        'purgeDatastream',
-        'purgeDisseminator',
-        'setDatastreamState',
-        'setDisseminatorState',
-        'setDatastreamVersionable',
-        'compareDatastreamChecksum',
-        'serverShutdown',
-        'serverStatus',
-        'upload',
-        'dsstate',
-        'resolveDatastream',
-        'reloadPolicies',
-      );
     }
+    $this->rule['methods'] = array(
+      'addDatastream',
+      'addDisseminator',
+      'adminPing',
+      'getDisseminatorHistory',
+      'getNextPid',
+      'ingest',
+      'modifyDatastreamByReference',
+      'modifyDatastreamByValue',
+      'modifyDisseminator',
+      'modifyObject',
+      'purgeObject',
+      'purgeDatastream',
+      'purgeDisseminator',
+      'setDatastreamState',
+      'setDisseminatorState',
+      'setDatastreamVersionable',
+      'compareDatastreamChecksum',
+      'serverShutdown',
+      'serverStatus',
+      'upload',
+      'dsstate',
+      'resolveDatastream',
+      'reloadPolicies',
+    );
   }
 
   /**
@@ -356,12 +356,12 @@ class XacmlViewingRule extends XacmlRule {
     parent::__construct($arg1, $xacml);
     if ($arg1 == NULL) {
       $this->rule = $this->initializeRule(VIEWING_RULE, 'Deny');
-      $this->rule['methods'] = array(
-        'api-a',
-        'getDatastreamHistory',
-        'listObjectInResourceIndexResults',
-      );
     }
+    $this->rule['methods'] = array(
+      'api-a',
+      'getDatastreamHistory',
+      'listObjectInResourceIndexResults',
+    );
   }
 
   /**
@@ -423,8 +423,8 @@ class XacmlDatastreamRule extends XacmlRule {
     parent::__construct($arg1, $xacml);
     if ($arg1 == NULL) {
       $this->rule = $this->initializeRule(DATASTREAM_RULE, 'Deny');
-      $this->rule['methods'][] = 'getDatastreamDissemination';
     }
+    $this->rule['methods'][] = 'getDatastreamDissemination';
   }
 
   /**
