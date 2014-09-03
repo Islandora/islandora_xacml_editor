@@ -165,7 +165,7 @@ function islandora_xacml_api_fedora_repository_check_perm($op, $pid, $user, $dsi
 
       // Map the Islandora/fedora_repository perms to our rules.
       if ($op == ObjectHelper::$OBJECT_HELPER_VIEW_FEDORA || $op == ObjectHelper::$VIEW_DETAILED_CONTENT_LIST) {
-        if($dsid && isset($item->datastreams[$dsid])) {
+        if ($dsid && isset($item->datastreams[$dsid])) {
           $datastream = $item->datastreams[$dsid];
           return $xacml->datastreamRule->hasPermission($user->name, $user->roles, $datastream['MIMEType'], $dsid);
         }
