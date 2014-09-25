@@ -36,6 +36,8 @@ In order to comply with XACML restrictions placed on objects, a hook is used to 
 
 The XACML editor hooks into ingesting through the interface. When a child is added through the interface, the parent's POLICY will be applied if one exists.
 
+If XACML policies are written or edited by hand, it may result in unexpected behaviour.
+
 ## Troubleshooting/Issues
 
 Having problems or solved a problem? Check out the Islandora google groups for a solution.
