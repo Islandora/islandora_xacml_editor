@@ -58,6 +58,43 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
     // Some basic error handling.
     try {
       $xacml = new Xacml($object['POLICY']->content);
+
+      if ($xacml->managementRule->isPopulated()) {
+        $rule = $xacml->managementRule->getRuleArray();
+        if (isset($rule['methods_default']) && count($rule['methods_default']) > 0) {
+          $compare = array_intersect($rule['methods_default'], $rule['methods']);
+          if (count($compare) < count($rule['methods_default'])) {
+            $output = format_plural(count($rule['methods_default']) - count($compare),
+              'You are missing 1 default management method in your XACML Policy',
+              'You are missing @count default management methods in your XACML Policy');
+            drupal_set_message($output, 'error');
+          }
+        }
+      }
+      if ($xacml->viewingRule->isPopulated()) {
+        $rule = $xacml->viewingRule->getRuleArray();
+        if (isset($rule['methods_default']) && count($rule['methods_default']) > 0) {
+          $compare = array_intersect($rule['methods_default'], $rule['methods']);
+          if (count($compare) < count($rule['methods_default'])) {
+            $output = format_plural(count($rule['methods_default']) - count($compare),
+              'You are missing 1 default viewing method in your XACML Policy',
+              'You are missing @count default viewing methods in your XACML Policy');
+            drupal_set_message($output, 'error');
+          }
+        }
+      }
+      if ($xacml->datastreamRule->isPopulated()) {
+        $rule = $xacml->datastreamRule->getRuleArray();
+        if (isset($rule['methods_default']) && count($rule['methods_default']) > 0) {
+          $compare = array_intersect($rule['methods_default'], $rule['methods']);
+          if (count($compare) < count($rule['methods_default'])) {
+            $output = format_plural(count($rule['methods_default']) - count($compare),
+              'You are missing 1 default datastream method in your XACML Policy',
+              'You are missing @count default datastream methods in your XACML Policy');
+            drupal_set_message($output, 'error');
+          }
+        }
+      }
     }
     catch (XacmlException $e) {
       watchdog('islandora_xacml_editor', 'Exception in Islandora Xacml: @message', array('@message', $e->getMessage()), array(), WATCHDOG_ERROR);
