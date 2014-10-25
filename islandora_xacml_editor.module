@@ -181,9 +181,6 @@ function islandora_xacml_editor_apply_policy(&$form_state, $parent) {
       islandora_xacml_editor_apply_parent_policy($object, $parent_object);
     }
   }
-  if (isset($form_state['input']['xacml']) && !isset($parent_object['POLICY'])) {
-    drupal_set_message(t('Parent @object does not contain an xacml policy.', array('@object' => $parent)), 'status');
-  }
 }
 
 /**
@@ -347,6 +344,7 @@ function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_stat
     'submit' => array(
       '#type' => 'submit',
       '#value' => t('Update XACML Inheritance'),
+      '#access' => count($rows),
     ),
   );
 }
