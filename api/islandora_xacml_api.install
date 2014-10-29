@@ -96,3 +96,109 @@ EOQ;
     ));
   }
 }
+
+/**
+ * Ensure RELS-EXT/-INT relationships are present on inheriting objects, if enabled.
+ */
+function islandora_xacml_api_update_7101(&$sandbox) {
+  if (!variable_get('islandora_xacml_api_save_relationships', TRUE)) {
+    return t('Relationships are disabled, nothing to do.');
+  }
+  drupal_load('module', 'islandora');
+
+  // XXX: We want to force things to be done as admin, and running the update
+  // through drush seems to break things, despite specifying user 1... Let's
+  // force things.
+  drupal_static_reset('islandora_get_tuque_connection');
+  $user = user_load(1);
+  $tuque = islandora_get_tuque_connection($user);
+  $pred = 'inheritXacmlFrom';
+
+  $rels_uri = ISLANDORA_RELS_EXT_URI;
+  $query = <<<EOQ
+PREFIX islandora: <$rels_uri>
+SELECT DISTINCT ?object
+FROM <#ri>
+WHERE {
+  ?object islandora:$pred ?parent ;
+          <fedora-view:disseminates> ?ds .
+  ?ds <fedora-view:disseminationType> <info:fedora/*/POLICY> .
+  OPTIONAL {
+    {
+      ?object islandora:isViewableByUser ?user .
+    } UNION {
+      ?object islandora:isViewableByRole ?role .
+    }
+  }
+  FILTER (!(bound(?user) || bound(?role)))
+  !filter
+}
+ORDER BY ?object
+
+EOQ;
+
+  if (!isset($sandbox['total'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['total'] = $tuque->repository->ri->countQuery(format_string($query, array(
+      '!filter' => '',
+    )), 'sparql');
+    if ($sandbox['total'] == 0) {
+      // Nothing to process.
+      $sandbox['#finished'] = 1;
+
+      // XXX: Reset it, so it gets whatever user...
+      drupal_static_reset('islandora_get_tuque_connection');
+
+      return t('Nothing to fix.');
+    }
+    $sandbox['result_stash'] = array();
+  }
+
+  if (empty($sandbox['result_stash'])) {
+    $offset = 100;
+    $limited_query = format_string($query, array(
+      '!filter' => (isset($sandbox['last_pid']) ?
+        "FILTER(?object > {$sandbox['last_pid']})" :
+        '')
+    )) . <<<EOQ
+LIMIT $offset
+EOQ;
+
+    $sandbox['result_stash'] = $tuque->repository->ri->sparqlQuery($limited_query);
+    if (empty($sandbox['result_stash'])) {
+      // Ran out of items early?
+      $sandbox['#finished'] = 1;
+
+      // XXX: Reset it, so it gets whatever user...
+      drupal_static_reset('islandora_get_tuque_connection');
+
+      return t('Updated @count PID(s) and ran out of items early... Somebody manually updated a document?', array(
+        '@count' => $sandbox['total'],
+      ));
+    }
+  }
+
+  $result = array_pop($sandbox['result_stash']);
+  $sandbox['last_pid'] = $result;
+  $updating_pid = $result['object']['value'];
+  $object_to_update = islandora_object_load($updating_pid);
+
+  module_load_include('inc', 'islandora_xacml_api', 'includes/islandora_xacml');
+  $xacml = new IslandoraXacml($object_to_update, $object_to_update['POLICY']->content);
+  $xacml->writeBackToFedora();
+
+  watchdog('islandora_xacml_api', 'Rewrote policy and relationships for @pid.', array(
+    '@pid' => $updating_pid,
+  ));
+
+  $sandbox['progress'] = min($sandbox['total'], $sandbox['progress'] + 1);
+  $sandbox['#finished'] = $sandbox['progress'] / $sandbox['total'];
+  if ($sandbox['#finished'] >= 1) {
+    // XXX: Reset it, so it gets whatever user...
+    drupal_static_reset('islandora_get_tuque_connection');
+
+    return t('Updated @count PID(s).', array(
+      '@count' => $sandbox['total'],
+    ));
+  }
+}
