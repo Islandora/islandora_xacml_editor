@@ -158,7 +158,7 @@ EOQ;
     $offset = 100;
     $limited_query = format_string($query, array(
       '!filter' => (isset($sandbox['last_pid']) ?
-        "FILTER(?object > {$sandbox['last_pid']})" :
+        "FILTER(?object > <info:fedora/{$sandbox['last_pid']}>)" :
         ''),
     )) . <<<EOQ
 LIMIT $offset
@@ -179,8 +179,8 @@ EOQ;
   }
 
   $result = array_pop($sandbox['result_stash']);
-  $sandbox['last_pid'] = $result;
   $updating_pid = $result['object']['value'];
+  $sandbox['last_pid'] = $updating_pid;
   $object_to_update = islandora_object_load($updating_pid);
 
   module_load_include('inc', 'islandora_xacml_api', 'includes/islandora_xacml');
