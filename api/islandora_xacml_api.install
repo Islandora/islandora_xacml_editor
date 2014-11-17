@@ -158,7 +158,7 @@ EOQ;
     $offset = 100;
     $limited_query = format_string($query, array(
       '!filter' => (isset($sandbox['last_pid']) ?
-        "FILTER(?object > <info:fedora/{$sandbox['last_pid']}>)" :
+        "FILTER(xsd:string(?object) > xsd:string(<info:fedora/{$sandbox['last_pid']}>))" :
         ''),
     )) . <<<EOQ
 LIMIT $offset
