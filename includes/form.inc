@@ -59,41 +59,16 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
     try {
       $xacml = new Xacml($object['POLICY']->content);
 
-      if ($xacml->managementRule->isPopulated()) {
-        $rule = $xacml->managementRule->getRuleArray();
-        if (isset($rule['methods_default']) && count($rule['methods_default']) > 0) {
-          $compare = array_intersect($rule['methods_default'], $rule['methods']);
-          if (count($compare) < count($rule['methods_default'])) {
-            $output = format_plural(count($rule['methods_default']) - count($compare),
-              'You are missing 1 default management method in your XACML Policy',
-              'You are missing @count default management methods in your XACML Policy');
-            drupal_set_message($output, 'error');
-          }
-        }
+      if ($xacml->managementRule->isPopulated() && !$xacml->managementRule->validate_default_methods()) {
+        drupal_set_message(t('The management XACML policy is not valid.'), 'error');
       }
-      if ($xacml->viewingRule->isPopulated()) {
-        $rule = $xacml->viewingRule->getRuleArray();
-        if (isset($rule['methods_default']) && count($rule['methods_default']) > 0) {
-          $compare = array_intersect($rule['methods_default'], $rule['methods']);
-          if (count($compare) < count($rule['methods_default'])) {
-            $output = format_plural(count($rule['methods_default']) - count($compare),
-              'You are missing 1 default viewing method in your XACML Policy',
-              'You are missing @count default viewing methods in your XACML Policy');
-            drupal_set_message($output, 'error');
-          }
-        }
+
+      if ($xacml->viewingRule->isPopulated() && !$xacml->viewingRule->validate_default_methods()) {
+        drupal_set_message(t('The viewing XACML policy is not valid.'), 'error');
       }
-      if ($xacml->datastreamRule->isPopulated()) {
-        $rule = $xacml->datastreamRule->getRuleArray();
-        if (isset($rule['methods_default']) && count($rule['methods_default']) > 0) {
-          $compare = array_intersect($rule['methods_default'], $rule['methods']);
-          if (count($compare) < count($rule['methods_default'])) {
-            $output = format_plural(count($rule['methods_default']) - count($compare),
-              'You are missing 1 default datastream method in your XACML Policy',
-              'You are missing @count default datastream methods in your XACML Policy');
-            drupal_set_message($output, 'error');
-          }
-        }
+
+      if ($xacml->datastreamRule->isPopulated() && !$xacml->datastreamRule->validate_default_methods()) {
+        drupal_set_message(t('The datastream XACML policy is not valid.'), 'error');
       }
     }
     catch (XacmlException $e) {

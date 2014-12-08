@@ -283,6 +283,23 @@ abstract class XacmlRule {
     $rule['roles'] = array_unique($rule['roles']);
     return $rule;
   }
+
+  /**
+   * Check if all default methods are set in the rule.
+   *
+   * @return bool
+   *   Whether the rule has all the default methods set or not.
+   */
+  public function validate_default_methods() {
+    $return = TRUE;
+    if (isset($this->rule['methods_default']) && count($this->rule['methods_default']) > 0) {
+      $compare = array_intersect($this->rule['methods_default'], $this->rule['methods']);
+      if (count($compare) < count($this->rule['methods_default'])) {
+        $return = FALSE;
+      }
+    }
+    return $return;
+  }
 }
 
 /**
