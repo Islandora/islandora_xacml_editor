@@ -59,15 +59,15 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
     try {
       $xacml = new Xacml($object['POLICY']->content);
 
-      if ($xacml->managementRule->isPopulated() && !$xacml->managementRule->validate_default_methods()) {
+      if ($xacml->managementRule->isPopulated() && !$xacml->managementRule->validateDefaultMethods()) {
         drupal_set_message(t('The management XACML policy is not valid.'), 'error');
       }
 
-      if ($xacml->viewingRule->isPopulated() && !$xacml->viewingRule->validate_default_methods()) {
+      if ($xacml->viewingRule->isPopulated() && !$xacml->viewingRule->validateDefaultMethods()) {
         drupal_set_message(t('The viewing XACML policy is not valid.'), 'error');
       }
 
-      if ($xacml->datastreamRule->isPopulated() && !$xacml->datastreamRule->validate_default_methods()) {
+      if ($xacml->datastreamRule->isPopulated() && !$xacml->datastreamRule->validateDefaultMethods()) {
         drupal_set_message(t('The datastream XACML policy is not valid.'), 'error');
       }
     }

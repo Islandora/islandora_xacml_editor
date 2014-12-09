@@ -290,7 +290,7 @@ abstract class XacmlRule {
    * @return bool
    *   Whether the rule has all the default methods set or not.
    */
-  public function validate_default_methods() {
+  public function validateDefaultMethods() {
     $return = TRUE;
     if (isset($this->rule['methods_default']) && count($this->rule['methods_default']) > 0) {
       $compare = array_intersect($this->rule['methods_default'], $this->rule['methods']);
