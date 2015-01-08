@@ -51,6 +51,7 @@ abstract class XacmlRule {
     $rule['mimes'] = array();
     $rule['dsidregexs'] = array();
     $rule['mimeregexs'] = array();
+    $rule['methods_default'] = array();
     $rule['methods'] = array();
     $rule['users'] = array();
     $rule['roles'] = array();
@@ -145,6 +146,7 @@ abstract class XacmlRule {
       'ruleid',
       'effect',
       'methods',
+      'methods_default',
     );
 
     $clearable = array_diff(array_keys($this->rule), $dont_touch);
@@ -281,6 +283,23 @@ abstract class XacmlRule {
     $rule['roles'] = array_unique($rule['roles']);
     return $rule;
   }
+
+  /**
+   * Check if all default methods are set in the rule.
+   *
+   * @return bool
+   *   Whether the rule has all the default methods set or not.
+   */
+  public function validateDefaultMethods() {
+    $return = TRUE;
+    if (isset($this->rule['methods_default']) && count($this->rule['methods_default']) > 0) {
+      $compare = array_intersect($this->rule['methods_default'], $this->rule['methods']);
+      if (count($compare) < count($this->rule['methods_default'])) {
+        $return = FALSE;
+      }
+    }
+    return $return;
+  }
 }
 
 /**
@@ -302,34 +321,36 @@ class XacmlManagementRule extends XacmlRule {
    */
   public function __construct($arg1, $xacml) {
     parent::__construct($arg1, $xacml);
+    $methods_default = array(
+      'addDatastream',
+      'addDisseminator',
+      'adminPing',
+      'getDisseminatorHistory',
+      'getNextPid',
+      'ingest',
+      'modifyDatastreamByReference',
+      'modifyDatastreamByValue',
+      'modifyDisseminator',
+      'modifyObject',
+      'purgeObject',
+      'purgeDatastream',
+      'purgeDisseminator',
+      'setDatastreamState',
+      'setDisseminatorState',
+      'setDatastreamVersionable',
+      'compareDatastreamChecksum',
+      'serverShutdown',
+      'serverStatus',
+      'upload',
+      'dsstate',
+      'resolveDatastream',
+      'reloadPolicies',
+    );
     if ($arg1 == NULL) {
       $this->rule = $this->initializeRule(ISLANDORA_XACML_API_MANAGEMENT_RULE, 'Deny');
-      $this->rule['methods'] = array(
-        'addDatastream',
-        'addDisseminator',
-        'adminPing',
-        'getDisseminatorHistory',
-        'getNextPid',
-        'ingest',
-        'modifyDatastreamByReference',
-        'modifyDatastreamByValue',
-        'modifyDisseminator',
-        'modifyObject',
-        'purgeObject',
-        'purgeDatastream',
-        'purgeDisseminator',
-        'setDatastreamState',
-        'setDisseminatorState',
-        'setDatastreamVersionable',
-        'compareDatastreamChecksum',
-        'serverShutdown',
-        'serverStatus',
-        'upload',
-        'dsstate',
-        'resolveDatastream',
-        'reloadPolicies',
-      );
+      $this->rule['methods'] = $methods_default;
     }
+    $this->rule['methods_default'] = $methods_default;
   }
 
   /**
@@ -366,14 +387,16 @@ class XacmlViewingRule extends XacmlRule {
    */
   public function __construct($arg1, $xacml) {
     parent::__construct($arg1, $xacml);
+    $methods_default = array(
+      'api-a',
+      'getDatastreamHistory',
+      'listObjectInResourceIndexResults',
+    );
     if ($arg1 == NULL) {
       $this->rule = $this->initializeRule(ISLANDORA_XACML_API_VIEWING_RULE, 'Deny');
-      $this->rule['methods'] = array(
-        'api-a',
-        'getDatastreamHistory',
-        'listObjectInResourceIndexResults',
-      );
+      $this->rule['methods'] = $methods_default;
     }
+    $this->rule['methods_default'] = $methods_default;
   }
 
   /**
@@ -478,10 +501,14 @@ class XacmlDatastreamRule extends XacmlRule {
    */
   public function __construct($arg1, $xacml) {
     parent::__construct($arg1, $xacml);
+    $methods_default = array(
+      'getDatastreamDissemination',
+    );
     if ($arg1 == NULL) {
       $this->rule = $this->initializeRule(ISLANDORA_XACML_API_DATASTREAM_RULE, 'Deny');
-      $this->rule['methods'][] = 'getDatastreamDissemination';
+      $this->rule['methods'] = $methods_default;
     }
+    $this->rule['methods_default'] = $methods_default;
   }
 
   /**
