@@ -786,6 +786,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
     $form['dsid_mime']['dsid_regex'] = array(
       '#type' => 'textfield',
       '#title' => t('DSID Regex'),
+      '#description' => l(t('XML regex'), 'http://www.w3.org/TR/xmlschema-0/#regexAppendix'),
       '#size' => 35,
       '#prefix' => '<div class="islandora_xacml_block">',
       '#name' => 'dsid_regex_add_textfield',
@@ -839,6 +840,7 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
     $form['dsid_mime']['mime_regex'] = array(
       '#type' => 'textfield',
       '#title' => t('MIME type Regex'),
+      '#description' => l(t('XML regex'), 'http://www.w3.org/TR/xmlschema-0/#regexAppendix'),
       '#size' => 35,
       '#prefix' => '<div class="islandora_xacml_block">',
       '#name' => 'mime_regex_add_textfield',
