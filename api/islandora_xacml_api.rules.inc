@@ -132,7 +132,7 @@ function islandora_xacml_api_rules_data_info() {
             'getter callback' => 'islandora_xacml_api_rules_info_getter',
             'setter callback' => 'islandora_xacml_api_rules_info_setter',
           ),
-        )
+        ),
       ),
       'view' => array(
         'label' => t('Viewing Rule'),
@@ -155,7 +155,7 @@ function islandora_xacml_api_rules_data_info() {
             'getter callback' => 'islandora_xacml_api_rules_info_getter',
             'setter callback' => 'islandora_xacml_api_rules_info_setter',
           ),
-        )
+        ),
       ),
       'datastream' => array(
         'label' => t('Datastream Viewing Rule'),
@@ -206,7 +206,7 @@ function islandora_xacml_api_rules_data_info() {
             'getter callback' => 'islandora_xacml_api_rules_info_getter',
             'setter callback' => 'islandora_xacml_api_rules_info_setter',
           ),
-        )
+        ),
       ),
     ),
   );
