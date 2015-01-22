@@ -60,19 +60,21 @@ function islandora_xacml_api_rules_save(IslandoraXacml $xacml) {
 /**
  * Getter helper for our islandora_xacml type.
  */
-function islandora_xacml_api_rules_info_getter($data, array $options, $name, $type, $info) {
-  if ($data instanceof IslandoraXacml) {
-    $map = array(
-      'manage' => $data->managementRule,
-      'view' => $data->viewingRule,
-      'datastream' => $data->datastreamRule,
-    );
-    return $map[$name];
-  }
-  elseif ($data instanceof XacmlRule) {
-    $rule = $data->getRuleArray();
-    return $rule[$name];
-  }
+function islandora_xacml_api_rules_islandora_xacml_getter($data, array $options, $name, $type, $info) {
+  $map = array(
+    'manage' => $data->managementRule,
+    'view' => $data->viewingRule,
+    'datastream' => $data->datastreamRule,
+  );
+  return $map[$name];
+}
+
+/**
+ * Getter helper for our islandora_xacml "Rule" type.
+ */
+function islandora_xacml_api_rules_islandora_xacml_rule_getter($data, array $options, $name, $type, $info) {
+  $rule = $data->getRuleArray();
+  return $rule[$name];
 }
 
 /**
@@ -107,6 +109,20 @@ function islandora_xacml_api_rules_info_noop_setter() {
 function islandora_xacml_api_rules_data_info() {
   $data = array();
 
+  $base_property = array(
+    'type' => 'list<text>',
+    'computed' => TRUE,
+    'getter callback' => 'islandora_xacml_api_rules_islandora_xacml_rule_getter',
+    'setter callback' => 'islandora_xacml_api_rules_info_setter',
+  );
+  $base_properties = array(
+    'users' => array(
+      'label' => t('List of users in this rule'),
+    ) + $base_property,
+    'roles' => array(
+      'label' => t('List of roles in this rule'),
+    ) + $base_property,
+  );
   $data['islandora_xacml'] = array(
     'label' => t('Islandora XACML object'),
     'wrap' => TRUE,
@@ -115,97 +131,37 @@ function islandora_xacml_api_rules_data_info() {
         'label' => t('Management Rule'),
         'type' => 'struct',
         'computed' => TRUE,
-        'getter callback' => 'islandora_xacml_api_rules_info_getter',
+        'getter callback' => 'islandora_xacml_api_rules_islandora_xacml_getter',
         'setter callback' => 'islandora_xacml_api_rules_info_noop_setter',
-        'property info' => array(
-          'users' => array(
-            'label' => t('List of users in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
-          'roles' => array(
-            'label' => t('List of roles in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
-        ),
+        'property info' => $base_properties,
       ),
       'view' => array(
         'label' => t('Viewing Rule'),
         'type' => 'struct',
         'computed' => TRUE,
-        'getter callback' => 'islandora_xacml_api_rules_info_getter',
+        'getter callback' => 'islandora_xacml_api_rules_islandora_xacml_getter',
         'setter callback' => 'islandora_xacml_api_rules_info_noop_setter',
-        'property info' => array(
-          'users' => array(
-            'label' => t('List of users in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
-          'roles' => array(
-            'label' => t('List of roles in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
-        ),
+        'property info' => $base_properties,
       ),
       'datastream' => array(
         'label' => t('Datastream Viewing Rule'),
         'type' => 'struct',
         'computed' => TRUE,
-        'getter callback' => 'islandora_xacml_api_rules_info_getter',
+        'getter callback' => 'islandora_xacml_api_rules_islandora_xacml_getter',
         'setter callback' => 'islandora_xacml_api_rules_info_noop_setter',
-        'property info' => array(
-          'users' => array(
-            'label' => t('List of users in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
-          'roles' => array(
-            'label' => t('List of roles in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
+        'property info' => $base_properties + array(
           'mimes' => array(
             'label' => t('List of mimes in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
+          ) + $base_property,
           'mimeregexs' => array(
             'label' => t('List of mimeregexs in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
+          ) + $base_property,
           'dsids' => array(
             'label' => t('List of dsids in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
+          ) + $base_property,
           'dsidregexs' => array(
             'label' => t('List of dsidregexs in this rule'),
-            'type' => 'list<text>',
-            'computed' => TRUE,
-            'getter callback' => 'islandora_xacml_api_rules_info_getter',
-            'setter callback' => 'islandora_xacml_api_rules_info_setter',
-          ),
+          ) + $base_property,
         ),
       ),
     ),
