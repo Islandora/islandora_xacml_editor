@@ -73,8 +73,13 @@ function islandora_xacml_api_rules_islandora_xacml_getter($data, array $options,
  * Getter helper for our islandora_xacml "Rule" type.
  */
 function islandora_xacml_api_rules_islandora_xacml_rule_getter($data, array $options, $name, $type, $info) {
-  $rule = $data->getRuleArray();
-  return $rule[$name];
+  if ($data->isPopulated()) {
+    $rule = $data->getRuleArray();
+    return $rule[$name];
+  }
+  else {
+    return array();
+  }
 }
 
 /**
