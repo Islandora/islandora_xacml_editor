@@ -76,7 +76,7 @@ class IslandoraXacmlApiRelsWritingTest extends IslandoraWebTestCase {
     $this->assertFalse($this->object->relationships->get(ISLANDORA_RELS_EXT_URI, 'isManageableByUser', 'asdfer', RELS_TYPE_PLAIN_LITERAL), 'Management relationship does not exist for datastream access user.');
   }
 
-  /** 
+  /**
    * Test if writing "roles" first affects the ability of writing "users".
    */
   public function testRoleUserRels() {
@@ -85,7 +85,7 @@ class IslandoraXacmlApiRelsWritingTest extends IslandoraWebTestCase {
     $this->testRoleRels();
   }
 
-  /** 
+  /**
    * Test if writing "users" first affects the ability of writing "roles".
    */
   public function testUserRoleRels() {
