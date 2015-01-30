@@ -11,5 +11,6 @@ files[] = includes/exception.inc
 files[] = includes/parser.inc
 files[] = includes/writer.inc
 files[] = tests/api.test
+files[] = tests/rels.test
 files[] = tests/hooked_access.test
 testing_api = 2.x
