@@ -23,6 +23,9 @@ function islandora_xacml_api_drush_command() {
       'islandora',
       'islandora_xacml_api',
     ),
+    'examples' => array(
+      'drush -u 1 islandora-xacml-api-relationships-update-batch',
+    ),
   );
 
   return $command;
@@ -83,7 +86,7 @@ EOQ;
       // Nothing to process.
       $context['finished'] = 1;
 
-      return t('Nothing to fix.');
+      $context['message'] = t('Nothing to fix.');
     }
     $sandbox['result_stash'] = array();
   }
