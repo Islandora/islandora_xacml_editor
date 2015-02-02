@@ -78,6 +78,9 @@ class IslandoraXacml extends Xacml {
     list($manageable_by_user, $manageable_by_role) = $manage_relationships;
 
     $all_relationships = array_merge($view_relationships, $manage_relationships);
+
+    $this->object->relationships->autoCommit = FALSE;
+
     // Remove all existing relationships.
     foreach ($all_relationships as $relationship) {
       $this->object->relationships->remove(ISLANDORA_RELS_EXT_URI, $relationship);
@@ -128,5 +131,7 @@ class IslandoraXacml extends Xacml {
         $this->object->relationships->add(ISLANDORA_RELS_EXT_URI, $manageable_by_role, $role, TRUE);
       }
     }
+
+    $this->object->relationships->commitRelationships();
   }
 }
