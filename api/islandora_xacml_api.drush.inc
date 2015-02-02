@@ -34,9 +34,12 @@ function islandora_xacml_api_drush_command() {
 function drush_islandora_xacml_api_relationships_update_batch() {
   $batch = array(
     'operations' => array(
-      array('islandora_xacml_api_relationships_update_batch_operation', array(
-        drush_get_option('limit', 100),
-      )),
+      array(
+        'islandora_xacml_api_relationships_update_batch_operation',
+        array(
+          drush_get_option('limit', 100),
+        ),
+      ),
     ),
   );
 
