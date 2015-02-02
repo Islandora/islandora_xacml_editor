@@ -87,6 +87,7 @@ EOQ;
       $context['finished'] = 1;
 
       $context['message'] = t('Nothing to fix.');
+      return;
     }
     $sandbox['result_stash'] = array();
   }
