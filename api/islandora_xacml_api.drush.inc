@@ -114,7 +114,7 @@ EOQ;
     }
   }
 
-  $result = array_pop($sandbox['result_stash']);
+  $result = array_shift($sandbox['result_stash']);
   $updating_pid = $result['object']['value'];
   $sandbox['last_date'] = $result['created']['value'];
   $object_to_update = islandora_object_load($updating_pid);
