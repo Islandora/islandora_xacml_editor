@@ -173,8 +173,6 @@ EOQ;
   $ds = $parts[1];
   $object_to_update = islandora_object_load($pid);
 
-  // Need to either replace the existing RELS-INT if a POLICY still exists
-  // or remove bunked statements if it was since removed.
   $manageable_by_user = 'isManageableByUser';
   $manageable_by_role = 'isManageableByRole';
   $object_to_update[$ds]->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_user);
@@ -183,7 +181,6 @@ EOQ;
     '@pid' => $pid,
     '@ds' => $ds,
   ));
-
 
   $sandbox['progress'] = min($sandbox['total'], $sandbox['progress'] + 1);
   $sandbox['#finished'] = $sandbox['progress'] / $sandbox['total'];
