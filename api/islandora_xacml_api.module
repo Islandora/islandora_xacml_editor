@@ -114,8 +114,6 @@ function islandora_xacml_api_islandora_datastream_alter(AbstractObject $object, 
       foreach ($object as $source_dsid => $value) {
         $object[$source_dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
         $object[$source_dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
-        $object[$source_dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_user);
-        $object[$source_dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
       }
     }
     else {
@@ -127,11 +125,9 @@ function islandora_xacml_api_islandora_datastream_alter(AbstractObject $object, 
         if (array_search($dsid, $ds_rule['dsids']) !== FALSE) {
           if (count($ds_rule['users']) > 0) {
             $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_user);
-            $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_user);
           }
           if (count($ds_rule['roles']) > 0) {
             $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $viewable_by_role);
-            $object[$dsid]->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
           }
         }
       }
@@ -159,14 +155,12 @@ function islandora_xacml_api_islandora_datastream_ingested(AbstractObject $objec
           // cleanliness sake.
           if ($user !== 'fedoraAdmin') {
             $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_user, $user, TRUE);
-            $object[$datastream->id]->relationships->add(ISLANDORA_RELS_EXT_URI, $manageable_by_user, $user, TRUE);
           }
         }
       }
       if (count($ds_rule['roles']) > 0) {
         foreach ($ds_rule['roles'] as $role) {
           $object[$datastream->id]->relationships->add(ISLANDORA_RELS_INT_URI, $viewable_by_role, $role, TRUE);
-          $object[$datastream->id]->relationships->add(ISLANDORA_RELS_EXT_URI, $manageable_by_role, $role, TRUE);
         }
       }
     }
