@@ -71,9 +71,6 @@ function islandora_xacml_editor_batch_finished($success, $results, $operations) 
       drupal_set_message(t("Failed to update: @failed_object. You do not have permission to update this object.", array('@failed_object' => $fail)), 'error');
     }
   }
-
-  $pid = $results['redirect'];
-  drupal_goto('islandora/object/' . $pid);
 }
 
 /**
