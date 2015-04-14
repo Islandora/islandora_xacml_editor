@@ -1074,6 +1074,7 @@ function islandora_xacml_editor_form_submit(&$form, &$form_state) {
 
   $xacml->writeBackToFedora();
 
+  $form_state['redirect'] = array('islandora/object/' . $pid);
   if (isset($form_state['islandora_xacml']['query_choices']) && $form_state['values']['update_options'] != 'newchildren') {
     $option = $form_state['values']['update_options'];
     $query_array = $form_state['islandora_xacml']['query_choices'][$option];
@@ -1094,7 +1095,6 @@ function islandora_xacml_editor_form_submit(&$form, &$form_state) {
   }
   else {
     unset($form_state['islandora_xacml']);
-    $form_state['redirect'] = array('islandora/object/' . $pid);
     drupal_set_message(t('The configured POLICY datastream has been applied to @pid!', array(
       '@pid' => $pid,
     )));
