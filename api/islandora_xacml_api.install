@@ -173,10 +173,17 @@ EOQ;
   $ds = $parts[1];
   $object_to_update = islandora_object_load($pid);
 
+  if (!isset($object_to_update[$ds])) {
+    $temp_ds = $object_to_update->constructDatastream($ds);
+  }
+  else {
+    $temp_ds = $object_to_update[$ds];
+  }
+
   $manageable_by_user = 'isManageableByUser';
   $manageable_by_role = 'isManageableByRole';
-  $object_to_update[$ds]->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_user);
-  $object_to_update[$ds]->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_role);
+  $temp_ds->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_user);
+  $temp_ds->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
   watchdog('islandora_xacml_api', 'Removed superfluous RELS-INT relationship for @pid on the @ds datastream.', array(
     '@pid' => $pid,
     '@ds' => $ds,
