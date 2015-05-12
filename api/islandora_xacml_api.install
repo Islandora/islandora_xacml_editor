@@ -173,6 +173,8 @@ EOQ;
   $ds = $parts[1];
   $object_to_update = islandora_object_load($pid);
 
+  // Add temp ds to existing update because if the hook fails,
+  // it's still pending.
   if (!isset($object_to_update[$ds])) {
     $temp_ds = $object_to_update->constructDatastream($ds);
   }
