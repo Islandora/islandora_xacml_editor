@@ -289,7 +289,7 @@ EOQ;
 
 /**
  * Remove superfluous relationship from the RELS-INT and RELS-INT namespace
- * wether or not the datastream exists.
+ * whether or not the datastream exists.
  *
  * Force tuque connection to user 1 incase of xacml.
  *
