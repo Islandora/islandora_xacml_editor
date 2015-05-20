@@ -186,7 +186,7 @@ EOQ;
   $manageable_by_role = 'isManageableByRole';
   $temp_ds->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_user);
   $temp_ds->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_role);
-  watchdog('islandora_xacml_api', 'Removed superfluous RELS-INT relationship for @pid on the @ds datastream.', array(
+  watchdog('islandora_xacml_api', 'Removed superfluous RELS-INT (RELS-EXT NS) relationship for @pid on the @ds datastream.', array(
     '@pid' => $pid,
     '@ds' => $ds,
   ));
@@ -271,6 +271,112 @@ EOQ;
 
   $manageable_by_user = 'isManageableByUser';
   $manageable_by_role = 'isManageableByRole';
+  $temp_ds->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_user);
+  $temp_ds->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
+  watchdog('islandora_xacml_api', 'Removed superfluous RELS-INT (RELS-INT NS) relationship for @pid on the @ds datastream.', array(
+    '@pid' => $pid,
+    '@ds' => $ds,
+  ));
+
+  $sandbox['progress'] = min($sandbox['total'], $sandbox['progress'] + 1);
+  $sandbox['#finished'] = $sandbox['progress'] / $sandbox['total'];
+  if ($sandbox['#finished'] >= 1) {
+    return t('Updated @count PID(s).', array(
+      '@count' => $sandbox['total'],
+    ));
+  }
+}
+
+/**
+ * Remove superfluous relationships from the RELS-INT DS.
+ *
+ * Removes from both RELS-EXT and RELS-INT namespace and
+ * whether or not the datastream exists.
+ *
+ * Force tuque connection to user 1 incase of xacml.
+ *
+ * @see https://jira.duraspace.org/browse/ISLANDORA-1273
+ */
+function islandora_xacml_api_update_7105(&$sandbox) {
+  if (!variable_get('islandora_xacml_api_save_relationships', TRUE)) {
+    return t('Relationships are disabled, nothing to do.');
+  }
+  drupal_load('module', 'islandora');
+  drupal_static_reset('islandora_get_tuque_connection');
+  $user = user_load(1);
+  $tuque = islandora_get_tuque_connection($user);
+  $rels_int_uri = ISLANDORA_RELS_INT_URI;
+  $rels_ext_uri = ISLANDORA_RELS_EXT_URI;
+
+  $query = <<<EOQ
+SELECT DISTINCT ?ds FROM <#ri> WHERE {
+  {
+    {
+      ?ds <{$rels_int_uri}isManageableByRole> ?role
+    }
+    UNION {
+      ?ds <{$rels_int_uri}isManageableByUser> ?user
+    }
+    UNION {
+      ?ds <{$rels_ext_uri}isManageableByRole> ?user
+    }
+    UNION {
+      ?ds <{$rels_ext_uri}isManageableByUser> ?user
+    }
+    OPTIONAL {
+      ?ds <fedora-model:hasModel> ?model
+    }
+  }
+  FILTER (!bound(?model))
+}
+EOQ;
+
+  if (!isset($sandbox['total'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['total'] = $tuque->repository->ri->countQuery($query, 'sparql');
+    if ($sandbox['total'] == 0) {
+      // Nothing to process.
+      $sandbox['#finished'] = 1;
+      return t('Nothing to fix.');
+    }
+    $sandbox['result_stash'] = array();
+  }
+
+  if (empty($sandbox['result_stash'])) {
+    $offset = 100;
+    $limited_query = $query . <<<EOQ
+LIMIT $offset
+EOQ;
+
+    $sandbox['result_stash'] = $tuque->repository->ri->sparqlQuery($limited_query);
+    if (empty($sandbox['result_stash'])) {
+      // Ran out of items early?
+      $sandbox['#finished'] = 1;
+      return t('Updated @count PID(s) and ran out of items early... Somebody manually updated a document?', array(
+        '@count' => $sandbox['total'],
+      ));
+    }
+  }
+
+  $result = array_pop($sandbox['result_stash']);
+  $datastream_uri = $result['ds']['value'];
+
+  $parts = explode('/', $datastream_uri);
+  $pid = $parts[0];
+  $ds = $parts[1];
+  $object_to_update = islandora_object_load($pid);
+
+  if (!isset($object_to_update[$ds])) {
+    $temp_ds = $object_to_update->constructDatastream($ds);
+  }
+  else {
+    $temp_ds = $object_to_update[$ds];
+  }
+
+  $manageable_by_user = 'isManageableByUser';
+  $manageable_by_role = 'isManageableByRole';
+  $temp_ds->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_user);
+  $temp_ds->relationships->remove(ISLANDORA_RELS_EXT_URI, $manageable_by_role);
   $temp_ds->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_user);
   $temp_ds->relationships->remove(ISLANDORA_RELS_INT_URI, $manageable_by_role);
   watchdog('islandora_xacml_api', 'Removed superfluous RELS-INT relationship for @pid on the @ds datastream.', array(
