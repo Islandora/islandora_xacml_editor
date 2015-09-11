@@ -14,6 +14,7 @@ This module requires the following modules/libraries:
 
 * [Islandora](https://github.com/islandora/islandora)
 * [Tuque](https://github.com/islandora/tuque)
+* [Islandora XACML API](https://github.com/Islandora/islandora_xacml_editor/tree/7.x/api)
 
 ## Installation
 
@@ -23,7 +24,7 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 ### Fedora Configuration
 
-It may be desirable--and in fact necessary for some modules--to disable/remove ene of the default XACML policies which denies any interactions with the POLICY datastream to users without the "administrator" role.
+It may be desirable--and in fact necessary for some modules--to disable/remove one of the default XACML policies which denies any interactions with the POLICY datastream to users without the "administrator" role.
 
 This policy is located here:
 `$FEDORA_HOME/data/fedora-xacml-policies/repository-policies/default/deny-policy-management-if-not-administrator.xml`
@@ -31,6 +32,8 @@ This policy is located here:
 ### Solr Searching Hook
 
 In order to comply with XACML restrictions placed on objects, a hook is used to filter results that do not conform to a searching user's roles and name. This hook will not function correctly if the Solr fields for `ViewableByUser` and `ViewableByRole` are not defined correctly as they are set in the XSLT. These values can be set through the admin page for the module.
+
+![image](https://cloud.githubusercontent.com/assets/2371345/9816201/d7e9a1e6-5871-11e5-90a0-51381eaf8fcb.png)
 
 ### Notes
 
