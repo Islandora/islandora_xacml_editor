@@ -233,6 +233,19 @@ function islandora_xacml_editor_form($form, &$form_state, $object) {
     if (isset($form_state['islandora_xacml']['child_option'])) {
       $form['update_options']['#value'] = $form_state['islandora_xacml']['child_option'];
     }
+
+    $form['update_options_warning'] = array(
+      '#type' => 'container',
+      '#states' => array(
+        'invisible' => array(
+          ':input[name="update_options"]' => array('value' => 'newchildren'),
+        ),
+      ),
+      'markup' => array(
+        '#markup' => t('<strong>Warning:</strong> Overriding existing policies can break the expected behavoir of other modules which rely on full control of an objects POLICY. If any children have embargoes set by <em>Islandora Scholar Embargo</em> they will be lost when this action is committed.'),
+      ),
+    );
+
   }
   $form['dsid_mime']['users'] = array(
     '#type' => 'select',
