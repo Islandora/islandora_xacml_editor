@@ -295,8 +295,8 @@ function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_stat
   // Hard code the XACML pager element because it needs to be unique.
   $pager_element = 3;
   $page = pager_find_page($pager_element);
-  list($count, $results) = islandora_basic_collection_get_member_objects($object, $page, 20, 'manage');
-  pager_default_initialize($count, 20, $pager_element);
+  list($count, $results) = islandora_basic_collection_get_member_objects($object, $page, 10, 'manage');
+  pager_default_initialize($count, 10, $pager_element);
   $rows = array();
   $options = array('none' => 'None');
   // Get the pids of the children for this collection.
