@@ -291,62 +291,70 @@ function islandora_xacml_editor_after_build($form, &$form_state) {
  *   The Drupal form definition.
  */
 function islandora_xacml_editor_manage_xacml_form(array $form, array &$form_state, AbstractObject $object) {
-  module_load_include('inc', 'islandora', 'includes/utilities');
-  $dt = islandora_basic_collection_get_member_objects($object, 0, 20, 'view', 'islandora:collectionCModel');
-  $child_collections_pids = array();
-  $rows = array();
-  $options = array('none' => 'None');
-  // Get the pids of the children for this collection.
-  foreach ($dt[1] as $info) {
-    array_push($child_collections_pids, $info['object']['value']);
-  }
-  foreach ($child_collections_pids as $pid) {
-    $child_collection = islandora_object_load($pid);
-    $parent_pids = islandora_basic_collection_get_parent_pids($child_collection);
-    $rels_ext = $child_collection->relationships->get(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom');
-    foreach ($parent_pids as $parent_pid) {
-      $parent_object = islandora_object_load($parent_pid);
-      $options[$parent_object->id] = $parent_object->label;
+  if (module_exists('islandora_basic_collection')) {
+    module_load_include('inc', 'islandora', 'includes/utilities');
+    // Hard code the XACML pager element because it needs to be unique.
+    $pager_element = 3;
+    $page = pager_find_page($pager_element);
+    list($count, $results) = islandora_basic_collection_get_member_objects($object, $page, 10, 'manage', 'islandora:collectionCModel');
+    pager_default_initialize($count, 10, $pager_element);
+    $rows = array();
+    $options = array('none' => 'None');
+    // Get the pids of the children for this collection.
+    foreach ($results as $result) {
+      $pid = $result['object']['value'];
+      $child_collection = islandora_object_load($pid);
+      $parent_pids = islandora_basic_collection_get_parent_pids($child_collection);
+      $rels_ext = $child_collection->relationships->get(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom');
+      foreach ($parent_pids as $parent_pid) {
+        $parent_object = islandora_object_load($parent_pid);
+        $options[$parent_object->id] = $parent_object->label;
+      }
+      $default_value = (isset($rels_ext[0]) ? $rels_ext[0]['object']['value'] : 'none');
+      $rows[$pid] = array(
+        'selected' => array(
+          '#type' => 'checkbox',
+          '#default_value' => FALSE,
+        ),
+        'title' => array(
+          '#markup' => l(t('@label (@pid)', array('@label' => $child_collection->label, '@pid' => $pid)), "islandora/object/{$pid}"),
+        ),
+        'parents' => array(
+          '#type' => 'select',
+          '#options' => $options,
+          '#default_value' => $default_value,
+        ),
+      );
     }
-    $default_value = (isset($rels_ext[0]) ? $rels_ext[0]['object']['value'] : 'none');
-    $rows[$pid] = array(
-      'selected' => array(
-        '#type' => 'checkbox',
-        '#default_value' => FALSE,
+    // Theme pager doesn't support url fragments in D7 so we insert manually.
+    $pager = theme('pager', array('quantity' => 20, 'element' => $pager_element));
+    $pager = islandora_basic_collection_append_fragment_to_pager_url($pager, '#manage-xacml');
+    return array(
+      '#action' => request_uri() . '#manage-xacml',
+      'help' => array(
+        '#type' => 'item',
+        '#markup' => t('XACML Inheritance Policies'),
       ),
-      'title' => array(
-        '#markup' => l(t('@label (@pid)', array('@label' => $child_collection->label, '@pid' => $pid)), "islandora/object/{$pid}"),
+      'table' => array(
+        '#tree' => TRUE,
+        '#header' => array(
+          array('class' => array('select-all')), t('COLLECTION(PID)'), 'INHERIT FROM',
+        ),
+        '#theme' => 'islandora_xacml_editor_policy_management_table',
+        'rows' => $rows,
+        '#prefix' => $pager,
+        '#suffix' => $pager,
       ),
-      'parents' => array(
-        '#type' => 'select',
-        '#options' => $options,
-        '#default_value' => $default_value,
+      'submit' => array(
+        '#type' => 'submit',
+        '#value' => t('Update XACML Inheritance'),
+        '#access' => count($rows),
       ),
     );
   }
-  return array(
-    '#action' => request_uri() . '#policy-management',
-    'help' => array(
-      '#type' => 'item',
-      '#markup' => t('XACML Inheritance Policies'),
-    ),
-    'table' => array(
-      '#tree' => TRUE,
-      '#header' => array(
-        array('class' => array('select-all')), t('COLLECTION(PID)'), 'INHERIT FROM',
-      ),
-      'pager' => array(
-        '#markup' => theme('pager'),
-      ),
-      '#theme' => 'islandora_xacml_editor_policy_management_table',
-      'rows' => $rows,
-    ),
-    'submit' => array(
-      '#type' => 'submit',
-      '#value' => t('Update XACML Inheritance'),
-      '#access' => count($rows),
-    ),
-  );
+  else {
+    return array();
+  }
 }
 
 /**
@@ -387,7 +395,7 @@ function islandora_xacml_editor_manage_xacml_form_submit(array $form, array &$fo
         // we must remove the current XACML policy if it exists.
         $object = islandora_object_load($child_pids[$count]);
         if (isset($object['POLICY'])) {
-          $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom', $parent_object->id, RELS_TYPE_URI);
+          $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'inheritXacmlFrom');
           $object->purgeDatastream('POLICY');
           drupal_set_message(t('@child no longer inherits XACML.', array('@child' => $object->id)), 'status');
         }
