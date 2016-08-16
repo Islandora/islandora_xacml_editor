@@ -246,7 +246,13 @@ function islandora_xacml_editor_islandora_basic_collection_build_manage_object(a
  */
 function islandora_xacml_editor_form_islandora_basic_collection_create_child_collection_form_alter(array &$form, array &$form_state) {
   $parent_object = islandora_object_load($form_state['islandora']['shared_storage']['parent']);
+
   $xacml_options = array('None' => 'None');
+
+  // If the form has a step_storage value set for this field, use it.
+  $step_storage = &islandora_ingest_form_get_step_storage($form_state, 'islandora_basic_collection');
+  $xacml_selected_option = isset($step_storage['values']['xacml']) ? array($step_storage['values']['xacml'] => $step_storage['values']['xacml']) : array('None' => 'None');
+
   if ($parent_object) {
     $xacml_options[$parent_object->id] = $parent_object->label;
   }
@@ -255,6 +261,7 @@ function islandora_xacml_editor_form_islandora_basic_collection_create_child_col
     '#type' => 'select',
     '#title' => t('Inherit XACML policy from'),
     '#options' => $xacml_options,
+    '#default_value' => $xacml_selected_option,
   );
   // Using after_build to alter the weight dynamically.
   $form['#after_build'][] = 'islandora_xacml_editor_after_build';
