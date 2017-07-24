@@ -263,6 +263,7 @@ function islandora_xacml_editor_form_islandora_basic_collection_create_child_col
     '#options' => $xacml_options,
     '#default_value' => $xacml_selected_option,
   );
+
   // Using after_build to alter the weight dynamically.
   $form['#after_build'][] = 'islandora_xacml_editor_after_build';
 }
@@ -279,7 +280,11 @@ function islandora_xacml_editor_form_islandora_basic_collection_create_child_col
  *   The form after POST processing is complete.
  */
 function islandora_xacml_editor_after_build($form, &$form_state) {
-  $form['xacml']['#weight'] = $form['next']['#weight'] - .001;
+  $weight = $form['next']['#weight'] - .001;
+  if (isset($form['prev'])) {
+    $weight = min($weight, $form['prev']['#weight'] - .001);
+  }
+  $form['xacml']['#weight'] = $weight;
   unset($form['#sorted']);
   return $form;
 }
