@@ -234,7 +234,7 @@ EOQ;
     $limited_query = format_string($query, array(
       '!filter' => isset($filter) ? $filter : '',
     )) . <<<EOQ
-LIMIT 100
+LIMIT $limit
 EOQ;
 
     drush_log(dt('Querying for 100 objects.'));
