@@ -392,3 +392,16 @@ EOQ;
     ));
   }
 }
+
+/**
+ * Ensure RELS-INT relationships are present.
+ *
+ * @see https://jira.duraspace.org/browse/ISLANDORA-2067
+ */
+function islandora_xacml_api_update_7106(&$sandbox) {
+  if (!variable_get('islandora_xacml_api_save_relationships', TRUE)) {
+    return t('Relationships are disabled, nothing to do.');
+  }
+  drupal_set_message(t('Please run the islandora-xacml-api-relationships-missing-rels-int-batch drush command.'));
+  return t('Please run the islandora-xacml-api-relationships-missing-rels-int-batch command.');
+}
