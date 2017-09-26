@@ -293,7 +293,7 @@ EOQ;
   }
   $sandbox['progress'] = min($sandbox['total'], $sandbox['progress'] + 1);
   $context['finished'] = $sandbox['progress'] / $sandbox['total'];
-  $context['message'] = t('Updated @progress of @total.', array(
+  $context['message'] = t('Checked @progress of @total.', array(
     '@progress' => $sandbox['progress'],
     '@total' => $sandbox['total'],
   ));
