@@ -19,7 +19,7 @@ function islandora_xacml_api_drush_command() {
         'description' => dt('The max number of objects for which to query at a time. (affects memory usage, defaults to 100)'),
       ),
     ),
-    'drupal dependenies' => array(
+    'drupal dependencies' => array(
       'islandora',
       'islandora_xacml_api',
     ),
@@ -38,11 +38,11 @@ function islandora_xacml_api_drush_command() {
         'description' => dt('The max number of objects for which to query at a time. (affects memory usage, defaults to 100)'),
       ),
       'commit' => array(
-        'description' => dt('Whether to commit the update of POLICY datastreams. Defaults to FALSE.'),
+        'description' => dt('Whether to commit the changes to the relations of the POLICY. Defaults to FALSE.'),
         'required' => FALSE,
       ),
     ),
-    'drupal dependenies' => array(
+    'drupal dependencies' => array(
       'islandora',
       'islandora_xacml_api',
     ),
@@ -130,7 +130,7 @@ EOQ;
       $context['finished'] = 1;
 
       $context['message'] = t('Updated @count PID(s) and ran out of items early... Somebody manually updated a document?', array(
-        '@count' => $sandbox['total'],
+        '@count' => $sandbox['progress'],
       ));
       return;
     }
@@ -242,7 +242,7 @@ EOQ;
     if (empty($sandbox['result_stash'])) {
       $context['finished'] = 1;
       $context['message'] = t('Updated @count PID(s) and ran out of items early. POLICY was manually removed?', array(
-        '@count' => $sandbox['total'],
+        '@count' => $sandbox['progress'],
       ));
       return;
     }
@@ -268,14 +268,14 @@ EOQ;
         $user_rels = $object[$dsid]->relationships->get(ISLANDORA_RELS_INT_URI, 'isViewableByUser', $user, RELS_TYPE_PLAIN_LITERAL);
         if (!$user_rels) {
           $to_update = TRUE;
-          break;
+          break 2;
         }
       }
       foreach ($datastream_data['roles'] as $role) {
         $role_rels = $object[$dsid]->relationships->get(ISLANDORA_RELS_INT_URI, 'isViewableByRole', $role, RELS_TYPE_PLAIN_LITERAL);
         if (!$role_rels) {
           $to_update = TRUE;
-          break;
+          break 2;
         }
       }
     }
