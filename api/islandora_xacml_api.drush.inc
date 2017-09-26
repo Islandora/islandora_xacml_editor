@@ -237,7 +237,7 @@ EOQ;
 LIMIT $limit
 EOQ;
 
-    drush_log(dt('Querying for 100 objects.'));
+    drush_log(dt('Querying for @count objects.', array('@count' => $limit)));
     $sandbox['result_stash'] = $tuque->repository->ri->sparqlQuery($limited_query);
     if (empty($sandbox['result_stash'])) {
       $context['finished'] = 1;
