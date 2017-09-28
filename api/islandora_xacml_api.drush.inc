@@ -209,7 +209,7 @@ WHERE {
   }
   !filter
 }
-ORDER BY ?created
+ORDER BY ?created ?pid
 
 EOQ;
   if (!isset($sandbox['total'])) {
