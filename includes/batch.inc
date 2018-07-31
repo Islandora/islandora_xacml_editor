@@ -20,17 +20,19 @@
  *   Context array used in the batch.
  */
 function islandora_xacml_editor_batch_function($xml, $pid, $query_array, &$context) {
-  if (empty($context['sandbox'])) {
+  $sandbox = &$context['sandbox'];
+
+  if (!isset($sandbox['pids'])) {
     $query = new IslandoraXacmlEditorQuery($pid, $query_array);
-    $context['sandbox'] = array();
-    $context['sandbox']['progress'] = 0;
-    $context['sandbox']['pids'] = $query->getPids();
+    $sandbox['progress'] = 0;
+    $sandbox['pids'] = $query->getPids();
     $context['sandbox']['items'] = count($context['sandbox']['pids']);
     $context['results']['redirect'] = $pid;
     $context['results']['success'] = array();
     $context['results']['fail'] = array();
   }
   $targetpid = array_pop($context['sandbox']['pids']);
+
   $context['sandbox']['progress']++;
 
   $policy_update = new IslandoraUpdatePolicy($targetpid, $xml);
