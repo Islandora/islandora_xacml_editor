@@ -26,27 +26,33 @@ function islandora_xacml_editor_batch_function($xml, $pid, $query_array, &$conte
     $query = new IslandoraXacmlEditorQuery($pid, $query_array);
     $sandbox['progress'] = 0;
     $sandbox['pids'] = $query->getPids();
-    $context['sandbox']['items'] = count($context['sandbox']['pids']);
+    $sandbox['items'] = count($context['sandbox']['pids']);
     $context['results']['redirect'] = $pid;
     $context['results']['success'] = array();
     $context['results']['fail'] = array();
   }
-  $targetpid = array_pop($context['sandbox']['pids']);
 
-  $context['sandbox']['progress']++;
-
-  $policy_update = new IslandoraUpdatePolicy($targetpid, $xml);
-  $success = $policy_update->updatePolicy();
-
-  if ($success) {
-    $context['results']['success'][] = $targetpid;
+  if ($sandbox['items'] == 0) {
+    // If no items are found exit the operation.
+    $context['finished'] = 1;
   }
   else {
-    $context['results']['fail'][] = $targetpid;
-  }
+    $sandbox['progress']++;
 
-  // Make sure we don't divide by zero.
-  $context['finished'] = $context['sandbox']['items'] == 0 ? 1 : $context['sandbox']['progress'] / $context['sandbox']['items'];
+    $target_pid = array_pop($sandbox['pids']);
+
+    $policy_update = new IslandoraUpdatePolicy($target_pid, $xml);
+    $success = $policy_update->updatePolicy();
+
+    if ($success) {
+      $context['results']['success'][] = $target_pid;
+    }
+    else {
+      $context['results']['fail'][] = $target_pid;
+    }
+
+    $context['finished'] = $sandbox['progress'] / $sandbox['items'];
+  }
 }
 
 /**

@@ -20,7 +20,7 @@ function islandora_xacml_editor_drush_command() {
     ),
     'options' => array(
       'policy' => array(
-        'description' => dt('The path to an XML file containing the XACML policy configuration to be applied.'),
+        'description' => dt('The path to an XML file containing the XACML policy configuration to be applied. It is expected that this policy file be generated from the UI\'s XACML Editor.'),
         'required' => TRUE,
       ),
       'pid' => array(
@@ -65,8 +65,7 @@ function drush_islandora_xacml_editor_apply_policy() {
   $object = islandora_object_load(drush_get_option('pid'));
 
   if (!$object) {
-    drush_log(dt('Error loading object.'), 'error');
-    return;
+    return drush_set_error('Invalid object', dt('An error occurred while trying to load \'@pid\'.', array('@pid' => drush_get_option('pid'))));
   }
 
   $policy = drush_get_option('policy');
@@ -75,13 +74,11 @@ function drush_islandora_xacml_editor_apply_policy() {
     $xml = file_get_contents($policy);
 
     if (!$xml) {
-      drush_log(dt('Could not read policy file at @policy', array('@policy' => $policy)), 'error');
-      return;
+      return drush_set_error('Failed to read file', dt('Could not read policy file from @policy', array('@policy' => $policy)));
     }
   }
   else {
-    drush_log(dt('File path provided does not exist or is not a file.'), 'error');
-    return;
+    return drush_set_error('Invalid policy parameter', dt('File path provided does not exist or is not a file.'));
   }
 
   $traversal = drush_get_option('traversal', FALSE);
@@ -102,21 +99,7 @@ function drush_islandora_xacml_editor_apply_policy() {
     }
   }
 
-  $batch = array(
-    'operations' => array(
-      array(
-        'islandora_xacml_editor_batch_function',
-        array($xml, $object->id, reset($query_array)),
-      ),
-    ),
-    'finished' => 'islandora_xacml_editor_batch_finished',
-    'file' => drupal_get_path('module', 'islandora_xacml_editor') . '/includes/batch.inc',
-  );
-
-  drush_log(dt('Please wait if many objects are being updated as this could take a few minutes.'), 'ok');
-
-  batch_set($batch);
-  drush_backend_batch_process();
+  islandora_xacml_editor_process_batch($xml, $object->id, reset($query_array));
 }
 
 /**
@@ -128,21 +111,18 @@ function drush_islandora_xacml_editor_force_policy_inheritance() {
   $object = islandora_object_load(drush_get_option('pid'));
 
   if (!$object) {
-    drush_log(dt('Error loading object.'), 'error');
-    return;
+    return drush_set_error('Error loading object', dt('An error occurred while trying to load \'@pid\'.', array('@pid' => drush_get_option('pid'))));
   }
 
   if ($object['POLICY']) {
     $xml = $object['POLICY']->content;
 
     if (!$xml) {
-      drush_log(dt('An error occurred while trying to load the \'POLICY\' for @pid.', array('@pid' => $object->id)), 'error');
-      return;
+      return drush_set_error('Failed to load policy', dt('An error occurred while trying to load the \'POLICY\' datastream for @pid.', array('@pid' => $object->id)));
     }
   }
   else {
-    drush_log(dt('No \'POLICY\' datastream found for @pid.', array('@pid' => $object->id)), 'error');
-    return;
+    return drush_set_error('No policy datastream', dt('No \'POLICY\' datastream found for @pid.', array('@pid' => $object->id)));
   }
 
   $query_array = array();
@@ -152,7 +132,6 @@ function drush_islandora_xacml_editor_force_policy_inheritance() {
 
     if (!empty($temp)) {
       $query_array = array_merge_recursive($query_array, $temp);
-
       // If shallow traversal is enabled and the content models child query
       // found targets all children, add the shallow restriction to the query.
       if (isset($query_array['all_children']) && drush_get_option('shallow_traversal', FALSE)) {
@@ -162,22 +141,35 @@ function drush_islandora_xacml_editor_force_policy_inheritance() {
   }
 
   if (empty($query_array)) {
-    drush_log('No child query found from object\'s content model.', 'error');
-    return;
+    return drush_set_error('No child query found', dt('No child query found for object\'s content model.'));
   }
 
+  islandora_xacml_editor_process_batch($xml, $object->id, reset($query_array));
+}
+
+/**
+ * Build and process batch operation.
+ *
+ * @param string $xml
+ *   String containing the XACML policy configuration markup.
+ * @param string $pid
+ *   The PID of the target object.
+ * @param array $query_array
+ *   Array containing query child query, type and description.
+ */
+function islandora_xacml_editor_process_batch($xml, $pid, array $query_array) {
   $batch = array(
     'operations' => array(
       array(
         'islandora_xacml_editor_batch_function',
-        array($xml, $object->id, reset($query_array)),
+        array($xml, $pid, $query_array),
       ),
     ),
     'finished' => 'islandora_xacml_editor_batch_finished',
     'file' => drupal_get_path('module', 'islandora_xacml_editor') . '/includes/batch.inc',
   );
 
-  drush_log(dt('Please wait if many objects are being updated as this could take a few minutes.'), 'ok');
+  drush_print(dt('Please wait if many objects are being updated as this could take a few minutes.'));
 
   batch_set($batch);
   drush_backend_batch_process();
