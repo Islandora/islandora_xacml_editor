@@ -91,15 +91,29 @@ function drush_islandora_xacml_editor_apply_policy() {
 
       if (!empty($temp)) {
         $query_array = array_merge_recursive($query_array, $temp);
+        // Need to reset the array as we expect only one query.
+        $query_array = reset($query_array);
       }
     }
 
     if (empty($query_array)) {
       drush_log('No child queries found, skipping traversal...', 'notice');
     }
-  }
 
-  islandora_xacml_editor_process_batch($xml, $object->id, reset($query_array));
+    islandora_xacml_editor_process_batch($xml, $object->id, $query_array);
+  }
+  else {
+    module_load_include('inc', 'islandora_xacml_editor', 'includes/batch');
+
+    $policy_update = new IslandoraUpdatePolicy($object->id, $xml);
+    $success = $policy_update->updatePolicy();
+
+    if (!$success) {
+      return drush_set_error('Failed to load policy', dt('An error occurred while trying to update the \'POLICY\' datastream for @pid.', array('@pid' => $object->id)));
+    }
+
+    drush_print(dt('The \'POLICY\' configuration has been applied to @pid!', array('@pid' => $object->id)));
+  }
 }
 
 /**
