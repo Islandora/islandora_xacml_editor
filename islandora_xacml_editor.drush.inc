@@ -16,7 +16,7 @@ function islandora_xacml_editor_drush_command() {
     'description' => dt('Apply XACML policy to target object.'),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
     'examples' => array(
-      'Apply policy.xml to \'islandora:57\', use traversal to target child objects.' => 'drush -v --user=1 islandora_xacml_editor_apply_policy --policy=/tmp/policy.xml --pid=islandora:57 --traversal',
+      'Apply policy.xml to \'islandora:57\' and use traversal to target child objects.' => 'drush -v --user=1 islandora_xacml_editor_apply_policy --policy=/tmp/policy.xml --pid=islandora:57 --traversal',
     ),
     'options' => array(
       'policy' => array(
@@ -28,7 +28,7 @@ function islandora_xacml_editor_drush_command() {
         'required' => TRUE,
       ),
       'traversal' => array(
-        'description' => dt('Optional. Whether to apply policies to the target object\'s children (shallow traversal is not supported for collection objects). Disabled by default.'),
+        'description' => dt('Optional. When enabled, the policy configuration will be applied to the target object\'s children (shallow traversal is not supported for collection objects). Disabled by default.'),
         'required' => FALSE,
       ),
     ),
