@@ -56,7 +56,7 @@ Having problems or solved a problem? Check out the Islandora google groups for a
 
 Current maintainers:
 
-* [Jordan Dukart](https://github.com/jordandukart)
+* [William Panting](https://github.com/willtp87)
 
 ## Development
 
