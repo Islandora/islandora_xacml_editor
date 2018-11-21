@@ -37,7 +37,7 @@ In order to comply with XACML restrictions placed on objects, a hook is used to 
 
 ### Drush 
 
-#### Apply XACML policy to target object. For example:
+#### Apply XACML policy to target object.
 
 To add policy.xml to object islandora:57:
 `drush -v --user=1 islandora_xacml_editor_apply_policy --policy=/tmp/policy.xml --pid=islandora:57`
@@ -51,7 +51,7 @@ To apply the XACML policy from islandora:root to its children:
 
 To apply this policy only to immediate children, use the `--shallow_traversal` option. Disabled by default
 
-The PID of the parent object => MUST HAVE a \'POLICY\' datastream.
+The target object must have a POLICY datastream.
 
 ### Notes
 
