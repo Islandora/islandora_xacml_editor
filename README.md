@@ -37,7 +37,7 @@ In order to comply with XACML restrictions placed on objects, a hook is used to 
 
 ### Drush 
 
-#### Apply XACML policy to target object.
+#### Apply XACML policy to target object
 
 To add policy.xml to object islandora:57:
 `drush -v --user=1 islandora_xacml_editor_apply_policy --policy=/tmp/policy.xml --pid=islandora:57`
