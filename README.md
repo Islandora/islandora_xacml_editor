@@ -37,17 +37,21 @@ In order to comply with XACML restrictions placed on objects, a hook is used to 
 
 ### Drush 
 
-Apply XACML policy to target object. For example:
-Apply policy.xml to \'islandora:57\' and use traversal to target child objects. 
-drush -v --user=1 islandora_xacml_editor_apply_policy --policy=/tmp/policy.xml --pid=islandora:57 --traversal
+#### Apply XACML policy to target object. For example:
 
-To force all child objects to inherit target object\'s XACML policy configuration. For example:
-Enforce policy inheritance to all immediate children of \'islandora:root\' object.
-drush -v --user=1 islandora_xacml_editor_force_policy_inheritance --pid=islandora:root --shallow_traversal
+To add policy.xml to object islandora:57:
+`drush -v --user=1 islandora_xacml_editor_apply_policy --policy=/tmp/policy.xml --pid=islandora:57`
 
-The PID of the parent object. Must have a \'POLICY\' datastream.
+To apply this policy to islandora:57 and all child objects, add the `--traversal` option.
 
-Optional. If the target object is a collection, use shallow traversal to target only the immediate children. Disabled by default
+#### Force XACML inheritance to child objects
+
+To apply the XACML policy from islandora:root to its children:
+`drush -v --user=1 islandora_xacml_editor_force_policy_inheritance --pid=islandora:root`
+
+To apply this policy only to immediate children, use the `--shallow_traversal` option. Disabled by default
+
+The PID of the parent object => MUST HAVE a \'POLICY\' datastream.
 
 ### Notes
 
