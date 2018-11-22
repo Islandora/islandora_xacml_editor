@@ -35,6 +35,24 @@ In order to comply with XACML restrictions placed on objects, a hook is used to 
 
 ![image](https://cloud.githubusercontent.com/assets/2371345/9816201/d7e9a1e6-5871-11e5-90a0-51381eaf8fcb.png)
 
+### Drush 
+
+#### Apply XACML policy to target object
+
+To add policy.xml to object islandora:57:
+`drush -v --user=1 islandora_xacml_editor_apply_policy --policy=/tmp/policy.xml --pid=islandora:57`
+
+To apply this policy to islandora:57 and all child objects, add the `--traversal` option.
+
+#### Force XACML inheritance to child objects
+
+To apply the XACML policy from islandora:root to its children:
+`drush -v --user=1 islandora_xacml_editor_force_policy_inheritance --pid=islandora:root`
+
+To apply this policy only to immediate children, use the `--shallow_traversal` option. Disabled by default
+
+The target object must have a POLICY datastream.
+
 ### Notes
 
 The XACML editor hooks into ingesting through the interface. When a child is added through the interface, the parent's POLICY will be applied if one exists.
@@ -60,7 +78,7 @@ Current maintainers:
 
 ## Development
 
-If you would like to contribute to this module, please check out [CONTRIBUTING.md](CONTRIBUTING.md). In addition, we have helpful [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers) info, as well as our [Developers](http://islandora.ca/developers) section on the [Islandora.ca](http://islandora.ca) site.
+If you would like to contribute to this module, please check out [CONTRIBUTING.md](CONTRIBUTING.md). In addition, we have helpful [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers) info, as well as our [Developers](https://islandora.ca/developers) section on the [Islandora.ca](https://islandora.ca) site.
 
 ## License
 
