@@ -127,16 +127,13 @@ select ?object from <#ri> WHERE
 }
 EOQ;
   $results = $object->repository->ri->sparqlQuery($collection_query);
-
-  if (count($results) > 0) {
-    return array(
-      'all_children' => array(
-        'type' => 'sparql',
-        'query' => $collection_query,
-        'description' => t('All children of this collection and collections within this collection (existing and new).'),
-      ),
-    );
-  }
+  return array(
+    'all_children' => array(
+      'type' => 'sparql',
+      'query' => $collection_query,
+      'description' => t('All children of this collection and collections within this collection (existing and new).'),
+    ),
+  );
 }
 
 /**
